@@ -1,8 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: unversioned template → 1.0.0
-- Modified principles: template placeholders → seven project principles (initial adoption)
-- Added sections: Engineering Constraints; Development Workflow; Governance rules
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: none
+- Added principles: 8. Effortless User Experience
+- Added sections: none
 - Removed sections: none
 - Follow-up TODOs: none
 -->
@@ -93,6 +94,21 @@ The red-green-refactor sequence provides evidence that each change is required a
 
 These rules expose integration problems early and keep review scope clear.
 
+### 8. Effortless User Experience
+
+- Every user-facing feature MUST identify its primary user task and define acceptance criteria
+  for completing that task without undocumented instructions.
+- Primary actions, navigation, and labels MUST be clear and consistent across the app. The
+  interface MUST show the current state, give timely feedback, and provide a clear recovery path
+  when an action fails.
+- User-facing flows MUST support keyboard use, readable text, and accessible names and status
+  messages so users can operate them without relying on visual cues alone.
+- Before a user-facing change is considered complete, its primary task MUST be checked against
+  the acceptance criteria in the running interface. Usability defects that block or confuse
+  task completion MUST be resolved before release.
+
+These rules make ease of use a verifiable quality gate for every user-facing change.
+
 ## Engineering Constraints
 
 - A new dependency MUST solve a concrete requirement that standard platform capabilities do
@@ -109,7 +125,8 @@ These rules expose integration problems early and keep review scope clear.
 3. Implement the smallest change that passes the test; run the relevant tests.
 4. Refactor with tests green, then verify the slice through its integration path.
 5. Review the diff for scope, duplicated domain logic, hidden dependencies, and constitution
-   compliance before merging.
+   compliance. For user-facing changes, verify the primary task in the running interface before
+   merging.
 
 ## Governance
 
@@ -125,4 +142,4 @@ These rules expose integration problems early and keep review scope clear.
 - Update the version and Last Amended date with each approved amendment. Preserve the original
   Ratified date. Remove the temporary Sync Impact Report before committing the amendment.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-21 | **Last Amended**: 2026-09-21
+**Version**: 1.1.0 | **Ratified**: 2026-09-21 | **Last Amended**: 2026-09-21
