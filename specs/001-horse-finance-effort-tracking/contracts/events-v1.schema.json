@@ -1,0 +1,863 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cost-tracking.example/schemas/events-v1.json",
+  "title": "Horse cost tracking event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "streamVersion",
+    "schemaVersion",
+    "type",
+    "subject",
+    "occurredAt",
+    "idempotencyKey",
+    "payload",
+    "commandHash"
+  ],
+  "properties": {
+    "eventId": {
+      "$ref": "#/$defs/id"
+    },
+    "streamVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "type": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string",
+      "pattern": "^user_[A-Za-z0-9]+$"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "idempotencyKey": {
+      "$ref": "#/$defs/id"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "commandHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/accountConfigured"
+    },
+    {
+      "$ref": "#/$defs/horseRegistered"
+    },
+    {
+      "$ref": "#/$defs/horseDetailsUpdated"
+    },
+    {
+      "$ref": "#/$defs/horseStatusChanged"
+    },
+    {
+      "$ref": "#/$defs/expenseRecorded"
+    },
+    {
+      "$ref": "#/$defs/drivingRateChanged"
+    },
+    {
+      "$ref": "#/$defs/expenseRuleCreated"
+    },
+    {
+      "$ref": "#/$defs/expenseRuleUpdated"
+    },
+    {
+      "$ref": "#/$defs/expenseRuleStopped"
+    },
+    {
+      "$ref": "#/$defs/expenseOccurrenceOverridden"
+    },
+    {
+      "$ref": "#/$defs/incomeRecorded"
+    },
+    {
+      "$ref": "#/$defs/incomeRuleCreated"
+    },
+    {
+      "$ref": "#/$defs/incomeRuleUpdated"
+    },
+    {
+      "$ref": "#/$defs/incomeRuleStopped"
+    },
+    {
+      "$ref": "#/$defs/incomeApproved"
+    },
+    {
+      "$ref": "#/$defs/incomeRejected"
+    },
+    {
+      "$ref": "#/$defs/taskLogged"
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "money": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "allocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "horseId",
+        "weight",
+        "amountMinor"
+      ],
+      "properties": {
+        "horseId": {
+          "$ref": "#/$defs/id"
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "allocations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/allocation"
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cadence",
+        "interval",
+        "weekdays",
+        "dayOfMonth",
+        "startDate",
+        "endDate"
+      ],
+      "properties": {
+        "cadence": {
+          "enum": [
+            "Daily",
+            "Weekly",
+            "Weekdays",
+            "Monthly"
+          ]
+        },
+        "interval": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "weekdays": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          }
+        },
+        "dayOfMonth": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 31
+        },
+        "startDate": {
+          "$ref": "#/$defs/date"
+        },
+        "endDate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "expenseDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amountMinor",
+        "category",
+        "description",
+        "allocations",
+        "splitMode"
+      ],
+      "properties": {
+        "amountMinor": {
+          "$ref": "#/$defs/money"
+        },
+        "category": {
+          "enum": [
+            "Stabling",
+            "Veterinary",
+            "Farrier",
+            "Feed",
+            "Equipment",
+            "Training",
+            "Driving",
+            "Other"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "allocations": {
+          "$ref": "#/$defs/allocations"
+        },
+        "splitMode": {
+          "enum": [
+            "Equal",
+            "Custom"
+          ]
+        }
+      }
+    },
+    "incomeDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amountMinor",
+        "source",
+        "allocations",
+        "splitMode"
+      ],
+      "properties": {
+        "amountMinor": {
+          "$ref": "#/$defs/money"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "allocations": {
+          "$ref": "#/$defs/allocations"
+        },
+        "splitMode": {
+          "enum": [
+            "Equal",
+            "Custom"
+          ]
+        }
+      }
+    },
+    "accountConfigured": {
+      "properties": {
+        "type": {
+          "const": "AccountConfigured"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "currency",
+            "timeZone"
+          ],
+          "properties": {
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "timeZone": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "horseRegistered": {
+      "properties": {
+        "type": {
+          "const": "HorseRegistered"
+        },
+        "payload": {
+          "$ref": "#/$defs/horsePayload"
+        }
+      }
+    },
+    "horseDetailsUpdated": {
+      "properties": {
+        "type": {
+          "const": "HorseDetailsUpdated"
+        },
+        "payload": {
+          "$ref": "#/$defs/horsePayload"
+        }
+      }
+    },
+    "horsePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "horseId",
+        "name",
+        "breed",
+        "dateOfBirth",
+        "status"
+      ],
+      "properties": {
+        "horseId": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "breed": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "dateOfBirth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "Active",
+            "Leased",
+            "Retired",
+            "Sold"
+          ]
+        }
+      }
+    },
+    "horseStatusChanged": {
+      "properties": {
+        "type": {
+          "const": "HorseStatusChanged"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "horseId",
+            "status"
+          ],
+          "properties": {
+            "horseId": {
+              "$ref": "#/$defs/id"
+            },
+            "status": {
+              "enum": [
+                "Active",
+                "Leased",
+                "Retired",
+                "Sold"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "expenseRecorded": {
+      "properties": {
+        "type": {
+          "const": "ExpenseRecorded"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "expenseId",
+            "expenseDate",
+            "amountMinor",
+            "category",
+            "description",
+            "allocations",
+            "driving",
+            "splitMode"
+          ],
+          "properties": {
+            "expenseId": {
+              "$ref": "#/$defs/id"
+            },
+            "expenseDate": {
+              "$ref": "#/$defs/date"
+            },
+            "amountMinor": {
+              "$ref": "#/$defs/money"
+            },
+            "category": {
+              "enum": [
+                "Stabling",
+                "Veterinary",
+                "Farrier",
+                "Feed",
+                "Equipment",
+                "Training",
+                "Driving",
+                "Other"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "allocations": {
+              "$ref": "#/$defs/allocations"
+            },
+            "driving": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kilometers",
+                    "rateMinorPerKm"
+                  ],
+                  "properties": {
+                    "kilometers": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "multipleOf": 0.001
+                    },
+                    "rateMinorPerKm": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "multipleOf": 0.0001
+                    }
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "splitMode": {
+              "enum": [
+                "Equal",
+                "Custom"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "drivingRateChanged": {
+      "properties": {
+        "type": {
+          "const": "DrivingRateChanged"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rateMinorPerKm"
+          ],
+          "properties": {
+            "rateMinorPerKm": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "multipleOf": 0.0001
+            }
+          }
+        }
+      }
+    },
+    "expenseRuleCreated": {
+      "properties": {
+        "type": {
+          "const": "RecurringExpenseRuleCreated"
+        },
+        "payload": {
+          "$ref": "#/$defs/expenseRule"
+        }
+      }
+    },
+    "expenseRuleUpdated": {
+      "properties": {
+        "type": {
+          "const": "RecurringExpenseRuleUpdated"
+        },
+        "payload": {
+          "$ref": "#/$defs/expenseRule"
+        }
+      }
+    },
+    "expenseRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId",
+        "effectiveFrom",
+        "schedule",
+        "defaults"
+      ],
+      "properties": {
+        "ruleId": {
+          "$ref": "#/$defs/id"
+        },
+        "effectiveFrom": {
+          "$ref": "#/$defs/date"
+        },
+        "schedule": {
+          "$ref": "#/$defs/schedule"
+        },
+        "defaults": {
+          "$ref": "#/$defs/expenseDefaults"
+        }
+      }
+    },
+    "expenseRuleStopped": {
+      "properties": {
+        "type": {
+          "const": "RecurringExpenseRuleStopped"
+        },
+        "payload": {
+          "$ref": "#/$defs/stoppedRule"
+        }
+      }
+    },
+    "expenseOccurrenceOverridden": {
+      "properties": {
+        "type": {
+          "const": "RecurringExpenseOccurrenceOverridden"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ruleId",
+            "scheduledDate",
+            "action",
+            "changed"
+          ],
+          "properties": {
+            "ruleId": {
+              "$ref": "#/$defs/id"
+            },
+            "scheduledDate": {
+              "$ref": "#/$defs/date"
+            },
+            "action": {
+              "enum": [
+                "Changed",
+                "Skipped"
+              ]
+            },
+            "changed": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/expenseDefaults"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "incomeRecorded": {
+      "properties": {
+        "type": {
+          "const": "IncomeRecorded"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "incomeId",
+            "receivedDate",
+            "amountMinor",
+            "source",
+            "allocations",
+            "splitMode"
+          ],
+          "properties": {
+            "incomeId": {
+              "$ref": "#/$defs/id"
+            },
+            "receivedDate": {
+              "$ref": "#/$defs/date"
+            },
+            "amountMinor": {
+              "$ref": "#/$defs/money"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "allocations": {
+              "$ref": "#/$defs/allocations"
+            },
+            "splitMode": {
+              "enum": [
+                "Equal",
+                "Custom"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "incomeRuleCreated": {
+      "properties": {
+        "type": {
+          "const": "RecurringIncomeRuleCreated"
+        },
+        "payload": {
+          "$ref": "#/$defs/incomeRule"
+        }
+      }
+    },
+    "incomeRuleUpdated": {
+      "properties": {
+        "type": {
+          "const": "RecurringIncomeRuleUpdated"
+        },
+        "payload": {
+          "$ref": "#/$defs/incomeRule"
+        }
+      }
+    },
+    "incomeRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId",
+        "effectiveFrom",
+        "schedule",
+        "defaults"
+      ],
+      "properties": {
+        "ruleId": {
+          "$ref": "#/$defs/id"
+        },
+        "effectiveFrom": {
+          "$ref": "#/$defs/date"
+        },
+        "schedule": {
+          "$ref": "#/$defs/schedule"
+        },
+        "defaults": {
+          "$ref": "#/$defs/incomeDefaults"
+        }
+      }
+    },
+    "incomeRuleStopped": {
+      "properties": {
+        "type": {
+          "const": "RecurringIncomeRuleStopped"
+        },
+        "payload": {
+          "$ref": "#/$defs/stoppedRule"
+        }
+      }
+    },
+    "stoppedRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleId",
+        "lastDate"
+      ],
+      "properties": {
+        "ruleId": {
+          "$ref": "#/$defs/id"
+        },
+        "lastDate": {
+          "$ref": "#/$defs/date"
+        }
+      }
+    },
+    "incomeApproved": {
+      "properties": {
+        "type": {
+          "const": "RecurringIncomeApproved"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ruleId",
+            "scheduledDate",
+            "receivedDate",
+            "amountMinor",
+            "allocations",
+            "nextDueDate",
+            "splitMode"
+          ],
+          "properties": {
+            "ruleId": {
+              "$ref": "#/$defs/id"
+            },
+            "scheduledDate": {
+              "$ref": "#/$defs/date"
+            },
+            "receivedDate": {
+              "$ref": "#/$defs/date"
+            },
+            "amountMinor": {
+              "$ref": "#/$defs/money"
+            },
+            "allocations": {
+              "$ref": "#/$defs/allocations"
+            },
+            "nextDueDate": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "splitMode": {
+              "enum": [
+                "Equal",
+                "Custom"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "incomeRejected": {
+      "properties": {
+        "type": {
+          "const": "RecurringIncomeRejected"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ruleId",
+            "scheduledDate",
+            "nextDueDate"
+          ],
+          "properties": {
+            "ruleId": {
+              "$ref": "#/$defs/id"
+            },
+            "scheduledDate": {
+              "$ref": "#/$defs/date"
+            },
+            "nextDueDate": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "taskLogged": {
+      "properties": {
+        "type": {
+          "const": "TaskLogged"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "taskId",
+            "horseId",
+            "taskDate",
+            "taskType",
+            "minutes",
+            "quantity",
+            "quantityUnit",
+            "notes"
+          ],
+          "properties": {
+            "taskId": {
+              "$ref": "#/$defs/id"
+            },
+            "horseId": {
+              "$ref": "#/$defs/id"
+            },
+            "taskDate": {
+              "$ref": "#/$defs/date"
+            },
+            "taskType": {
+              "enum": [
+                "Riding",
+                "Groundwork",
+                "Lunging",
+                "Grooming",
+                "MedicalCare",
+                "PaddockDuty",
+                "Transportation",
+                "Other"
+              ]
+            },
+            "minutes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "quantity": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "quantityUnit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 30
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        }
+      }
+    }
+  }
+}

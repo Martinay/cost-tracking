@@ -1,6 +1,8 @@
 # Architecture and contracts: Horse Finance and Effort Tracking
 
-**Status**: Design contract for planning, 2026-09-21. [Feature requirements](spec.md) take precedence for user behavior.
+**Status**: Design contract refined by planning, 2026-09-21. [Feature requirements](spec.md) take precedence for user behavior.
+
+Planning refinements are recorded in [research.md](research.md); canonical shapes and state rules are in [data-model.md](data-model.md) and [contracts/README.md](contracts/README.md). These clarify exact equal splits, verified locking, command hashes, JWT audience setup, and bounded complete queries.
 
 ## 1. System and deployment
 
@@ -20,11 +22,11 @@ Azure Static Web Apps (free)       WorkOS AuthKit
                              append-only per-user JSONL
 ```
 
-The backend verifies access-token signature, issuer, audience, expiry and user `sub` against the configured WorkOS environment. It rejects missing, malformed and non-user subjects before storage access. `sub` is the sole account key; `org_id` never broadens access. Every resource lookup begins with the authenticated subject, not a client-supplied tenant ID. Return 404 for a foreign or unknown resource ID. Cache keys include the subject and are discarded on sign-out. AuthKit session token storage and renewal must follow WorkOS's browser session guidance; no long-lived token is placed in local storage. WorkOS documents `sub` as the user ID and its signing JWKS in [AuthKit sessions](https://workos.com/docs/authkit/sessions).
+The backend verifies access-token signature, issuer, audience, expiry and user `sub` against the configured WorkOS environment. It rejects missing, malformed and non-user subjects before storage access. `sub` is the sole account key; `org_id` never broadens access. Every resource lookup begins with the authenticated subject, not a client-supplied tenant ID. Return 404 for a foreign or unknown resource ID. Cache keys include the subject and are discarded on sign-out. A server-managed WorkOS session broker handles code exchange and refresh, as defined in [contracts/auth.md](contracts/auth.md); no long-lived token is placed in local storage. WorkOS documents `sub` as the user ID and its signing JWKS in [AuthKit sessions](https://workos.com/docs/authkit/sessions).
 
-Use Static Web Apps Free, Container Apps Consumption with HTTP ingress, `minReplicas: 0`, and initially `maxReplicas: 1`; mount a standard Azure Files SMB share at `/data`. The maximum of one is an operating default, not the integrity mechanism: file locking and version checks remain correct if replicas are raised later. The file share persists while the container scales to zero. Microsoft documents [Azure Files mounts in Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts-azure-files) and [zero-replica consumption billing](https://azure.microsoft.com/en-us/pricing/details/container-apps/). Cold starts must be measured separately from warm interactions. The **less than $5/month** objective is a budget gate, not a guaranteed price: price the chosen region's file capacity, operations, egress, logs, WorkOS plan and active container seconds, then set spending alerts. Azure Files incurs charges while compute is at zero.
+Use Static Web Apps Free, Container Apps Consumption with HTTP ingress, `minReplicas: 0`, and initially `maxReplicas: 1`; mount a standard Azure Files SMB share at `/data`. The maximum of one is an operating default, not the integrity mechanism: verified file locking and version checks must remain correct across independent clients before deployment, even with the initial replica limit. The file share persists while the container scales to zero. Microsoft documents [Azure Files mounts in Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts-azure-files) and [zero-replica consumption billing](https://azure.microsoft.com/en-us/pricing/details/container-apps/). Cold starts must be measured separately from warm interactions. The **less than $5/month** objective is a budget gate, not a guaranteed price: price the chosen region's file capacity, operations, egress, logs, WorkOS plan and active container seconds, then set spending alerts. Azure Files incurs charges while compute is at zero.
 
-No database, message broker, materialization worker, or recurring cron exists. The event store is the source of truth. Snapshots and process caches are disposable accelerators. A bounded full replay must always recover the same state. Azure Files share snapshots or an independently retained backup are required for disaster recovery; a snapshot file inside the same share is only a projection accelerator, not a backup.
+No database, message broker, materialization worker, or recurring cron exists. Encrypted mutable authentication sessions and a protected Data Protection key ring are separate operational files on the share; financial truth remains exclusively the event streams. The event store is the source of truth. Snapshots and process caches are disposable accelerators. A bounded full replay must always recover the same state. Azure Files share snapshots or an independently retained backup are required for disaster recovery; a snapshot file inside the same share is only a projection accelerator, not a backup.
 
 ### Storage layout and file safety
 
@@ -37,15 +39,15 @@ No database, message broker, materialization worker, or recurring cron exists. T
       snapshot_<sha256-of-workos-sub>.tmp
 ```
 
-Only the server derives the path. Hashing the subject prevents path traversal and avoids plain identity in filenames; the raw subject remains in authenticated in-memory context and event envelope, never a URL parameter. The share and mount are writable only by the backend identity. Disable arbitrary file serving. Avoid request-body and token logging; log correlation IDs and event types, not private financial content. Encrypt the storage account at rest and require encrypted transport. Backups must have restricted access and a tested restore path.
+Only the server derives the path. Hashing the subject prevents path traversal and avoids plain identity in filenames; the raw subject remains in authenticated in-memory context and event envelope, never a URL parameter. Restrict share and mount access to the backend and authorized deployment operators; protect the storage-account mount credentials and never expose them to the browser. Disable arbitrary file serving. Avoid request-body and token logging; log correlation IDs and event types, not private financial content. Encrypt the storage account at rest and require encrypted transport. Backups must have restricted access and a tested restore path.
 
-Use one process-local semaphore per subject plus an OS/SMB exclusive lock on the stream file for the entire read-current-version, validate, append, flush sequence. Open with `FileShare.None`, with a bounded retry for ordinary lock contention. This is the cross-process guard; the semaphore only reduces local contention. SMB supports mounted-client file locking as described by [Microsoft](https://learn.microsoft.com/en-us/rest/api/storageservices/managing-file-locks). Before production, run a two-container adversarial test on the exact Linux SMB mount to prove that exclusive opens serialize and flushed writes survive failover. If the mount does not honor the required semantics, this storage design is blocked: limiting replicas alone would not make storage safe across restarts or revisions.
+Use one process-local semaphore per subject plus an explicitly checked Linux exclusive lock on the event-file handle for the entire read-current-version, validate, append, durable-flush sequence. `FileShare.None` alone is insufficient: .NET's Unix implementation can silently continue after unsupported locking errors. Use the fail-closed protocol in [contracts/storage.md](contracts/storage.md), and verify actual cross-client SMB semantics before deployment. Lock failure returns a retryable error and never permits unlocked writes. The maximum replica count is not an integrity mechanism.
 
 Each event is one UTF-8 JSON object followed by `\n`, with monotonically increasing `streamVersion` starting at 1. Never rewrite committed lines. A record is acknowledged only after the full line and newline are flushed to the durable file. At lock acquisition, a final unterminated line may be truncated to the last newline and reported as a recovery event; a corrupt terminated line fails closed and requires restore, never silent skipping. Keep an external backup of the original file before repair. A pre-append expected-version mismatch returns 409. The append operation includes a client-generated idempotency key: on an ambiguous retry, scan the existing stream for the same key and return the original result if payload hash matches; return 409 if the key was reused with different content.
 
 ### Event envelope and evolution
 
-All events are immutable. A schema version is per event type, not the stream version. Timestamps are UTC instants; financial and due dates are ISO calendar dates in the owner's configured IANA zone. IDs are opaque UUIDs. Event readers upcast older payloads to the current in-memory contract before projections; upcasters are pure, deterministic, and covered by historical fixtures. Unknown event types or newer unsupported schema versions fail startup for that stream rather than being dropped.
+All events are immutable. A schema version is per event type, not the stream version. Timestamps are UTC instants; financial and due dates are ISO calendar dates in the owner's configured IANA zone. Persisted entity/event IDs are opaque UUIDs; virtual and approved recurring transaction IDs use the stable composite strings defined below. Event readers upcast older payloads to the current in-memory contract before projections; upcasters are pure, deterministic, and covered by historical fixtures. Unknown event types or newer unsupported schema versions fail startup for that stream rather than being dropped.
 
 ```json
 {
@@ -56,101 +58,34 @@ All events are immutable. A schema version is per event type, not the stream ver
   "subject": "user_01JABC123",
   "occurredAt": "2026-09-21T10:02:41Z",
   "idempotencyKey": "7c3145e2-c6c5-4359-aebc-622a1962b5e8",
-  "payload": { "ruleId": "b15e7f50-36db-4edc-88c9-1a0195df4e9e", "scheduledDate": "2026-09-21", "receivedDate": "2026-09-21", "amountMinor": 5000, "allocations": [{ "horseId": "85fe5c1a-15d4-4567-8792-4db515f1e104", "weight": 1000000, "amountMinor": 5000 }], "nextDueDate": "2026-10-21" }
+  "commandHash": "b1e603d80c4c3236b3e4fded5dd1d1a9f7c38908d16d116b7068404390ce9090",
+  "payload": { "ruleId": "b15e7f50-36db-4edc-88c9-1a0195df4e9e", "scheduledDate": "2026-09-21", "receivedDate": "2026-09-21", "amountMinor": 5000, "splitMode": "Equal", "allocations": [{ "horseId": "85fe5c1a-15d4-4567-8792-4db515f1e104", "weight": 1000000, "amountMinor": 5000 }], "nextDueDate": "2026-10-21" }
 }
 ```
 
-Canonical monetary amount is an integer count of currency minor units, positive for expense/income; there are no floating-point monetary fields. `weight` is an integer millionth of the whole (sum exactly 1,000,000), allowing custom fractional splits. Equal splitting distributes residual weights in ascending horse-ID order. For amounts, compute floor of each exact fractional minor-unit allocation, then distribute remaining minor units by largest fractional remainder, breaking ties by horse ID. This guarantees exact totals. Decimal driving `kilometers` (at most three decimal places) times `rateMinorPerKm` (at most four decimal places) is rounded half away from zero once to account minor units, then allocated. Expense category and task type strings are closed enums; income `source` is a nonempty owner-entered label. One account currency is fixed after the first financial event.
+Canonical monetary amount is an integer count of currency minor units, positive for expense/income; there are no floating-point monetary fields. `weight` is an integer millionth of the whole (sum exactly 1,000,000), allowing custom fractional splits. Equal splitting distributes residual weights in ascending horse-ID order. For Equal monetary amounts, divide directly by horse count and assign residual minor units by horse ID; do not derive equal money from rounded weights. For Custom amounts, compute floor of each exact weighted allocation, then distribute remaining minor units by largest fractional remainder, breaking ties by horse ID. Persist `splitMode` alongside allocations. This guarantees exact totals. Decimal driving `kilometers` (at most three decimal places) times `rateMinorPerKm` (at most four decimal places) is rounded half away from zero once to account minor units, then allocated. Expense category and task type strings are closed enums; income `source` is a nonempty owner-entered label. One account currency is fixed after the first financial event.
 
 Schedule contract: `cadence` is `Daily`, `Weekly`, `Weekdays`, or `Monthly`; `interval` is a positive integer for Daily/Weekly/Monthly and 1 for Weekdays. `weekdays` is an array of distinct ISO weekday numbers 1-7 and is nonempty only for Weekdays. Weekly recurs every `interval` weeks on the start date's weekday; Monthly recurs every `interval` months on `dayOfMonth`, clamped to the month's final day. Start and optional end are inclusive. Each rule revision has an `effectiveFrom` calendar date; a revision may affect only dates after today and never rewrites existing decisions. An occurrence key is `(ruleId, scheduledDate)`. Expense overrides can set `Skipped` or `Changed`; the latest override event for a key wins, so a later correction is auditable. Income decisions are final and unique for a key; a rule cannot retroactively change a decided date. Stopping a rule closes it after an inclusive `lastDate` and preserves past items.
 
 ## 2. Domain event contract
 
-The following JSON Schema describes the persisted envelope and every payload. `additionalProperties: false` is intentional. Nullable fields are listed explicitly; optional fields are absent rather than null unless shown. The `kind` field is not duplicated in payload: `type` selects the corresponding payload definition via `oneOf`. A production schema file should be generated directly from this canonical contract, with compatibility tests against the C# records below.
+The linked JSON Schema describes the persisted envelope and every payload. `additionalProperties: false` is intentional. Nullable fields are listed explicitly; optional fields are absent rather than null unless shown. The `kind` field is not duplicated in payload: `type` selects the corresponding payload definition via `oneOf`. Implementation records must satisfy this canonical contract through compatibility fixtures; do not maintain a second schema copy.
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://cost-tracking.example/schemas/events-v1.json",
-  "title": "Horse cost tracking event",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["eventId", "streamVersion", "schemaVersion", "type", "subject", "occurredAt", "idempotencyKey", "payload"],
-  "properties": {
-    "eventId": { "$ref": "#/$defs/id" },
-    "streamVersion": { "type": "integer", "minimum": 1 },
-    "schemaVersion": { "const": 1 },
-    "type": { "type": "string" },
-    "subject": { "type": "string", "pattern": "^user_[A-Za-z0-9]+$" },
-    "occurredAt": { "type": "string", "format": "date-time" },
-    "idempotencyKey": { "$ref": "#/$defs/id" },
-    "payload": { "type": "object" }
-  },
-  "oneOf": [
-    { "$ref": "#/$defs/accountConfigured" },
-    { "$ref": "#/$defs/horseRegistered" },
-    { "$ref": "#/$defs/horseDetailsUpdated" },
-    { "$ref": "#/$defs/horseStatusChanged" },
-    { "$ref": "#/$defs/expenseRecorded" },
-    { "$ref": "#/$defs/drivingRateChanged" },
-    { "$ref": "#/$defs/expenseRuleCreated" },
-    { "$ref": "#/$defs/expenseRuleUpdated" },
-    { "$ref": "#/$defs/expenseRuleStopped" },
-    { "$ref": "#/$defs/expenseOccurrenceOverridden" },
-    { "$ref": "#/$defs/incomeRecorded" },
-    { "$ref": "#/$defs/incomeRuleCreated" },
-    { "$ref": "#/$defs/incomeRuleUpdated" },
-    { "$ref": "#/$defs/incomeRuleStopped" },
-    { "$ref": "#/$defs/incomeApproved" },
-    { "$ref": "#/$defs/incomeRejected" },
-    { "$ref": "#/$defs/taskLogged" }
-  ],
-  "$defs": {
-    "id": { "type": "string", "format": "uuid" },
-    "date": { "type": "string", "format": "date" },
-    "money": { "type": "integer", "minimum": 1 },
-    "allocation": { "type": "object", "additionalProperties": false, "required": ["horseId", "weight", "amountMinor"], "properties": { "horseId": { "$ref": "#/$defs/id" }, "weight": { "type": "integer", "minimum": 1, "maximum": 1000000 }, "amountMinor": { "type": "integer", "minimum": 0 } } },
-    "allocations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/allocation" } },
-    "schedule": { "type": "object", "additionalProperties": false, "required": ["cadence", "interval", "weekdays", "dayOfMonth", "startDate", "endDate"], "properties": { "cadence": { "enum": ["Daily", "Weekly", "Weekdays", "Monthly"] }, "interval": { "type": "integer", "minimum": 1 }, "weekdays": { "type": "array", "uniqueItems": true, "items": { "type": "integer", "minimum": 1, "maximum": 7 } }, "dayOfMonth": { "type": ["integer", "null"], "minimum": 1, "maximum": 31 }, "startDate": { "$ref": "#/$defs/date" }, "endDate": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] } } },
-    "expenseDefaults": { "type": "object", "additionalProperties": false, "required": ["amountMinor", "category", "description", "allocations"], "properties": { "amountMinor": { "$ref": "#/$defs/money" }, "category": { "enum": ["Stabling", "Veterinary", "Farrier", "Feed", "Equipment", "Training", "Driving", "Other"] }, "description": { "type": "string", "maxLength": 500 }, "allocations": { "$ref": "#/$defs/allocations" } } },
-    "incomeDefaults": { "type": "object", "additionalProperties": false, "required": ["amountMinor", "source", "allocations"], "properties": { "amountMinor": { "$ref": "#/$defs/money" }, "source": { "type": "string", "minLength": 1, "maxLength": 100 }, "allocations": { "$ref": "#/$defs/allocations" } } },
-    "accountConfigured": { "properties": { "type": { "const": "AccountConfigured" }, "payload": { "type": "object", "additionalProperties": false, "required": ["currency", "timeZone"], "properties": { "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }, "timeZone": { "type": "string", "minLength": 1 } } } } },
-    "horseRegistered": { "properties": { "type": { "const": "HorseRegistered" }, "payload": { "$ref": "#/$defs/horsePayload" } } },
-    "horseDetailsUpdated": { "properties": { "type": { "const": "HorseDetailsUpdated" }, "payload": { "$ref": "#/$defs/horsePayload" } } },
-    "horsePayload": { "type": "object", "additionalProperties": false, "required": ["horseId", "name", "breed", "dateOfBirth", "status"], "properties": { "horseId": { "$ref": "#/$defs/id" }, "name": { "type": "string", "minLength": 1, "maxLength": 100 }, "breed": { "type": "string", "maxLength": 100 }, "dateOfBirth": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] }, "status": { "enum": ["Active", "Leased", "Retired", "Sold"] } } },
-    "horseStatusChanged": { "properties": { "type": { "const": "HorseStatusChanged" }, "payload": { "type": "object", "additionalProperties": false, "required": ["horseId", "status"], "properties": { "horseId": { "$ref": "#/$defs/id" }, "status": { "enum": ["Active", "Leased", "Retired", "Sold"] } } } } },
-    "expenseRecorded": { "properties": { "type": { "const": "ExpenseRecorded" }, "payload": { "type": "object", "additionalProperties": false, "required": ["expenseId", "expenseDate", "amountMinor", "category", "description", "allocations", "driving"], "properties": { "expenseId": { "$ref": "#/$defs/id" }, "expenseDate": { "$ref": "#/$defs/date" }, "amountMinor": { "$ref": "#/$defs/money" }, "category": { "enum": ["Stabling", "Veterinary", "Farrier", "Feed", "Equipment", "Training", "Driving", "Other"] }, "description": { "type": "string", "maxLength": 500 }, "allocations": { "$ref": "#/$defs/allocations" }, "driving": { "anyOf": [{ "type": "object", "additionalProperties": false, "required": ["kilometers", "rateMinorPerKm"], "properties": { "kilometers": { "type": "number", "exclusiveMinimum": 0, "multipleOf": 0.001 }, "rateMinorPerKm": { "type": "number", "exclusiveMinimum": 0, "multipleOf": 0.0001 } } }, { "type": "null" }] } } } } },
-    "drivingRateChanged": { "properties": { "type": { "const": "DrivingRateChanged" }, "payload": { "type": "object", "additionalProperties": false, "required": ["rateMinorPerKm"], "properties": { "rateMinorPerKm": { "type": "number", "exclusiveMinimum": 0, "multipleOf": 0.0001 } } } } },
-    "expenseRuleCreated": { "properties": { "type": { "const": "RecurringExpenseRuleCreated" }, "payload": { "$ref": "#/$defs/expenseRule" } } },
-    "expenseRuleUpdated": { "properties": { "type": { "const": "RecurringExpenseRuleUpdated" }, "payload": { "$ref": "#/$defs/expenseRule" } } },
-    "expenseRule": { "type": "object", "additionalProperties": false, "required": ["ruleId", "effectiveFrom", "schedule", "defaults"], "properties": { "ruleId": { "$ref": "#/$defs/id" }, "effectiveFrom": { "$ref": "#/$defs/date" }, "schedule": { "$ref": "#/$defs/schedule" }, "defaults": { "$ref": "#/$defs/expenseDefaults" } } },
-    "expenseRuleStopped": { "properties": { "type": { "const": "RecurringExpenseRuleStopped" }, "payload": { "$ref": "#/$defs/stoppedRule" } } },
-    "expenseOccurrenceOverridden": { "properties": { "type": { "const": "RecurringExpenseOccurrenceOverridden" }, "payload": { "type": "object", "additionalProperties": false, "required": ["ruleId", "scheduledDate", "action", "changed"], "properties": { "ruleId": { "$ref": "#/$defs/id" }, "scheduledDate": { "$ref": "#/$defs/date" }, "action": { "enum": ["Changed", "Skipped"] }, "changed": { "anyOf": [{ "$ref": "#/$defs/expenseDefaults" }, { "type": "null" }] } } } } },
-    "incomeRecorded": { "properties": { "type": { "const": "IncomeRecorded" }, "payload": { "type": "object", "additionalProperties": false, "required": ["incomeId", "receivedDate", "amountMinor", "source", "allocations"], "properties": { "incomeId": { "$ref": "#/$defs/id" }, "receivedDate": { "$ref": "#/$defs/date" }, "amountMinor": { "$ref": "#/$defs/money" }, "source": { "type": "string", "minLength": 1, "maxLength": 100 }, "allocations": { "$ref": "#/$defs/allocations" } } } } },
-    "incomeRuleCreated": { "properties": { "type": { "const": "RecurringIncomeRuleCreated" }, "payload": { "$ref": "#/$defs/incomeRule" } } },
-    "incomeRuleUpdated": { "properties": { "type": { "const": "RecurringIncomeRuleUpdated" }, "payload": { "$ref": "#/$defs/incomeRule" } } },
-    "incomeRule": { "type": "object", "additionalProperties": false, "required": ["ruleId", "effectiveFrom", "schedule", "defaults"], "properties": { "ruleId": { "$ref": "#/$defs/id" }, "effectiveFrom": { "$ref": "#/$defs/date" }, "schedule": { "$ref": "#/$defs/schedule" }, "defaults": { "$ref": "#/$defs/incomeDefaults" } } },
-    "incomeRuleStopped": { "properties": { "type": { "const": "RecurringIncomeRuleStopped" }, "payload": { "$ref": "#/$defs/stoppedRule" } } },
-    "stoppedRule": { "type": "object", "additionalProperties": false, "required": ["ruleId", "lastDate"], "properties": { "ruleId": { "$ref": "#/$defs/id" }, "lastDate": { "$ref": "#/$defs/date" } } },
-    "incomeApproved": { "properties": { "type": { "const": "RecurringIncomeApproved" }, "payload": { "type": "object", "additionalProperties": false, "required": ["ruleId", "scheduledDate", "receivedDate", "amountMinor", "allocations", "nextDueDate"], "properties": { "ruleId": { "$ref": "#/$defs/id" }, "scheduledDate": { "$ref": "#/$defs/date" }, "receivedDate": { "$ref": "#/$defs/date" }, "amountMinor": { "$ref": "#/$defs/money" }, "allocations": { "$ref": "#/$defs/allocations" }, "nextDueDate": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] } } } } },
-    "incomeRejected": { "properties": { "type": { "const": "RecurringIncomeRejected" }, "payload": { "type": "object", "additionalProperties": false, "required": ["ruleId", "scheduledDate", "nextDueDate"], "properties": { "ruleId": { "$ref": "#/$defs/id" }, "scheduledDate": { "$ref": "#/$defs/date" }, "nextDueDate": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] } } } } },
-    "taskLogged": { "properties": { "type": { "const": "TaskLogged" }, "payload": { "type": "object", "additionalProperties": false, "required": ["taskId", "horseId", "taskDate", "taskType", "minutes", "quantity", "quantityUnit", "notes"], "properties": { "taskId": { "$ref": "#/$defs/id" }, "horseId": { "$ref": "#/$defs/id" }, "taskDate": { "$ref": "#/$defs/date" }, "taskType": { "enum": ["Riding", "Groundwork", "Lunging", "Grooming", "MedicalCare", "PaddockDuty", "Transportation", "Other"] }, "minutes": { "type": "integer", "minimum": 0 }, "quantity": { "type": ["number", "null"], "minimum": 0 }, "quantityUnit": { "type": ["string", "null"], "maxLength": 30 }, "notes": { "type": "string", "maxLength": 1000 } } } } }
-  }
-}
-```
+The canonical machine-readable schema is [contracts/events-v1.schema.json](contracts/events-v1.schema.json). It includes the planning refinements `commandHash` and `splitMode`; cross-field validation is defined in [data-model.md](data-model.md).
 
-Additional cross-field validation is mandatory: allocation horse IDs are distinct, weights sum to 1,000,000, allocated amounts sum to the parent amount, and all horses belong to the subject and are eligible on the new entry date. `HorseDetailsUpdated` preserves the current status; status changes use `HorseStatusChanged`. An `ExpenseRecorded` item has category Driving if and only if `driving` is present, and its amount must match the calculation. A Changed expense override requires `changed`; Skipped requires null. A rule update's effective date must be strictly after the account's current local date; initial rule creation may start in the past. The `nextDueDate` stored on decisions is the first undecided scheduled date after the processed date for traceability; the authoritative pending set is always derived from schedule revisions minus decisions, so out-of-order processing cannot hide older pending payments.
+Additional cross-field validation is mandatory: allocation horse IDs are distinct, weights sum to 1,000,000, allocated amounts sum to the parent amount, and all horses belong to the subject. Current status controls eligibility for new splits; existing rule obligations retain their accepted allocations as detailed in [data-model.md](data-model.md). `HorseDetailsUpdated` preserves the current status; status changes use `HorseStatusChanged`. An `ExpenseRecorded` item has category Driving if and only if `driving` is present, and its amount must match the calculation. A Changed expense override requires `changed`; Skipped requires null. A rule update's effective date must be strictly after the account's current local date; initial rule creation may start in the past. The `nextDueDate` stored on decisions is the first undecided scheduled date after the processed date for traceability; the authoritative pending set is always derived from schedule revisions minus decisions, so out-of-order processing cannot hide older pending payments.
 
 ### C#/.NET 10 contract sketch
 
-Use `decimal` for distances and rates and `long` for minor-unit amounts. Configure JSON polymorphism by the envelope `Type` discriminator, not dynamic type-name serialization. The code below is the canonical persisted shape; validators enforce the cross-field rules above. `DateOnly` and `DateTimeOffset` serialize to ISO dates/instants. Enum values use the exact strings in the schema.
+Use `decimal` for distances and rates and `long` for minor-unit amounts. Configure JSON polymorphism by the envelope `Type` discriminator, not dynamic type-name serialization. The code below is an illustrative typed representation of the canonical schema; validators enforce the cross-field rules above. `DateOnly` and `DateTimeOffset` serialize to ISO dates/instants. Enum values use the exact strings in the schema.
 
 ```csharp
 public sealed record EventEnvelope<T>(
     Guid EventId, long StreamVersion, int SchemaVersion, string Type,
-    string Subject, DateTimeOffset OccurredAt, Guid IdempotencyKey, T Payload);
+    string Subject, DateTimeOffset OccurredAt, Guid IdempotencyKey, string CommandHash, T Payload);
 
 public sealed record Allocation(Guid HorseId, int Weight, long AmountMinor);
+public enum SplitMode { Equal, Custom }
 public sealed record Schedule(
     Cadence Cadence, int Interval, int[] Weekdays, int? DayOfMonth,
     DateOnly StartDate, DateOnly? EndDate);
@@ -167,10 +102,10 @@ public sealed record HorseStatusChanged(Guid HorseId, HorseStatus Status);
 public sealed record Driving(decimal Kilometers, decimal RateMinorPerKm);
 public sealed record ExpenseRecorded(
     Guid ExpenseId, DateOnly ExpenseDate, long AmountMinor, ExpenseCategory Category,
-    string Description, Allocation[] Allocations, Driving? Driving);
+    string Description, Allocation[] Allocations, SplitMode SplitMode, Driving? Driving);
 public sealed record DrivingRateChanged(decimal RateMinorPerKm);
 public sealed record ExpenseDefaults(long AmountMinor, ExpenseCategory Category,
-    string Description, Allocation[] Allocations);
+    string Description, Allocation[] Allocations, SplitMode SplitMode);
 public sealed record RecurringExpenseRuleCreated(Guid RuleId, DateOnly EffectiveFrom,
     Schedule Schedule, ExpenseDefaults Defaults);
 public sealed record RecurringExpenseRuleUpdated(Guid RuleId, DateOnly EffectiveFrom,
@@ -179,15 +114,15 @@ public sealed record RecurringExpenseRuleStopped(Guid RuleId, DateOnly LastDate)
 public sealed record RecurringExpenseOccurrenceOverridden(Guid RuleId,
     DateOnly ScheduledDate, OverrideAction Action, ExpenseDefaults? Changed);
 public sealed record IncomeRecorded(Guid IncomeId, DateOnly ReceivedDate,
-    long AmountMinor, string Source, Allocation[] Allocations);
-public sealed record IncomeDefaults(long AmountMinor, string Source, Allocation[] Allocations);
+    long AmountMinor, string Source, Allocation[] Allocations, SplitMode SplitMode);
+public sealed record IncomeDefaults(long AmountMinor, string Source, Allocation[] Allocations, SplitMode SplitMode);
 public sealed record RecurringIncomeRuleCreated(Guid RuleId, DateOnly EffectiveFrom,
     Schedule Schedule, IncomeDefaults Defaults);
 public sealed record RecurringIncomeRuleUpdated(Guid RuleId, DateOnly EffectiveFrom,
     Schedule Schedule, IncomeDefaults Defaults);
 public sealed record RecurringIncomeRuleStopped(Guid RuleId, DateOnly LastDate);
 public sealed record RecurringIncomeApproved(Guid RuleId, DateOnly ScheduledDate,
-    DateOnly ReceivedDate, long AmountMinor, Allocation[] Allocations, DateOnly? NextDueDate);
+    DateOnly ReceivedDate, long AmountMinor, Allocation[] Allocations, SplitMode SplitMode, DateOnly? NextDueDate);
 public sealed record RecurringIncomeRejected(Guid RuleId, DateOnly ScheduledDate,
     DateOnly? NextDueDate);
 public sealed record TaskLogged(Guid TaskId, Guid HorseId, DateOnly TaskDate,
@@ -208,7 +143,7 @@ No event contains derived balances. A projected transaction ID for an ordinary r
 6. Construct a single event with the next version, serialize and append one JSONL line, flush to the durable share, then update the in-process projection and respond `201` or `200` with `streamVersion` and resource ID. For a multi-event command, either encode one atomic domain event or explicitly design a batch commit protocol before implementation; this version uses one event per command.
 7. Release lock and semaphore. If a failure occurs after flush but before the response, the idempotency key makes a retry safe. Never report success before durable flush.
 
-All command handlers use the same pipeline. A duplicate approval with a different key conflicts even if the values match. No account may write to another subject's stream. One-time writes from a stale client version are rejected and must be refreshed; the UI preserves the unsent form.
+All committing command handlers use the same pipeline. Financial preview requests are authenticated reads and append nothing. A duplicate approval with a different key conflicts even if the values match. No account may write to another subject's stream. One-time writes from a stale client version are rejected and must be refreshed; the UI preserves the unsent form.
 
 ### Read and cache pipeline
 
@@ -228,11 +163,13 @@ Pure projection functions accept `(priorState, event)` and return a new state. T
 
 ## 4. REST API contract
 
-Base path `/api/v1`. Every endpoint requires a valid WorkOS access token; the client never sends a tenant ID. Dates are `YYYY-MM-DD`. Financial amounts are integer minor units in the account currency. Lists use `limit` (default 50, maximum 200) and opaque `cursor`; date-range report endpoints accept `from` and `to`, inclusive, with the five-year and 10,000-generated-occurrence limits. Write requests require `Idempotency-Key: <UUID>` and `If-Match: "<streamVersion>"` (new account uses `"0"`); responses include `ETag: "<newVersion>"`. `GET /account` supplies current version for the first form. Request shapes below omit these common headers.
+The endpoint inventory below is the baseline. [contracts/http-api.md](contracts/http-api.md) specifies planned refinements, authoritative preview requests, audit reads, and precise validation/response semantics.
+
+Base path `/api/v1`; session endpoints are separately defined in [contracts/auth.md](contracts/auth.md). Every domain endpoint requires a valid WorkOS access token; the client never sends a tenant ID. Dates are `YYYY-MM-DD`. Financial amounts are integer minor units in the account currency. Lists use `limit` (default 50, maximum 200) and opaque `cursor`; date-range report endpoints accept `from` and `to`, inclusive, with the five-year and 10,000-generated-occurrence limits. Committing write requests require `Idempotency-Key: <UUID>` and `If-Match: "<streamVersion>"` (new account uses `"0"`); responses include `ETag: "<newVersion>"`. `GET /account` supplies current version for the first form. Request shapes below omit these common headers.
 
 | Method and path | Request JSON / query | Success JSON and status |
 |---|---|---|
-| `GET /account` | None | `200 {currency,timeZone,streamVersion,drivingRateMinorPerKm}`; unconfigured account returns null settings and version 0 |
+| `GET /account` | None | `200 {currency,timeZone,streamVersion,drivingRateMinorPerKm}`; unconfigured account returns null settings and actual stream version (0 only for a new stream) |
 | `PUT /account` | `{currency,timeZone}` | `200 {currency,timeZone,streamVersion}`; only before first financial entry |
 | `GET /horses` | `status?,limit?,cursor?` | `200 {items:[Horse],nextCursor,streamVersion}` |
 | `POST /horses` | `{name,breed,dateOfBirth,status}` | `201 {horseId,streamVersion}` |
@@ -254,13 +191,13 @@ Base path `/api/v1`. Every endpoint requires a valid WorkOS access token; the cl
 | `POST /income-rules` | `{schedule,amountMinor,source,split}` | `201 {ruleId,streamVersion}` |
 | `PATCH /income-rules/{ruleId}` | `{effectiveFrom,schedule,amountMinor,source,split}` | `200 {ruleId,streamVersion}` |
 | `POST /income-rules/{ruleId}/stop` | `{lastDate}` | `200 {ruleId,lastDate,streamVersion}` |
-| `GET /income-approvals` | `through?,limit?,cursor?` | `200 {items:[PendingIncome],nextCursor,asOfDate,streamVersion}` |
+| `GET /income-approvals` | `from?,through?,limit?,cursor?` | `200 {items:[PendingIncome],nextCursor,asOfDate,streamVersion}` |
 | `POST /income-rules/{ruleId}/occurrences/{scheduledDate}/approve` | `{receivedDate,amountMinor,split}`; defaults supplied explicitly by UI from pending item | `200 {ruleId,scheduledDate,realizedIncomeId,allocations,nextDueDate,streamVersion}` |
 | `POST /income-rules/{ruleId}/occurrences/{scheduledDate}/reject` | `{}` | `200 {ruleId,scheduledDate,nextDueDate,streamVersion}` |
 | `GET /tasks` | `from,to,horseId?,taskType?,limit?,cursor?` | `200 {items:[Task],nextCursor,streamVersion}` |
 | `POST /tasks` | `{horseId,taskDate,taskType,minutes,quantity?,quantityUnit?,notes}` | `201 {taskId,streamVersion}` |
 | `GET /reports/monthly-pnl` | `month=YYYY-MM,horseId?` | `200 {currency,month,items:[{horseId,incomeMinor,expenseMinor,netMinor}],streamVersion}` |
-| `GET /reports/lifetime` | `horseId?` | `200 {currency,items:[{horseId,incomeMinor,expenseMinor,netMinor}],streamVersion}` |
+| `GET /reports/lifetime` | `horseId?,cursor?` | `200 {currency,asOfDate,items:[{horseId,incomeMinor,expenseMinor,netMinor}],streamVersion,complete,nextCursor}`; additive batches, display final totals only when complete |
 | `GET /reports/breakdown` | `from,to,horseId?,kind=expense|income` | `200 {currency,items:[{label,amountMinor}],totalMinor,streamVersion}` |
 | `GET /reports/activity` | `from,to,horseId?` | `200 {items:[{taskType,count,minutes}],streamVersion}` |
 
