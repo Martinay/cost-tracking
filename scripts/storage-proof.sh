@@ -68,6 +68,9 @@ fi
 
 repo_root="$(git rev-parse --show-toplevel)"
 image="${STORAGE_PROOF_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0.103}"
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+  docker pull "$image"
+fi
 image_digest="$(docker image inspect --format '{{if .RepoDigests}}{{index .RepoDigests 0}}{{else}}{{.Id}}{{end}}' "$image")"
 validation_dir="$repo_root/specs/001-horse-finance-effort-tracking/validation"
 
