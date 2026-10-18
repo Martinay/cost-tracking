@@ -1,0 +1,2587 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-17T08:22:36.850Z",
+  "mode": "local-test-host-direct-http",
+  "gateEligible": false,
+  "releaseGatePassed": false,
+  "note": "Local TestHost direct HTTP request timings; no browser, frontend, Azure Files, or target-region claim.",
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "logicalCpuCount": 12,
+    "totalMemoryGiB": 24,
+    "hostAwakeGuardUsed": true,
+    "hostLoadControlled": false,
+    "before": {
+      "loadAverage": [
+        2.11328125,
+        2.099609375,
+        2.04150390625
+      ],
+      "freeMemoryBytes": 74072064
+    },
+    "after": {
+      "loadAverage": [
+        3.28466796875,
+        2.73486328125,
+        2.33056640625
+      ],
+      "freeMemoryBytes": 1604796416
+    }
+  },
+  "dataset": {
+    "verified": true,
+    "horses": 100,
+    "acceptedChanges": 5000,
+    "setupEvents": 176,
+    "streamEvents": 5176,
+    "eventMix": {
+      "ExpenseRecorded": 1500,
+      "IncomeRecorded": 1500,
+      "RecurringExpenseOccurrenceOverridden": 500,
+      "RecurringIncomeApproved": 250,
+      "RecurringIncomeRejected": 250,
+      "TaskLogged": 1000
+    },
+    "dateWindow": {
+      "from": "2026-09-01",
+      "through": "2026-09-30",
+      "asOfDate": "2026-09-21"
+    }
+  },
+  "runsByEndpoint": {
+    "account": 100,
+    "horses": 20,
+    "income": 20,
+    "incomeRules": 20,
+    "monthlyReport": 100,
+    "lifetimeReport": 100,
+    "activityReport": 20,
+    "expenseBreakdown": 20
+  },
+  "endpoints": {
+    "account": {
+      "summary": {
+        "samples": 100,
+        "minMs": 483.31,
+        "medianMs": 503.09,
+        "maxMs": 2152.27,
+        "p99Ms": 734.07
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 2152.27,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 734.07,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 510.99,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 490.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 493.29,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 491.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 493.27,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 488.21,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 498.11,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 491.53,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 494.65,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 483.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 488.38,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 493.6,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 491.94,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 483.67,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 486.16,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 488.98,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 512.83,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 498.78,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 21,
+          "durationMs": 495.13,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 22,
+          "durationMs": 503.67,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 23,
+          "durationMs": 500.44,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 24,
+          "durationMs": 501.83,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 25,
+          "durationMs": 510,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 26,
+          "durationMs": 495.04,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 27,
+          "durationMs": 484.99,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 28,
+          "durationMs": 499.62,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 29,
+          "durationMs": 493.37,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 30,
+          "durationMs": 509.61,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 31,
+          "durationMs": 510.45,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 32,
+          "durationMs": 499.23,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 33,
+          "durationMs": 514.01,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 34,
+          "durationMs": 500.49,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 35,
+          "durationMs": 499.41,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 36,
+          "durationMs": 502.19,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 37,
+          "durationMs": 496.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 38,
+          "durationMs": 499,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 39,
+          "durationMs": 497.37,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 40,
+          "durationMs": 503.38,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 41,
+          "durationMs": 499.3,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 42,
+          "durationMs": 498.49,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 43,
+          "durationMs": 497.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 44,
+          "durationMs": 486.02,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 45,
+          "durationMs": 490.38,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 46,
+          "durationMs": 500.65,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 47,
+          "durationMs": 508.26,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 48,
+          "durationMs": 510.32,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 49,
+          "durationMs": 514.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 50,
+          "durationMs": 511.98,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 51,
+          "durationMs": 506.92,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 52,
+          "durationMs": 501.62,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 53,
+          "durationMs": 506.4,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 54,
+          "durationMs": 498.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 55,
+          "durationMs": 494.69,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 56,
+          "durationMs": 494.77,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 57,
+          "durationMs": 497.61,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 58,
+          "durationMs": 500.3,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 59,
+          "durationMs": 495.46,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 60,
+          "durationMs": 497.25,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 61,
+          "durationMs": 507.53,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 62,
+          "durationMs": 508.07,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 63,
+          "durationMs": 503.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 64,
+          "durationMs": 520.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 65,
+          "durationMs": 521.18,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 66,
+          "durationMs": 518.39,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 67,
+          "durationMs": 513.57,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 68,
+          "durationMs": 532.04,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 69,
+          "durationMs": 525.42,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 70,
+          "durationMs": 520.56,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 71,
+          "durationMs": 509.13,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 72,
+          "durationMs": 505.61,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 73,
+          "durationMs": 509.33,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 74,
+          "durationMs": 501.48,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 75,
+          "durationMs": 507.04,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 76,
+          "durationMs": 512.22,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 77,
+          "durationMs": 522.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 78,
+          "durationMs": 516.48,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 79,
+          "durationMs": 518.46,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 80,
+          "durationMs": 497.66,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 81,
+          "durationMs": 507.21,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 82,
+          "durationMs": 500.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 83,
+          "durationMs": 506.2,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 84,
+          "durationMs": 506.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 85,
+          "durationMs": 505.43,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 86,
+          "durationMs": 500.82,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 87,
+          "durationMs": 515.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 88,
+          "durationMs": 528.05,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 89,
+          "durationMs": 515.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 90,
+          "durationMs": 509.22,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 91,
+          "durationMs": 504.2,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 92,
+          "durationMs": 506.93,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 93,
+          "durationMs": 505.71,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 94,
+          "durationMs": 503.82,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 95,
+          "durationMs": 501.46,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 96,
+          "durationMs": 506.06,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 97,
+          "durationMs": 511.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 98,
+          "durationMs": 526.05,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 99,
+          "durationMs": 509.1,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 100,
+          "durationMs": 514.11,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": true,
+        "withinEndpointThreshold": true,
+        "thresholdMs": 2000
+      }
+    },
+    "horses": {
+      "summary": {
+        "samples": 20,
+        "minMs": 499.81,
+        "medianMs": 512.28,
+        "maxMs": 529.05
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 516.27,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 515.74,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 504.47,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 501.73,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 505.69,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 511.64,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 519.04,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 522.78,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 529.05,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 518.05,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 519,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 522.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 512.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 518.6,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 514.86,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 499.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 510.65,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 508.08,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 504.76,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 511.41,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": false,
+        "withinEndpointThreshold": null,
+        "thresholdMs": 2000
+      }
+    },
+    "income": {
+      "summary": {
+        "samples": 20,
+        "minMs": 531.97,
+        "medianMs": 537.61,
+        "maxMs": 593.15
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 593.15,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 565.58,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 546.74,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 536.47,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 536.98,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 537.45,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 537.23,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 538.44,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 534.3,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 537.61,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 537.99,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 531.97,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 538.49,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 539.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 539,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 536.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 540.98,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 536.1,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 542.02,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 535.7,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": false,
+        "withinEndpointThreshold": null,
+        "thresholdMs": 2000
+      }
+    },
+    "incomeRules": {
+      "summary": {
+        "samples": 20,
+        "minMs": 521.49,
+        "medianMs": 525.15,
+        "maxMs": 544.44
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 531.73,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 523.63,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 535.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 523.66,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 524.23,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 526.24,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 523.18,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 521.49,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 544.44,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 530.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 525.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 525.15,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 538.1,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 532.59,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 528.11,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 523.24,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 523.92,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 524.47,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 523.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 528.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": false,
+        "withinEndpointThreshold": null,
+        "thresholdMs": 2000
+      }
+    },
+    "monthlyReport": {
+      "summary": {
+        "samples": 100,
+        "minMs": 734.11,
+        "medianMs": 745.43,
+        "maxMs": 772.91,
+        "p99Ms": 772.89
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 760.93,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 742.16,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 736.79,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 739.23,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 738.55,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 753.35,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 747.1,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 749.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 738.26,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 751.06,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 744.33,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 743.5,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 745.13,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 768.18,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 739.22,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 738.97,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 745.43,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 739.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 746.44,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 746.82,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 21,
+          "durationMs": 746.54,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 22,
+          "durationMs": 740.84,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 23,
+          "durationMs": 742.06,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 24,
+          "durationMs": 739.51,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 25,
+          "durationMs": 740.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 26,
+          "durationMs": 737.7,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 27,
+          "durationMs": 737.04,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 28,
+          "durationMs": 741.55,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 29,
+          "durationMs": 739.62,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 30,
+          "durationMs": 740.77,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 31,
+          "durationMs": 739.9,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 32,
+          "durationMs": 734.11,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 33,
+          "durationMs": 745.46,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 34,
+          "durationMs": 745.49,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 35,
+          "durationMs": 747.45,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 36,
+          "durationMs": 742.32,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 37,
+          "durationMs": 746.73,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 38,
+          "durationMs": 751.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 39,
+          "durationMs": 750.26,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 40,
+          "durationMs": 740.51,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 41,
+          "durationMs": 739.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 42,
+          "durationMs": 740.15,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 43,
+          "durationMs": 740.76,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 44,
+          "durationMs": 739.4,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 45,
+          "durationMs": 739.66,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 46,
+          "durationMs": 739.34,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 47,
+          "durationMs": 740.36,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 48,
+          "durationMs": 746.22,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 49,
+          "durationMs": 738.42,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 50,
+          "durationMs": 742.19,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 51,
+          "durationMs": 741.67,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 52,
+          "durationMs": 739.21,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 53,
+          "durationMs": 746.57,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 54,
+          "durationMs": 758.07,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 55,
+          "durationMs": 762.6,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 56,
+          "durationMs": 755.07,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 57,
+          "durationMs": 767.04,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 58,
+          "durationMs": 756.68,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 59,
+          "durationMs": 760.63,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 60,
+          "durationMs": 764.19,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 61,
+          "durationMs": 747.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 62,
+          "durationMs": 751.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 63,
+          "durationMs": 745.35,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 64,
+          "durationMs": 769.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 65,
+          "durationMs": 755.27,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 66,
+          "durationMs": 772.89,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 67,
+          "durationMs": 747.52,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 68,
+          "durationMs": 746,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 69,
+          "durationMs": 765.18,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 70,
+          "durationMs": 746.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 71,
+          "durationMs": 749.03,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 72,
+          "durationMs": 760.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 73,
+          "durationMs": 756.82,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 74,
+          "durationMs": 772.91,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 75,
+          "durationMs": 759.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 76,
+          "durationMs": 747.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 77,
+          "durationMs": 742.79,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 78,
+          "durationMs": 745.02,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 79,
+          "durationMs": 747.95,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 80,
+          "durationMs": 759.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 81,
+          "durationMs": 755.11,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 82,
+          "durationMs": 747.42,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 83,
+          "durationMs": 741.06,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 84,
+          "durationMs": 741.21,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 85,
+          "durationMs": 740.37,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 86,
+          "durationMs": 742.93,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 87,
+          "durationMs": 746.59,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 88,
+          "durationMs": 738,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 89,
+          "durationMs": 745.43,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 90,
+          "durationMs": 746.97,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 91,
+          "durationMs": 745.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 92,
+          "durationMs": 762.74,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 93,
+          "durationMs": 744.16,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 94,
+          "durationMs": 747.51,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 95,
+          "durationMs": 742.97,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 96,
+          "durationMs": 745.64,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 97,
+          "durationMs": 740.25,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 98,
+          "durationMs": 751.8,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 99,
+          "durationMs": 739.47,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 100,
+          "durationMs": 740.05,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": true,
+        "withinEndpointThreshold": true,
+        "thresholdMs": 2000
+      }
+    },
+    "lifetimeReport": {
+      "summary": {
+        "samples": 100,
+        "minMs": 738.26,
+        "medianMs": 747.72,
+        "maxMs": 791.23,
+        "p99Ms": 769.09
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 743.93,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 744.95,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 746.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 748.84,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 759.45,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 768.42,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 742.51,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 750.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 746.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 752.83,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 748.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 749.53,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 743.68,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 744.3,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 744.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 748.41,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 751.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 748.99,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 742.27,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 768.6,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 21,
+          "durationMs": 767.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 22,
+          "durationMs": 765.77,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 23,
+          "durationMs": 745.57,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 24,
+          "durationMs": 746.05,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 25,
+          "durationMs": 747.33,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 26,
+          "durationMs": 757.66,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 27,
+          "durationMs": 753.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 28,
+          "durationMs": 749.59,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 29,
+          "durationMs": 738.41,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 30,
+          "durationMs": 745.52,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 31,
+          "durationMs": 745.16,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 32,
+          "durationMs": 746.88,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 33,
+          "durationMs": 758.34,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 34,
+          "durationMs": 745.63,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 35,
+          "durationMs": 754.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 36,
+          "durationMs": 746.73,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 37,
+          "durationMs": 746.51,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 38,
+          "durationMs": 747.9,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 39,
+          "durationMs": 755.03,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 40,
+          "durationMs": 750.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 41,
+          "durationMs": 753.12,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 42,
+          "durationMs": 750.73,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 43,
+          "durationMs": 754.77,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 44,
+          "durationMs": 749.24,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 45,
+          "durationMs": 749.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 46,
+          "durationMs": 742.02,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 47,
+          "durationMs": 738.26,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 48,
+          "durationMs": 752.08,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 49,
+          "durationMs": 745.25,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 50,
+          "durationMs": 746.74,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 51,
+          "durationMs": 744.35,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 52,
+          "durationMs": 750.57,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 53,
+          "durationMs": 752.87,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 54,
+          "durationMs": 745.81,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 55,
+          "durationMs": 750.7,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 56,
+          "durationMs": 741.71,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 57,
+          "durationMs": 745.82,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 58,
+          "durationMs": 761.48,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 59,
+          "durationMs": 747.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 60,
+          "durationMs": 752.16,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 61,
+          "durationMs": 748.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 62,
+          "durationMs": 747.65,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 63,
+          "durationMs": 749.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 64,
+          "durationMs": 749.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 65,
+          "durationMs": 742.89,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 66,
+          "durationMs": 745.08,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 67,
+          "durationMs": 741.39,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 68,
+          "durationMs": 741.4,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 69,
+          "durationMs": 746.15,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 70,
+          "durationMs": 743.9,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 71,
+          "durationMs": 743.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 72,
+          "durationMs": 745.54,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 73,
+          "durationMs": 745.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 74,
+          "durationMs": 747.77,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 75,
+          "durationMs": 742.37,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 76,
+          "durationMs": 745.85,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 77,
+          "durationMs": 750.08,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 78,
+          "durationMs": 742.36,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 79,
+          "durationMs": 746.73,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 80,
+          "durationMs": 745.41,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 81,
+          "durationMs": 743.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 82,
+          "durationMs": 748.53,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 83,
+          "durationMs": 755.02,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 84,
+          "durationMs": 748.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 85,
+          "durationMs": 744.48,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 86,
+          "durationMs": 750.41,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 87,
+          "durationMs": 764.4,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 88,
+          "durationMs": 748.47,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 89,
+          "durationMs": 744.48,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 90,
+          "durationMs": 745.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 91,
+          "durationMs": 751.75,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 92,
+          "durationMs": 740.28,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 93,
+          "durationMs": 747.18,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 94,
+          "durationMs": 748.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 95,
+          "durationMs": 741.43,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 96,
+          "durationMs": 757.53,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 97,
+          "durationMs": 791.23,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 98,
+          "durationMs": 752.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 99,
+          "durationMs": 762.72,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 100,
+          "durationMs": 769.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": true,
+        "withinEndpointThreshold": true,
+        "thresholdMs": 2000
+      }
+    },
+    "activityReport": {
+      "summary": {
+        "samples": 20,
+        "minMs": 507.33,
+        "medianMs": 524.9,
+        "maxMs": 542.2
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 526.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 521.25,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 525.59,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 511.39,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 513.27,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 529.3,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 529.09,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 542.2,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 532.17,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 524.31,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 527.59,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 528.93,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 524.9,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 510,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 509.13,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 508.66,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 507.33,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 516.69,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 531.58,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 536.35,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": false,
+        "withinEndpointThreshold": null,
+        "thresholdMs": 2000
+      }
+    },
+    "expenseBreakdown": {
+      "summary": {
+        "samples": 20,
+        "minMs": 551.08,
+        "medianMs": 564.25,
+        "maxMs": 584.66
+      },
+      "rawSamples": [
+        {
+          "index": 1,
+          "durationMs": 582.74,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 2,
+          "durationMs": 575.53,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 3,
+          "durationMs": 551.08,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 4,
+          "durationMs": 560.77,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 5,
+          "durationMs": 554.24,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 6,
+          "durationMs": 553.36,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 7,
+          "durationMs": 552.14,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 8,
+          "durationMs": 560.86,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 9,
+          "durationMs": 557.45,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 10,
+          "durationMs": 556.76,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 11,
+          "durationMs": 568.76,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 12,
+          "durationMs": 569.84,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 13,
+          "durationMs": 578.61,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 14,
+          "durationMs": 568.69,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 15,
+          "durationMs": 555.96,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 16,
+          "durationMs": 570.42,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 17,
+          "durationMs": 576.02,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 18,
+          "durationMs": 564.25,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 19,
+          "durationMs": 584.66,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        },
+        {
+          "index": 20,
+          "durationMs": 569.98,
+          "httpStatus": 200,
+          "integrityCheck": "passed"
+        }
+      ],
+      "endpointThresholdAssessment": {
+        "measured": false,
+        "withinEndpointThreshold": null,
+        "thresholdMs": 2000
+      }
+    }
+  }
+}

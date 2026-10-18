@@ -1,0 +1,7 @@
+# User Story 5: Compare results
+
+**Local acceptance: verified.** The HTTP-backed private-ledger/report journey checks monthly P&L, expense category, income source, activity, and complete lifetime reports against the local event stream. The report UI supports month/horse filters, allocated drilldown, inactive horses, and complete-only lifetime accumulation with cursor restart behavior. Narrow-layout checks cover a 320 CSS-pixel viewport and 200% CSS zoom emulation, with readable text and a scrollable report table. See [frontend-journeys.md](frontend-journeys.md), [backend-acceptance.md](backend-acceptance.md#frontend-owned-story-acceptance), and [implementation.md](implementation.md).
+
+The final browser suite passed 21/21; frontend unit tests passed 68/68, and generated contract checks passed 42/42 with no drift. Backend report reconciliation covers per-horse allocations and the exclusion of pending/rejected income. Lifetime reports expose additive batches and the UI displays final totals only after completion. The local report journey is functional evidence; T104 performance acceptance remains separate and currently fails its warm p99 threshold.
+
+Historical red-first evidence for T087–T088 was not retained, so those test-authoring tasks remain unchecked. The layout check is CSS viewport/zoom emulation and does not claim operating-system or browser-level zoom coverage. The required 20-person usability study remains an external release gate.

@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+#root,
+.app-shell,
+main,
+.app-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-shell > header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.app-shell input,
+.app-shell select,
+.app-shell textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.report-table-region {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
+}
+
+.report-table-region:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.report-table-region table {
+  width: max-content;
+  min-width: 100%;
+}

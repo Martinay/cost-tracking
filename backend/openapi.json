@@ -1,0 +1,3383 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "CostTracking.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/login": {
+      "get": {
+        "tags": [
+          "SessionEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/callback": {
+      "get": {
+        "tags": [
+          "SessionEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/session": {
+      "get": {
+        "tags": [
+          "SessionEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "SessionEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "SessionEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/account": {
+      "get": {
+        "tags": [
+          "AccountEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AccountEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/horses": {
+      "get": {
+        "tags": [
+          "HorseEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HorseListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "HorseEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHorseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedHorseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/horses/{horseId}": {
+      "get": {
+        "tags": [
+          "HorseEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "horseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Horse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "HorseEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "horseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HorseDetailsPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Horse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/horses/{horseId}/status": {
+      "put": {
+        "tags": [
+          "HorseEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "horseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetHorseStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Horse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history": {
+      "get": {
+        "tags": [
+          "HistoryEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expenses": {
+      "post": {
+        "tags": [
+          "ExpenseEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedExpenseResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "ExpenseEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income": {
+      "post": {
+        "tags": [
+          "IncomeEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncomeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedIncomeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "IncomeEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/previews/financial": {
+      "post": {
+        "tags": [
+          "FinancialPreviewEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinancialPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinancialPreviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/monthly-pnl": {
+      "get": {
+        "tags": [
+          "FinancialReportEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/lifetime": {
+      "get": {
+        "tags": [
+          "FinancialReportEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LifetimeReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/breakdown": {
+      "get": {
+        "tags": [
+          "BreakdownReportEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreakdownReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks": {
+      "post": {
+        "tags": [
+          "TaskEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedTaskResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "TaskEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/activity": {
+      "get": {
+        "tags": [
+          "ActivityReportEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/driving-rate": {
+      "put": {
+        "tags": [
+          "DrivingEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDrivingRateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrivingRateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/driving": {
+      "post": {
+        "tags": [
+          "DrivingEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDrivingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedDrivingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense-rules": {
+      "get": {
+        "tags": [
+          "ExpenseRuleEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRuleListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ExpenseRuleEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExpenseRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRuleCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense-rules/{ruleId}": {
+      "patch": {
+        "tags": [
+          "ExpenseRuleEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviseExpenseRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRuleCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense-rules/{ruleId}/stop": {
+      "post": {
+        "tags": [
+          "ExpenseRuleEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopExpenseRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseRuleStopResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense-rules/{ruleId}/occurrences/{scheduledDate}": {
+      "put": {
+        "tags": [
+          "ExpenseOccurrenceEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduledDate",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideExpenseOccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseOccurrenceCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income-rules": {
+      "get": {
+        "tags": [
+          "IncomeRuleEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeRuleListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "IncomeRuleEndpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncomeRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeRuleCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income-rules/{ruleId}": {
+      "patch": {
+        "tags": [
+          "IncomeRuleEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviseIncomeRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeRuleCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income-rules/{ruleId}/stop": {
+      "post": {
+        "tags": [
+          "IncomeRuleEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopIncomeRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeRuleStopResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income-approvals": {
+      "get": {
+        "tags": [
+          "IncomeApprovalEndpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeApprovalListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income-rules/{ruleId}/occurrences/{scheduledDate}/approve": {
+      "post": {
+        "tags": [
+          "IncomeApprovalEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduledDate",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveIncomeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeApprovalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income-rules/{ruleId}/occurrences/{scheduledDate}/reject": {
+      "post": {
+        "tags": [
+          "IncomeApprovalEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduledDate",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectIncomeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomeApprovalResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountResponse": {
+        "required": [
+          "currency",
+          "timeZone",
+          "streamVersion",
+          "drivingRateMinorPerKm",
+          "settingsLocked",
+          "ownerToday"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "timeZone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "drivingRateMinorPerKm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settingsLocked": {
+            "type": "boolean"
+          },
+          "ownerToday": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ActivityReportResponse": {
+        "required": [
+          "items",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ActivitySummary": {
+        "required": [
+          "taskType",
+          "count",
+          "minutes"
+        ],
+        "type": "object",
+        "properties": {
+          "taskType": {
+            "type": "string"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "minutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "Allocation": {
+        "required": [
+          "horseId",
+          "weight",
+          "amountMinor"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ApiError": {
+        "required": [
+          "code",
+          "message",
+          "correlationId"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "details": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "required": [
+                "field",
+                "message"
+              ],
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ApiErrorDetail": {
+        "required": [
+          "field",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ApproveIncomeRequest": {
+        "required": [
+          "receivedDate",
+          "amountMinor",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "receivedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "BreakdownItem": {
+        "required": [
+          "label",
+          "amountMinor"
+        ],
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "BreakdownReportResponse": {
+        "required": [
+          "currency",
+          "items",
+          "totalMinor",
+          "streamVersion",
+          "asOfDate"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreakdownItem"
+            }
+          },
+          "totalMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "asOfDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Cadence": {
+        "enum": [
+          "Daily",
+          "Weekly",
+          "Weekdays",
+          "Monthly"
+        ]
+      },
+      "ChangedOccurrenceRequest": {
+        "required": [
+          "amountMinor",
+          "category",
+          "description",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "ConfigureAccountRequest": {
+        "required": [
+          "currency",
+          "timeZone"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatedDrivingResponse": {
+        "required": [
+          "expenseId",
+          "amountMinor",
+          "allocations",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "expenseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreatedExpenseResponse": {
+        "required": [
+          "expenseId",
+          "allocations",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "expenseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreatedHorseResponse": {
+        "required": [
+          "horseId",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreatedIncomeResponse": {
+        "required": [
+          "incomeId",
+          "allocations",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "incomeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreateDrivingRequest": {
+        "required": [
+          "expenseDate",
+          "kilometers",
+          "description",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kilometers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "description": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          },
+          "rateMinorPerKm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "CreatedTaskResponse": {
+        "required": [
+          "taskId",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreateExpenseRequest": {
+        "required": [
+          "expenseDate",
+          "amountMinor",
+          "category",
+          "description",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "CreateExpenseRuleRequest": {
+        "required": [
+          "schedule",
+          "amountMinor",
+          "category",
+          "description",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleRequest"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "CreateHorseRequest": {
+        "required": [
+          "name",
+          "breed",
+          "dateOfBirth",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "breed": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/HorseStatus"
+          }
+        }
+      },
+      "CreateIncomeRequest": {
+        "required": [
+          "receivedDate",
+          "amountMinor",
+          "source",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "receivedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "CreateIncomeRuleRequest": {
+        "required": [
+          "schedule",
+          "amountMinor",
+          "source",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleRequest"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "CreateTaskRequest": {
+        "required": [
+          "horseId",
+          "taskDate",
+          "taskType"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "taskType": {
+            "$ref": "#/components/schemas/TaskType"
+          },
+          "minutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64",
+            "default": 0
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "quantityUnit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "CustomShareRequest": {
+        "required": [
+          "horseId",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "DrivingDetails": {
+        "required": [
+          "kilometers",
+          "rateMinorPerKm"
+        ],
+        "type": "object",
+        "properties": {
+          "kilometers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateMinorPerKm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "DrivingRateResponse": {
+        "required": [
+          "rateMinorPerKm",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "rateMinorPerKm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseListItem": {
+        "required": [
+          "id",
+          "expenseDate",
+          "amountMinor",
+          "category",
+          "description",
+          "splitMode",
+          "allocations",
+          "origin",
+          "ruleId",
+          "scheduledDate",
+          "occurrenceState",
+          "skipped",
+          "contributionMinor",
+          "driving"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "splitMode": {
+            "type": "string"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "origin": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "occurrenceState": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "skipped": {
+            "type": "boolean"
+          },
+          "contributionMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "driving": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DrivingDetails"
+              }
+            ]
+          }
+        }
+      },
+      "ExpenseListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseListItem"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseOccurrenceCommandResponse": {
+        "required": [
+          "ruleId",
+          "scheduledDate",
+          "action",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "action": {
+            "type": "string"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseRuleCommandResponse": {
+        "required": [
+          "ruleId",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseRuleDefaults": {
+        "required": [
+          "amountMinor",
+          "category",
+          "description",
+          "splitMode",
+          "allocations"
+        ],
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "splitMode": {
+            "$ref": "#/components/schemas/SplitMode"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          }
+        }
+      },
+      "ExpenseRuleListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseRuleResponse"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseRuleResponse": {
+        "required": [
+          "ruleId",
+          "startDate",
+          "effectiveFrom",
+          "schedule",
+          "defaults",
+          "revisions",
+          "lastDate"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/Schedule"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/ExpenseRuleDefaults"
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleRevisionResponse"
+            }
+          },
+          "lastDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ExpenseRuleStopResponse": {
+        "required": [
+          "ruleId",
+          "lastDate",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "FinancialPreviewRequest": {
+        "required": [
+          "kind",
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "values": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "ruleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "exampleOccurrence": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FinancialPreviewResponse": {
+        "required": [
+          "currency",
+          "date",
+          "amountMinor",
+          "splitMode",
+          "allocations",
+          "monthlyEffect",
+          "streamVersion",
+          "driving"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "splitMode": {
+            "type": "string"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "monthlyEffect": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlyEffect"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "driving": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DrivingDetails"
+              }
+            ]
+          }
+        }
+      },
+      "HistoryItem": {
+        "required": [
+          "eventId",
+          "streamVersion",
+          "type",
+          "occurredAt",
+          "summary",
+          "changes"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "changes": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "HistoryResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryItem"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "Horse": {
+        "required": [
+          "horseId",
+          "name",
+          "breed",
+          "dateOfBirth",
+          "status",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "breed": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/HorseStatus"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "HorseDetailsPatchRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "breed": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dateOfBirth": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "HorseListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Horse"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "HorseStatus": {
+        "enum": [
+          "Active",
+          "Leased",
+          "Retired",
+          "Sold"
+        ]
+      },
+      "IncomeApprovalItem": {
+        "required": [
+          "ruleId",
+          "scheduledDate",
+          "amountMinor",
+          "source",
+          "splitMode",
+          "allocations"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "splitMode": {
+            "type": "string"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          }
+        }
+      },
+      "IncomeApprovalListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "from",
+          "through",
+          "asOfDate",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomeApprovalItem"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "through": {
+            "type": "string",
+            "format": "date"
+          },
+          "asOfDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "IncomeApprovalResponse": {
+        "required": [
+          "ruleId",
+          "scheduledDate",
+          "decision",
+          "realizedIncomeId",
+          "nextDueDate",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "realizedIncomeId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nextDueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "IncomeListItem": {
+        "required": [
+          "id",
+          "receivedDate",
+          "amountMinor",
+          "source",
+          "splitMode",
+          "allocations",
+          "origin",
+          "ruleId",
+          "scheduledDate",
+          "contributionMinor"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "receivedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "splitMode": {
+            "type": "string"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "origin": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "contributionMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "IncomeListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomeListItem"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "IncomeRuleCommandResponse": {
+        "required": [
+          "ruleId",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "IncomeRuleDefaults": {
+        "required": [
+          "amountMinor",
+          "source",
+          "splitMode",
+          "allocations"
+        ],
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "splitMode": {
+            "$ref": "#/components/schemas/SplitMode"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          }
+        }
+      },
+      "IncomeRuleListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomeRuleResponse"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "IncomeRuleResponse": {
+        "required": [
+          "ruleId",
+          "startDate",
+          "effectiveFrom",
+          "schedule",
+          "defaults",
+          "revisions",
+          "lastDate"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/Schedule"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/IncomeRuleDefaults"
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomeRuleRevisionResponse"
+            }
+          },
+          "lastDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "IncomeRuleRevisionResponse": {
+        "required": [
+          "effectiveFrom",
+          "schedule",
+          "defaults"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/Schedule"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/IncomeRuleDefaults"
+          }
+        }
+      },
+      "IncomeRuleStopResponse": {
+        "required": [
+          "ruleId",
+          "lastDate",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "JsonElement": {},
+      "LifetimeReportResponse": {
+        "required": [
+          "currency",
+          "asOfDate",
+          "items",
+          "streamVersion",
+          "complete",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "asOfDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportBalance"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "MonthlyEffect": {
+        "required": [
+          "month",
+          "horseId",
+          "incomeDeltaMinor",
+          "expenseDeltaMinor",
+          "netDeltaMinor"
+        ],
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "incomeDeltaMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "expenseDeltaMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "netDeltaMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "MonthlyReportResponse": {
+        "required": [
+          "currency",
+          "month",
+          "items",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "month": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportBalance"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "OverrideExpenseOccurrenceRequest": {
+        "required": [
+          "action",
+          "changed"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "changed": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChangedOccurrenceRequest"
+              }
+            ]
+          }
+        }
+      },
+      "RejectIncomeRequest": {
+        "type": "object"
+      },
+      "ReportBalance": {
+        "required": [
+          "horseId",
+          "incomeMinor",
+          "expenseMinor",
+          "netMinor"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "incomeMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "expenseMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "netMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "ReviseExpenseRuleRequest": {
+        "required": [
+          "effectiveFrom",
+          "schedule",
+          "amountMinor",
+          "category",
+          "description",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleRequest"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "ReviseIncomeRuleRequest": {
+        "required": [
+          "effectiveFrom",
+          "schedule",
+          "amountMinor",
+          "source",
+          "split"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleRequest"
+          },
+          "amountMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "split": {
+            "$ref": "#/components/schemas/SplitRequest"
+          }
+        }
+      },
+      "RuleRevisionResponse": {
+        "required": [
+          "effectiveFrom",
+          "schedule",
+          "defaults"
+        ],
+        "type": "object",
+        "properties": {
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/Schedule"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/ExpenseRuleDefaults"
+          }
+        }
+      },
+      "Schedule": {
+        "required": [
+          "cadence",
+          "interval",
+          "weekdays",
+          "dayOfMonth",
+          "startDate",
+          "endDate"
+        ],
+        "type": "object",
+        "properties": {
+          "cadence": {
+            "$ref": "#/components/schemas/Cadence"
+          },
+          "interval": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "weekdays": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "dayOfMonth": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ScheduleRequest": {
+        "required": [
+          "cadence",
+          "interval",
+          "weekdays",
+          "dayOfMonth",
+          "startDate",
+          "endDate"
+        ],
+        "type": "object",
+        "properties": {
+          "cadence": {
+            "$ref": "#/components/schemas/Cadence"
+          },
+          "interval": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "weekdays": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "dayOfMonth": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "SetDrivingRateRequest": {
+        "required": [
+          "rateMinorPerKm"
+        ],
+        "type": "object",
+        "properties": {
+          "rateMinorPerKm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "SetHorseStatusRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/HorseStatus"
+          }
+        }
+      },
+      "SplitMode": {
+        "enum": [
+          "Equal",
+          "Custom"
+        ]
+      },
+      "SplitRequest": {
+        "required": [
+          "mode"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "horseIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "shares": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CustomShareRequest"
+            }
+          }
+        }
+      },
+      "StopExpenseRuleRequest": {
+        "required": [
+          "lastDate"
+        ],
+        "type": "object",
+        "properties": {
+          "lastDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "StopIncomeRuleRequest": {
+        "required": [
+          "lastDate"
+        ],
+        "type": "object",
+        "properties": {
+          "lastDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "TaskListItem": {
+        "required": [
+          "taskId",
+          "horseId",
+          "taskDate",
+          "taskType",
+          "minutes",
+          "quantity",
+          "quantityUnit",
+          "notes",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "taskType": {
+            "$ref": "#/components/schemas/TaskType"
+          },
+          "minutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "quantityUnit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "TaskListResponse": {
+        "required": [
+          "items",
+          "nextCursor",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskListItem"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "TaskType": {
+        "enum": [
+          "Riding",
+          "Groundwork",
+          "Lunging",
+          "Grooming",
+          "MedicalCare",
+          "PaddockDuty",
+          "Transportation",
+          "Other"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "SessionEndpoints"
+    },
+    {
+      "name": "AccountEndpoints"
+    },
+    {
+      "name": "HorseEndpoints"
+    },
+    {
+      "name": "HistoryEndpoints"
+    },
+    {
+      "name": "ExpenseEndpoints"
+    },
+    {
+      "name": "IncomeEndpoints"
+    },
+    {
+      "name": "FinancialPreviewEndpoints"
+    },
+    {
+      "name": "FinancialReportEndpoints"
+    },
+    {
+      "name": "BreakdownReportEndpoints"
+    },
+    {
+      "name": "TaskEndpoints"
+    },
+    {
+      "name": "ActivityReportEndpoints"
+    },
+    {
+      "name": "DrivingEndpoints"
+    },
+    {
+      "name": "ExpenseRuleEndpoints"
+    },
+    {
+      "name": "ExpenseOccurrenceEndpoints"
+    },
+    {
+      "name": "IncomeRuleEndpoints"
+    },
+    {
+      "name": "IncomeApprovalEndpoints"
+    }
+  ]
+}

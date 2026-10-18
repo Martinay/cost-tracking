@@ -1,19 +1,19 @@
 # Quickstart Validation Guide
 
-**Status**: Planned commands and scenarios for the implementation phase. The repository currently contains design artifacts only; application projects, package scripts and test fixtures below must be created by the planned slices before these commands can run. No application test or deployment pass is claimed by this guide.
+**Status**: Local implementation and validation guide. Application projects, API contracts, frontend routes, tests, and local operational tooling are present. The evidence files below distinguish completed local checks from unverified release gates; no successful local check substitutes for an external gate.
 
 Contracts: [HTTP](contracts/http-api.md), [authentication](contracts/auth.md), [events/model](data-model.md), [UI](contracts/ui.md), [storage](contracts/storage.md).
 
 ## Prerequisites
 
-- .NET 10 SDK; Node.js 24 LTS and npm; Git. Commit SDK/package lockfiles during scaffolding. This planning session found .NET 10.0.103 but no Node/npm on PATH.
-- Linux container runtime for native file-lock tests; a local macOS filesystem is not Azure SMB evidence.
+- .NET SDK 10.0.103; Node.js 24.19.0 and npm 11.17.0; Git. Use the versions pinned in `global.json`, `.nvmrc`, and lockfiles. This workstation's verified Node distribution is in the ignored `.local/toolchain/node-v24.19.0-darwin-arm64/bin`; add it to `PATH` if Node is not otherwise installed.
+- Linux container runtime for native file-lock tests. The local Linux proof has passed; a local Linux filesystem is not Azure SMB evidence.
 - Isolated test directories and two test users; fixed owner date 2026-09-21 for deterministic cases (another fixture sets later dates). Test harness supplies clock and RSA issuer/JWKS; no production clock/auth bypass.
 - WorkOS staging environment, client ID and server-only API credential; template audience, registered callback/logout URLs and exact issuer/JWKS settings for real-auth smoke.
-- App-owned sibling HTTPS frontend/API hostnames for cookie session smoke; no paid WorkOS authentication custom domain required. Certificate secret for protected shared Data Protection keys. Never commit credentials/session tokens.
+- App-owned sibling HTTPS frontend/API hostnames for cookie session smoke; no paid WorkOS authentication custom domain required. A provisioned Azure Key Vault key and managed identity access for protected shared Data Protection keys in deployed environments. Never commit credentials/session tokens.
 - For release storage checks only: two test containers mounting the exact target Azure Files share and a separate backup destination. Use synthetic data in destructive fault tests.
 
-## Planned configuration surface
+## Configuration surface
 
 | Setting | Purpose |
 |---|---|
@@ -21,39 +21,46 @@ Contracts: [HTTP](contracts/http-api.md), [authentication](contracts/auth.md), [
 | `WorkOS__ClientId`, `WorkOS__ApiKey` | Public client ID and backend-only exchange credential |
 | `Auth__Issuer`, `Auth__Audience`, `Auth__JwksUrl` | Exact JWT validation configuration; HTTPS JWKS, not discovery URL |
 | `Auth__FrontendOrigin`, `Auth__CallbackUrl` | Allowlisted return origin and server callback |
-| `Auth__CertificatePath`, `Auth__CertificatePassword` | Secret-mounted certificate protecting shared key ring |
+| `Auth__DataProtectionKeyPath` | Stable protected key-ring directory shared by API replicas |
+| `Auth__DataProtectionKeyIdentifier` | Azure Key Vault key identifier used to wrap persisted Data Protection keys; deployed API authentication uses its attached managed identity |
 | `Cors__AllowedOrigin` | Exact frontend origin; credentials only for auth endpoints |
 | `VITE_API_BASE_URL` | API origin, no secret |
 
 Supply server development secrets using .NET user-secrets or a secret-mounted local environment; supply frontend public URL in a gitignored local environment file. Planned examples/templates must contain dummy values only. Production startup rejects test auth and missing/insecure auth configuration.
 
+The infrastructure deployment creates the Key Vault and key with soft delete and purge protection, then grants the API system-assigned identity the Key Vault Crypto Service Encryption User role at key scope. The deployment principal needs role-assignment write permission, and Key Vault RBAC propagation can delay the first successful key operation. The key-ring files remain on Azure Files. Use a versionless key identifier for automatic key rotation, and retain every old key version needed to unwrap existing key-ring entries. Local development defaults to a filesystem key ring without Azure credentials; to exercise Key Vault protection locally, configure a separate development key and use developer credentials.
+
 ## Build and automated validation
 
-Run from repository root after scaffolding. The implementation must supply these script/test entry points; a missing entry point is incomplete setup, not a passing check.
+Run from the repository root. Use `--locked-mode` to enforce the checked-in NuGet lockfiles. In this environment, disabling build servers avoids IPC hangs, and VSTest needs permission to bind a local TCP socket for its test host.
 
 ```sh
-dotnet restore backend/CostTracking.slnx
-dotnet build backend/CostTracking.slnx --no-restore
-dotnet test backend/CostTracking.slnx --no-build --filter 'Category!=AzureSmb'
+dotnet restore backend/CostTracking.slnx --locked-mode
+dotnet build backend/CostTracking.slnx --no-restore --disable-build-servers -m:1 -p:UseSharedCompilation=false
+dotnet test backend/CostTracking.slnx --no-build --no-restore --disable-build-servers -m:1 -p:UseSharedCompilation=false --filter 'Category!=AzureSmb'
 npm --prefix frontend ci
 npm --prefix frontend run contracts:check
 npm --prefix frontend run typecheck
+npm --prefix frontend run lint
+npm --prefix frontend run format:check
 npm --prefix frontend run test -- --run
 npm --prefix frontend run build
 npm --prefix frontend exec playwright install chromium
 npm --prefix frontend run test:e2e
+scripts/verify-storage.sh --local
+node --test scripts/backup-restore.test.mjs scripts/measure-journeys.test.mjs scripts/run-e2e.test.mjs scripts/verify-restore-replay.test.mjs
 ```
 
 `contracts:check` generates API OpenAPI and TypeScript types, fails on committed contract drift and validates event compatibility fixtures against the JSON Schema. `test:e2e` starts isolated test API/frontend/issuer processes and cleans them up; it uses condition-based Playwright assertions and verifies auth boundary, keyboard paths and recovery. Tests must first be observed failing for the relevant missing behavior before production code is written.
 
-For a manual interface run after configuration, start these in separate terminals:
+For a manual interface run with valid local or staging auth configuration, start these in separate terminals:
 
 ```sh
 dotnet run --project backend/src/CostTracking.Api
 npm --prefix frontend run dev -- --host 127.0.0.1
 ```
 
-Use the frontend URL printed by Vite. Local automated mode uses the test host; real WorkOS smoke uses the configured HTTPS sibling domains and deployed/staging callback, not arbitrary cross-site localhost cookies. No production secrets in screenshots/test reports.
+Use the frontend URL printed by Vite. Local automated mode uses the isolated test host and synthetic identity issuer. Real WorkOS smoke requires configured HTTPS sibling domains and the registered staging callback; arbitrary cross-site localhost cookies do not prove this flow. Keep production credentials and tokens out of screenshots and test reports.
 
 ## End-to-end scenarios
 
@@ -88,9 +95,14 @@ The suite requires explicit test share/containers configured and fails or report
 
 Seed 100 horses and 5,000 accepted events, restart, and compare event count/version, allocations, monthly/lifetime totals and pending keys. Add >5,000-event fixtures to trigger snapshots, corrupt the snapshot, and compare full versus assisted replay. Restore an independently retained backup to a fresh share with writers stopped and verify the backed-up prefix/checksum and totals; record backup age and any events outside that recovery point.
 
+The local synthetic backup verifier now performs the event-stream backup/restore to a fresh root and compares authoritative monthly report totals and pending-approval keys after reauthentication without reseeding. See `validation/ops-backup-restore.md` and `validation/ops-restore-replay.json`. This does not establish a scheduled 24-hour recovery point, restore on an independent Azure share, Azure Files semantics, or measured recovery time; those target gates remain separate.
+
 ## Release evidence
 
-- Automated domain/contract/integration/browser checks pass, with recorded red-green evidence per slice; no test-only authentication in production.
+- Automated local domain/contract/integration/browser checks pass, and test-only authentication is registered only in test hosting. Red/green evidence is retained for the fixes explicitly recorded in `validation/implementation.md`; older per-task tests-first history gaps remain open in `tasks.md`.
+- The 2026-10-16 local application measurement is retained in `validation/performance-local-20261016.json` with its sanitized progress journal. It completed 400/400 journeys and all 2,200 proxied API requests returned HTTP 200, but warm p99 was 2,355.65 ms for the month ledger and 2,856.13 ms for the report, above the 2,000 ms criterion. It is a measured local threshold failure, not a T104 pass or target-region result. The earlier 2026-10-10 run with 76 failed journeys remains retained separately in `validation/performance-local-t072-20261010.json`; see `validation/performance.md` and `validation/release.md` for both runs and their limits.
+- The 2026-10-17 direct HTTP baseline is in `validation/performance-http-local-20261017.json`. It ran 100 requests each for account, monthly P&L, and lifetime, plus 20 diagnostic requests for five list/activity/breakdown endpoints; every status, stream version, and checked item count passed. The three 100-sample p99 values were 734.07 ms, 772.89 ms, and 769.09 ms. This measures individual API requests, not browser-visible journeys; host load was uncontrolled, so it does not explain the earlier end-to-end p99 failure or justify a backend optimization by itself.
+- User-story evidence indexes are in `validation/us1.md` through `validation/us5.md`; they summarize local behavior evidence and retain the open historical red-first and external release gates.
 - Real WorkOS sign-in → session read → access-token validation → refresh → logout succeeds; invalid Origin/CSRF rejected, concurrent refresh safe, no persistent browser token. Server restart/revision retains or safely expires sessions.
 - Actual two-client SMB/fault/restore proof passes with runtime/mount metadata, not just local file tests.
 - Warm month ledger/report p99 ≤2 seconds at stated workload; cold starts reported separately. Measure enough warm runs to assess the 99% criterion; record methodology and raw anonymized measurements.

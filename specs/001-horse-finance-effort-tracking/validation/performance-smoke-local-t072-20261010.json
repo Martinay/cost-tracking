@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-10T10:56:32.889Z",
+  "mode": "local-test-host",
+  "gateEligible": false,
+  "smoke": true,
+  "smokeComplete": true,
+  "releaseGatePassed": false,
+  "note": "Local TestHost fixture only; not a target-region performance or release result.",
+  "browser": {
+    "name": "Chromium",
+    "version": "156.0.8078.4",
+    "runtime": "v24.19.0"
+  },
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "logicalCpuCount": 12,
+    "memoryGiB": 24
+  },
+  "region": "local TestHost",
+  "sourceSnapshot": {
+    "sha256": "22b464d97ab621ccb2b1d05bd2dc17fa135bac50e744ec8a8ba455231f700dc2",
+    "takenAtUtc": "2026-10-10T10:48:29.172Z"
+  },
+  "dataset": {
+    "description": "Verified isolated synthetic 100-horse, 5000-change account",
+    "horsesClaimed": 100,
+    "acceptedChangesClaimed": 5000,
+    "verified": true,
+    "setupEvents": 176,
+    "streamEvents": 5176,
+    "eventMix": {
+      "ExpenseRecorded": 1500,
+      "IncomeRecorded": 1500,
+      "RecurringExpenseOccurrenceOverridden": 500,
+      "RecurringIncomeApproved": 250,
+      "RecurringIncomeRejected": 250,
+      "TaskLogged": 1000
+    },
+    "dateWindow": {
+      "from": "2026-09-01",
+      "through": "2026-09-30",
+      "asOfDate": "2026-09-21"
+    },
+    "measuredMonth": "2026-09",
+    "evidence": "TestHost-only loopback fixture response"
+  },
+  "runsPerMode": 1,
+  "allJourneysSuccessful": true,
+  "execution": {
+    "workers": 1,
+    "journeyOrder": [
+      "ledger",
+      "report"
+    ],
+    "concurrentJourneys": false,
+    "concurrentFrontendBrowserSuite": false,
+    "hostLoadControlled": false
+  },
+  "warmP99Assessment": null,
+  "cold": {
+    "definition": "Fresh browser context per page navigation; browser process and target app/server remain running and may be warm.",
+    "summaries": {
+      "ledger": {
+        "samples": 1,
+        "failedSamples": 0,
+        "durationsMs": [
+          3874.89
+        ]
+      },
+      "report": {
+        "samples": 1,
+        "failedSamples": 0,
+        "durationsMs": [
+          1871.5
+        ]
+      }
+    },
+    "rawSamples": {
+      "ledger": [
+        {
+          "durationMs": 3874.89,
+          "outcome": "passed"
+        }
+      ],
+      "report": [
+        {
+          "durationMs": 1871.5,
+          "outcome": "passed"
+        }
+      ]
+    },
+    "requestTimings": {
+      "ledger": [
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/account",
+          "durationMs": 2113.94,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/horses",
+          "durationMs": 2895.51,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/income-rules",
+          "durationMs": 3349.72,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/income",
+          "durationMs": 1619.73,
+          "httpStatus": 200,
+          "outcome": "completed"
+        }
+      ],
+      "report": [
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/horses",
+          "durationMs": 514.01,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/account",
+          "durationMs": 835.1,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/monthly-pnl",
+          "durationMs": 834.09,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/activity",
+          "durationMs": 894.67,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/lifetime",
+          "durationMs": 1501.31,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/breakdown",
+          "durationMs": 1652.77,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/breakdown",
+          "durationMs": 1969.83,
+          "httpStatus": 200,
+          "outcome": "completed"
+        }
+      ]
+    }
+  },
+  "warm": {
+    "summaries": {
+      "ledger": {
+        "samples": 1,
+        "failedSamples": 0,
+        "durationsMs": [
+          1842.49
+        ]
+      },
+      "report": {
+        "samples": 1,
+        "failedSamples": 0,
+        "durationsMs": [
+          1837.97
+        ]
+      }
+    },
+    "rawSamples": {
+      "ledger": [
+        {
+          "durationMs": 1842.49,
+          "outcome": "passed"
+        }
+      ],
+      "report": [
+        {
+          "durationMs": 1837.97,
+          "outcome": "passed"
+        }
+      ]
+    },
+    "requestTimings": {
+      "ledger": [
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/horses",
+          "durationMs": 512.83,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/income-rules",
+          "durationMs": 885.85,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/account",
+          "durationMs": 1194,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/income",
+          "durationMs": 533.27,
+          "httpStatus": 200,
+          "outcome": "completed"
+        }
+      ],
+      "report": [
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/account",
+          "durationMs": 517.63,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/horses",
+          "durationMs": 854.48,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/monthly-pnl",
+          "durationMs": 933.26,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/breakdown",
+          "durationMs": 1069.28,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/breakdown",
+          "durationMs": 1416.2,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/activity",
+          "durationMs": 1717.4,
+          "httpStatus": 200,
+          "outcome": "completed"
+        },
+        {
+          "method": "GET",
+          "endpoint": "/api/v1/reports/lifetime",
+          "durationMs": 2276.15,
+          "httpStatus": 200,
+          "outcome": "completed"
+        }
+      ]
+    }
+  }
+}

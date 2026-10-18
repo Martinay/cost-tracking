@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/CostTracking.Api/CostTracking.Api.csproj" />
+  <Project Path="tests/CostTracking.Tests/CostTracking.Tests.csproj" />
+  <Project Path="tests/CostTracking.TestHost/CostTracking.TestHost.csproj" />
+</Solution>

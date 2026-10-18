@@ -1,0 +1,103 @@
+services:
+  release:
+    image: ${STORAGE_PROOF_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0.103}
+    command:
+      - bash
+      - -lc
+      - >-
+        set -euo pipefail;
+        base="/share-a/.cost-tracking-storage-proof/$${STORAGE_PROOF_RUN_ID}";
+        base_b="/share-b/.cost-tracking-storage-proof/$${STORAGE_PROOF_RUN_ID}";
+        mkdir -p "$${base}/version/data" "$${base}/same-key/data" "$${base_b}/version/data" "$${base_b}/same-key/data";
+        attempt=0;
+        until test -f "$${base}/version/data/version-client-a.ready" && test -f "$${base_b}/version/data/version-client-b.ready"; do
+          attempt=$$((attempt + 1));
+          test $$attempt -lt 600 || { echo 'Timed out waiting for independent SMB clients'; exit 1; };
+          sleep 0.1;
+        done;
+        touch "$${base}/version/go";
+        attempt=0;
+        until test -f "$${base}/same-key/data/same-key-client-a.ready" && test -f "$${base_b}/same-key/data/same-key-client-b.ready"; do
+          attempt=$$((attempt + 1));
+          test $$attempt -lt 600 || { echo 'Timed out waiting for same-key SMB clients'; exit 1; };
+          sleep 0.1;
+        done;
+        touch "$${base}/same-key/go";
+        exec tail -f /dev/null
+    environment:
+      STORAGE_PROOF_RUN_ID: ${STORAGE_PROOF_RUN_ID:?run scripts/verify-storage.sh --azure}
+    volumes:
+      - storage_client_a:/share-a
+      - storage_client_b:/share-b
+
+  client_a:
+    image: ${STORAGE_PROOF_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0.103}
+    depends_on:
+      release:
+        condition: service_started
+    command: ["bash", "/repo/scripts/verify-storage.sh", "--container-client", "azure-client"]
+    environment:
+      STORAGE_PROOF_RUN_ID: ${STORAGE_PROOF_RUN_ID:?run scripts/verify-storage.sh --azure}
+      STORAGE_PROOF_CLIENT_ID: client-a
+    volumes:
+      - type: bind
+        source: ..
+        target: /repo
+        read_only: true
+      - storage_client_a:/share
+
+  client_b:
+    image: ${STORAGE_PROOF_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0.103}
+    depends_on:
+      release:
+        condition: service_started
+    command: ["bash", "/repo/scripts/verify-storage.sh", "--container-client", "azure-client"]
+    environment:
+      STORAGE_PROOF_RUN_ID: ${STORAGE_PROOF_RUN_ID:?run scripts/verify-storage.sh --azure}
+      STORAGE_PROOF_CLIENT_ID: client-b
+    volumes:
+      - type: bind
+        source: ..
+        target: /repo
+        read_only: true
+      - storage_client_b:/share
+
+  verify:
+    image: ${STORAGE_PROOF_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0.103}
+    depends_on:
+      client_a:
+        condition: service_started
+      client_b:
+        condition: service_started
+    command: ["bash", "/repo/scripts/verify-storage.sh", "--container-client", "azure-verify"]
+    environment:
+      STORAGE_PROOF_RUN_ID: ${STORAGE_PROOF_RUN_ID:?run scripts/verify-storage.sh --azure}
+      STORAGE_PROOF_IMAGE_DIGEST: ${STORAGE_PROOF_IMAGE_DIGEST:-unreported}
+      STORAGE_PROOF_SHARE_SKU: ${STORAGE_PROOF_SHARE_SKU:?share SKU required}
+      STORAGE_PROOF_BILLING_MODEL: ${STORAGE_PROOF_BILLING_MODEL:?billing model required}
+      STORAGE_PROOF_AZURE_MOUNT: /share
+      STORAGE_PROOF_AZURE_REPORT: /report/storage-proof-early.md
+      STORAGE_PROOF_AZURE_RUN_DIRECTORY: /share/.cost-tracking-storage-proof/${STORAGE_PROOF_RUN_ID}
+      STORAGE_PROOF_AZURE_VERSION_ROOT: /share/.cost-tracking-storage-proof/${STORAGE_PROOF_RUN_ID}/version/data
+      STORAGE_PROOF_AZURE_IDEMPOTENCY_ROOT: /share/.cost-tracking-storage-proof/${STORAGE_PROOF_RUN_ID}/same-key/data
+    volumes:
+      - type: bind
+        source: ..
+        target: /repo
+        read_only: true
+      - type: bind
+        source: ../specs/001-horse-finance-effort-tracking/validation
+        target: /report
+      - storage_client_a:/share
+
+volumes:
+  storage_client_a:
+    driver_opts:
+      type: cifs
+      device: //${STORAGE_PROOF_STORAGE_ACCOUNT:?set designated synthetic-share account}.file.core.windows.net/${STORAGE_PROOF_FILE_SHARE:?set designated synthetic file share}
+      o: username=${STORAGE_PROOF_STORAGE_ACCOUNT},password=${STORAGE_PROOF_STORAGE_KEY:?set the existing share key},${STORAGE_PROOF_MOUNT_OPTIONS:?set the tested SMB options}
+  storage_client_b:
+    driver_opts:
+      type: cifs
+      device: //${STORAGE_PROOF_STORAGE_ACCOUNT:?set designated synthetic-share account}.file.core.windows.net/${STORAGE_PROOF_FILE_SHARE:?set designated synthetic file share}
+      o: username=${STORAGE_PROOF_STORAGE_ACCOUNT},password=${STORAGE_PROOF_STORAGE_KEY:?set the existing share key},${STORAGE_PROOF_MOUNT_OPTIONS:?set the tested SMB options}

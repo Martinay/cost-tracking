@@ -1,0 +1,7 @@
+# User Story 3: Confirm recurring income
+
+**Local acceptance: verified.** The HTTP-backed browser journey creates a recurring income rule, approves an unchanged payment, edits and approves a second payment, rejects a third, then revises and stops the rule. It reads the realized ledger and rule revisions from the API. The rejected occurrence is absent from a fresh inbox response and contributes no realized income. The final browser suite passed 21/21; the two-context decision race produced one HTTP 200 and one HTTP 409, followed by a losing-tab refetch and exactly one realized income row. See [frontend-journeys.md](frontend-journeys.md), [backend-acceptance.md](backend-acceptance.md#frontend-owned-story-acceptance), and [implementation.md](implementation.md).
+
+Inbox paging/window behavior, scheduled versus actual dates, final decisions, retries, and replay are covered by the recurring-income and integration suites. The shared event fixture covers all 17 persisted event variants. Generated contracts passed 42/42 with no drift; frontend tests passed 68/68 with typecheck, lint, format, and build passing.
+
+Historical red-first evidence for T061–T063 was not retained; those test-authoring markers remain unchecked. The passing decision race is current behavioral evidence, not a substitute for the missing pre-implementation red. Real WorkOS refresh/session behavior remains a separate staging gate.

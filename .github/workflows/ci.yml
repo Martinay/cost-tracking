@@ -1,0 +1,248 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install pinned Bicep CLI
+        run: az bicep install --version v0.48.1
+
+      - name: Validate Azure templates
+        run: |
+          az bicep build --file infra/main.bicep --outfile "$RUNNER_TEMP/cost-tracking-main.json"
+
+      - name: Install pinned .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.103
+
+      - name: Install pinned Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Restore locked .NET dependencies
+        run: dotnet restore backend/CostTracking.slnx --locked-mode
+
+      - name: Build .NET solution
+        run: dotnet build backend/CostTracking.slnx --configuration Debug --no-restore --disable-build-servers -m:1 -p:UseSharedCompilation=false
+
+      - name: Run backend tests
+        run: dotnet test backend/CostTracking.slnx --configuration Debug --no-build --no-restore --filter 'Category!=AzureSmb'
+
+      - name: Run local Linux storage proof
+        run: scripts/verify-storage.sh --local
+
+      - name: Install locked frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Check generated contracts
+        run: npm --prefix frontend run contracts:check
+
+      - name: Check frontend types and lint
+        run: |
+          npm --prefix frontend run typecheck
+          npm --prefix frontend run lint
+
+      - name: Check frontend formatting
+        run: npm --prefix frontend run format:check
+
+      - name: Build frontend production assets
+        env:
+          VITE_API_BASE_URL: https://api.cost-tracking.example.com
+        run: npm --prefix frontend run build
+
+      - name: Run frontend component tests
+        run: npm --prefix frontend run test -- --run
+
+      - name: Install Chromium and Linux browser dependencies
+        run: npm --prefix frontend exec -- playwright install --with-deps chromium
+
+      - name: Run isolated browser journeys
+        run: npm --prefix frontend run test:e2e
+
+      - name: Run local operational tooling tests
+        run: node --test scripts/backup-restore.test.mjs scripts/measure-http.test.mjs scripts/measure-journeys.test.mjs scripts/verify-restore-replay.test.mjs scripts/run-e2e.test.mjs scripts/create-deployment-parameters.test.mjs
+
+      - name: Verify local archive restore by replaying projections
+        run: node scripts/verify-restore-replay.mjs --testhost-dll backend/tests/CostTracking.TestHost/bin/Debug/net10.0/CostTracking.TestHost.dll --output "$RUNNER_TEMP/ops-restore-replay.json"
+
+      - name: Build API container without publishing
+        run: |
+          docker build --platform linux/amd64 --file backend/Dockerfile --tag cost-tracking-api:ci .
+          mkdir -p deploy-build/frontend
+          docker save cost-tracking-api:ci --output deploy-build/cost-tracking-api.tar
+          cp -R frontend/dist deploy-build/frontend/dist
+
+      - name: Save deployable build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-build-${{ github.sha }}
+          path: deploy-build/
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    name: Deploy Azure
+    needs: validate
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: azure-production
+    concurrency:
+      group: azure-production-deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    env:
+      AZURE_RESOURCE_GROUP: cost-tracking
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      LOCATION: centralindia
+      STATIC_WEB_APP_LOCATION: ${{ vars.STATIC_WEB_APP_LOCATION || 'westeurope' }}
+      GHCR_USERNAME: ${{ vars.GHCR_USERNAME }}
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      NAME_PREFIX: cost-tracking
+      APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+      API_DOMAIN: ${{ vars.API_DOMAIN }}
+      ENABLE_CUSTOM_DOMAINS: ${{ vars.ENABLE_CUSTOM_DOMAINS || 'false' }}
+      WORKOS_CLIENT_ID: ${{ vars.WORKOS_CLIENT_ID }}
+      AUTH_ISSUER: ${{ vars.AUTH_ISSUER }}
+      AUTH_AUDIENCE: ${{ vars.AUTH_AUDIENCE }}
+      AUTH_JWKS_URL: ${{ vars.AUTH_JWKS_URL }}
+      OPERATIONS_EMAIL: ${{ vars.OPERATIONS_EMAIL }}
+      WORKOS_API_KEY: ${{ secrets.WORKOS_API_KEY }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts from the validated job
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-build-${{ github.sha }}
+          path: deploy-build
+
+      - name: Check deployment configuration before Azure changes
+        env:
+          API_IMAGE: ghcr.io/example/cost-tracking-api@sha256:0000000000000000000000000000000000000000000000000000000000000000
+        run: |
+          node scripts/deployment-policy.mjs "$GITHUB_EVENT_NAME" "$GITHUB_REF"
+          if [ -z "$AZURE_CLIENT_ID" ] || [ -z "$AZURE_TENANT_ID" ] || [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
+            echo 'Missing Azure OIDC client, tenant, or subscription configuration.' >&2
+            exit 1
+          fi
+          node scripts/create-deployment-parameters.mjs "$RUNNER_TEMP/preflight.parameters.json"
+          rm -f "$RUNNER_TEMP/preflight.parameters.json"
+
+      - name: Login to Azure with GitHub OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check resource group region
+        run: |
+          region="$(az group show --name "$AZURE_RESOURCE_GROUP" --query location --output tsv)"
+          if [ "$region" != centralindia ]; then
+            echo 'The resource group must be in Central India.' >&2
+            exit 1
+          fi
+
+      - name: Push the validated API image to GHCR
+        id: image
+        env:
+          IMAGE_TAG: sha-${{ github.sha }}
+          GHCR_PUSH_TOKEN: ${{ github.token }}
+        run: |
+          image_name="ghcr.io/${GITHUB_REPOSITORY,,}/cost-tracking-api"
+          docker load --input deploy-build/cost-tracking-api.tar
+          docker tag cost-tracking-api:ci "$image_name:$IMAGE_TAG"
+          printf '%s' "$GHCR_PUSH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$image_name:$IMAGE_TAG"
+          digest="$(docker inspect --format '{{index .RepoDigests 0}}' "$image_name:$IMAGE_TAG")"
+          test -n "$digest"
+          printf 'api_image=%s\n' "$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare protected Bicep parameters
+        env:
+          API_IMAGE: ${{ steps.image.outputs.api_image }}
+        run: node scripts/create-deployment-parameters.mjs "$RUNNER_TEMP/deployment.parameters.json"
+
+      - name: Deploy Azure resources
+        run: |
+          trap 'rm -f "$RUNNER_TEMP/deployment.parameters.json"' EXIT
+          if [ "$ENABLE_CUSTOM_DOMAINS" = true ]; then
+            az config set extension.use_dynamic_install=yes_without_prompt
+            az containerapp update --name cost-tracking-api --resource-group "$AZURE_RESOURCE_GROUP" --min-replicas 1 --output none
+            api_fqdn="$(az containerapp show --name cost-tracking-api --resource-group "$AZURE_RESOURCE_GROUP" --query properties.configuration.ingress.fqdn --output tsv)"
+            for attempt in $(seq 1 24); do
+              if curl --silent --show-error --output /dev/null "https://$api_fqdn"; then break; fi
+              if [ "$attempt" -eq 24 ]; then echo "API ingress did not become reachable before certificate setup." >&2; exit 1; fi
+              sleep 5
+            done
+            if ! az containerapp hostname list --name cost-tracking-api --resource-group "$AZURE_RESOURCE_GROUP" --query "[?name=='$API_DOMAIN'] | length(@)" --output tsv | grep -q '^1$'; then
+              az containerapp hostname add --hostname "$API_DOMAIN" --name cost-tracking-api --resource-group "$AZURE_RESOURCE_GROUP" --output none
+            fi
+          fi
+          az deployment group create \
+            --name "cost-tracking-${GITHUB_SHA::12}" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/main.bicep \
+            --parameters "@$RUNNER_TEMP/deployment.parameters.json" \
+            --output none
+          static_hostname="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.staticWebAppDefaultHostname.value --output tsv)"
+          api_hostname="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.apiDefaultHostname.value --output tsv)"
+          verification_id="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.apiDomainVerificationId.value --output tsv)"
+          {
+            echo '### Azure deployment endpoints'
+            echo "- Static Web App default hostname: \`$static_hostname\`"
+            echo "- Container App default hostname: \`$api_hostname\`"
+            echo "- API DNS verification TXT value: \`$verification_id\`"
+            if [ "$ENABLE_CUSTOM_DOMAINS" != true ]; then echo '- Custom domains remain unbound. Configure the DNS records described in `infra/README.md`, set `ENABLE_CUSTOM_DOMAINS=true`, then run the protected workflow manually.'; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove protected deployment parameters
+        if: always()
+        run: rm -f "$RUNNER_TEMP/deployment.parameters.json"
+
+      - name: Read Static Web App deployment token
+        id: static-web-token
+        run: |
+          token="$(az staticwebapp secrets list --name cost-tracking-web --resource-group "$AZURE_RESOURCE_GROUP" --query properties.apiKey --output tsv)"
+          test -n "$token"
+          printf '::add-mask::%s\n' "$token"
+          printf 'token=%s\n' "$token" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy validated frontend assets
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.static-web-token.outputs.token }}
+          action: upload
+          app_location: deploy-build/frontend/dist
+          output_location: ""
+          skip_app_build: true

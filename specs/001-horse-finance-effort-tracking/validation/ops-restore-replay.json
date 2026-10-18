@@ -1,0 +1,78 @@
+{
+  "recordedAtUtc": "2026-10-09T11:28:55.282Z",
+  "mode": "local-synthetic-testhost-archive-restore",
+  "gateEligible": false,
+  "azureRestoreVerified": false,
+  "fixture": {
+    "horses": 100,
+    "setupEvents": 176,
+    "acceptedChanges": 5000,
+    "streamEvents": 5176,
+    "eventMix": {
+      "ExpenseRecorded": 1500,
+      "IncomeRecorded": 1500,
+      "RecurringExpenseOccurrenceOverridden": 500,
+      "RecurringIncomeApproved": 250,
+      "RecurringIncomeRejected": 250,
+      "TaskLogged": 1000
+    },
+    "dateWindow": {
+      "from": "2026-09-01",
+      "through": "2026-09-30",
+      "asOfDate": "2026-09-21"
+    }
+  },
+  "before": {
+    "report": {
+      "currency": "EUR",
+      "month": "2026-09",
+      "streamVersion": 5176,
+      "horseRows": 100,
+      "incomeMinor": 406250,
+      "expenseMinor": 692750,
+      "netMinor": -286500
+    },
+    "pending": {
+      "count": 550,
+      "keyDigestSha256": "ff30cd2d795b45b07b9d3c3fa0d9a30728e403f53624f9212393f65d548df98d"
+    }
+  },
+  "after": {
+    "report": {
+      "currency": "EUR",
+      "month": "2026-09",
+      "streamVersion": 5176,
+      "horseRows": 100,
+      "incomeMinor": 406250,
+      "expenseMinor": 692750,
+      "netMinor": -286500
+    },
+    "pending": {
+      "count": 550,
+      "keyDigestSha256": "ff30cd2d795b45b07b9d3c3fa0d9a30728e403f53624f9212393f65d548df98d"
+    }
+  },
+  "projectionParity": true,
+  "originalSourceUnchanged": true,
+  "emptyRootRejectedWithoutRepair": true,
+  "negativeControl": {
+    "reportReadRejected": true,
+    "streamFileInitializedByRead": true,
+    "eventBytes": 0
+  },
+  "backup": {
+    "formatVersion": 1,
+    "createdAtUtc": "2026-10-09T11:28:48.586865Z",
+    "streamCount": 1,
+    "eventCount": 5176,
+    "sha256": [
+      "4d87f9ea560878877ba2bb221ce484632e8d12b9170e3378d4e637172297e955"
+    ],
+    "age": {
+      "targetSeconds": 86400,
+      "snapshotAgeSeconds": 6,
+      "snapshotWithin24HourBoundAtRestore": true,
+      "scheduledRpoProven": false
+    }
+  }
+}

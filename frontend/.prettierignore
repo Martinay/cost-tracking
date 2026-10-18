@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+coverage/
+test-results/
+playwright-report/
+src/generated/
+src/api/generated/
+src/api/schema.d.ts
+package-lock.json

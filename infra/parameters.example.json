@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": {
+      "value": "horse-cost-example"
+    },
+    "location": {
+      "value": "centralindia"
+    },
+    "apiImage": {
+      "value": "ghcr.io/example/cost-tracking-api@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "appDomain": {
+      "value": "app.cost-tracking.example.com"
+    },
+    "apiDomain": {
+      "value": "api.cost-tracking.example.com"
+    },
+    "enableCustomDomains": {
+      "value": false
+    },
+    "workOsClientId": {
+      "value": "client_example"
+    },
+    "workOsApiKey": {
+      "value": "DO-NOT-USE-REPLACE-THROUGH-SECRET-PIPELINE"
+    },
+    "authIssuer": {
+      "value": "https://issuer.example.test"
+    },
+    "authAudience": {
+      "value": "cost-tracking-api-example"
+    },
+    "authJwksUrl": {
+      "value": "https://issuer.example.test/jwks"
+    },
+    "operationsEmail": {
+      "value": "operations@example.test"
+    },
+    "fileCapacityAlertBytes": {
+      "value": 8589934592
+    },
+    "staticWebAppLocation": {
+      "value": "westeurope"
+    },
+    "ghcrUsername": {
+      "value": "replace-with-github-user"
+    },
+    "ghcrToken": {
+      "value": "DO-NOT-USE-REPLACE-THROUGH-SECRET-PIPELINE"
+    }
+  }
+}
