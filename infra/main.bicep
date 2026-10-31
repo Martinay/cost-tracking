@@ -46,7 +46,6 @@ var staticAppName = '${namePrefix}-web'
 var logWorkspaceName = '${namePrefix}-logs'
 var dataProtectionVaultName = 'kv${uniqueString(subscription().id, resourceGroup().id, namePrefix)}'
 var dataProtectionKeyName = 'data-protection'
-var keyVaultCryptoServiceEncryptionUserRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'e147488a-f6f5-4113-8e2d-b22465e65bf6')
 var allowedMountOptions = 'vers=3.0,uid=1654,gid=1654,file_mode=0660,dir_mode=0770'
 
 resource dataProtectionVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -289,16 +288,6 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
   }
 }
 
-resource dataProtectionKeyAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(dataProtectionKey.id, apiApp.name, keyVaultCryptoServiceEncryptionUserRoleId)
-  scope: dataProtectionKey
-  properties: {
-    roleDefinitionId: keyVaultCryptoServiceEncryptionUserRoleId
-    principalId: apiApp.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
   name: staticAppName
   location: staticWebAppLocation
@@ -428,3 +417,7 @@ output apiDefaultHostname string = apiApp.properties.configuration.ingress.fqdn
 output apiDomainVerificationId string = apiApp.properties.customDomainVerificationId
 output logAnalyticsWorkspaceId string = logWorkspace.id
 output storageShareId string = fileShare.id
+
+// An operator grants key-scoped access to this identity after initial deployment.
+output apiPrincipalId string = apiApp.identity.principalId
+output dataProtectionKeyResourceId string = dataProtectionKey.id

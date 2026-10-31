@@ -12,10 +12,10 @@
       "value": "ghcr.io/example/cost-tracking-api@sha256:0000000000000000000000000000000000000000000000000000000000000000"
     },
     "appDomain": {
-      "value": "app.cost-tracking.example.com"
+      "value": "app.cost-tracking.ayasse.cloud"
     },
     "apiDomain": {
-      "value": "api.cost-tracking.example.com"
+      "value": "api.cost-tracking.ayasse.cloud"
     },
     "enableCustomDomains": {
       "value": false

@@ -218,11 +218,16 @@ jobs:
           static_hostname="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.staticWebAppDefaultHostname.value --output tsv)"
           api_hostname="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.apiDefaultHostname.value --output tsv)"
           verification_id="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.apiDomainVerificationId.value --output tsv)"
+          api_principal_id="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.apiPrincipalId.value --output tsv)"
+          key_resource_id="$(az deployment group show --name "cost-tracking-${GITHUB_SHA::12}" --resource-group "$AZURE_RESOURCE_GROUP" --query properties.outputs.dataProtectionKeyResourceId.value --output tsv)"
           {
             echo '### Azure deployment endpoints'
             echo "- Static Web App default hostname: \`$static_hostname\`"
             echo "- Container App default hostname: \`$api_hostname\`"
             echo "- API DNS verification TXT value: \`$verification_id\`"
+            echo "- API managed identity principal ID: \`$api_principal_id\`"
+            echo "- Key Vault key resource ID: \`$key_resource_id\`"
+            echo '- Manual access required: an Azure administrator must grant the API identity Key Vault Crypto Service Encryption User at the key scope before authentication can work. See `infra/README.md` for the procedure; verify the grant still applies if the identity or key changes.'
             if [ "$ENABLE_CUSTOM_DOMAINS" != true ]; then echo '- Custom domains remain unbound. Configure the DNS records described in `infra/README.md`, set `ENABLE_CUSTOM_DOMAINS=true`, then run the protected workflow manually.'; fi
           } >> "$GITHUB_STEP_SUMMARY"
 
