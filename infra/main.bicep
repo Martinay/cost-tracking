@@ -385,7 +385,8 @@ resource safeStorageFailureAlert 'Microsoft.Insights/scheduledQueryRules@2023-12
 | where Log_s has_any ("StorageLockTimeout", "EventStreamUnreadable", "EventReplayFailure", "EventAppendFailure", "StorageUnavailable", "ProjectionSnapshotFailure")
 | summarize FailureCount = count()
 '''
-          timeAggregation: 'Count'
+          // Evaluate the numeric count; Count counts result rows and disallows metricMeasureColumn.
+          timeAggregation: 'Total'
           metricMeasureColumn: 'FailureCount'
           operator: 'GreaterThan'
           threshold: 0
