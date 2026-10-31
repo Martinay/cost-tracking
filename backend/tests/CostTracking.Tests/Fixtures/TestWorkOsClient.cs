@@ -10,6 +10,7 @@ public sealed class TestWorkOsClient(TestIdentityIssuer identity, TimeProvider c
     public bool FailRefreshTransiently { get; set; }
     public bool FailRefreshTerminally { get; set; }
     public TimeSpan RefreshDelay { get; set; }
+    public Func<CancellationToken, Task>? BeforeRefreshAsync { get; set; }
     public string? NextRefreshAccessToken { get; set; }
     public string? NextExchangeAccessToken { get; set; }
 
@@ -31,6 +32,7 @@ public sealed class TestWorkOsClient(TestIdentityIssuer identity, TimeProvider c
 
     private async Task<WorkOsTokens> RefreshAfterDelayAsync(CancellationToken cancellationToken)
     {
+        if (BeforeRefreshAsync is not null) await BeforeRefreshAsync(cancellationToken);
         if (RefreshDelay > TimeSpan.Zero) await Task.Delay(RefreshDelay, cancellationToken);
         return CreateTokens();
     }

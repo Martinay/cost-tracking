@@ -257,19 +257,58 @@ public sealed class SessionBrokerTests
     }
 
     [Fact]
-    public async Task Logout_racing_refresh_never_resurrects_a_deleted_session()
+    public async Task Logout_during_refresh_deletes_the_rotated_session()
     {
         using var app = new TestApplication();
-        using var client = app.CreateClient();
+        using var client = app.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
         var handle = await CreateExpiringSessionAsync(app);
+        var refreshStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseRefresh = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        app.WorkOs.BeforeRefreshAsync = async cancellationToken =>
+        {
+            // Refresh holds the session update lock while the token provider is paused.
+            refreshStarted.SetResult();
+            await releaseRefresh.Task.WaitAsync(cancellationToken);
+        };
 
         var refresh = client.SendAsync(RefreshRequest(handle));
-        var logout = client.SendAsync(LogoutRequest(handle, "csrf_test"));
-        using var refreshResponse = await refresh;
-        using var logoutResponse = await logout;
+        Task<HttpResponseMessage> logout;
+        try
+        {
+            await refreshStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            logout = client.SendAsync(LogoutRequest(handle, "csrf_test"));
+        }
+        finally
+        {
+            releaseRefresh.TrySetResult();
+        }
+        using var refreshResponse = await refresh.WaitAsync(TimeSpan.FromSeconds(10));
+        using var logoutResponse = await logout.WaitAsync(TimeSpan.FromSeconds(10));
 
-        Assert.Contains(refreshResponse.StatusCode, new[] { HttpStatusCode.OK, HttpStatusCode.Unauthorized });
+        Assert.Equal(HttpStatusCode.OK, refreshResponse.StatusCode);
+        Assert.Equal(1, app.WorkOs.RefreshCount);
         Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
+        Assert.Null(await app.Services.GetRequiredService<SessionStore>().ReadAsync(handle));
+    }
+
+    [Fact]
+    public async Task Refresh_after_logout_rejects_the_deleted_session_without_rotating_tokens()
+    {
+        using var app = new TestApplication();
+        using var client = app.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+        var handle = await CreateExpiringSessionAsync(app);
+
+        using var logoutResponse = await client.SendAsync(LogoutRequest(handle, "csrf_test"));
+        Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
+        Assert.Null(await app.Services.GetRequiredService<SessionStore>().ReadAsync(handle));
+
+        using var refreshResponse = await client.SendAsync(RefreshRequest(handle));
+
+        // CSRF validation cannot authenticate a token belonging to a deleted session.
+        Assert.Equal(HttpStatusCode.BadRequest, refreshResponse.StatusCode);
+        using var body = JsonDocument.Parse(await refreshResponse.Content.ReadAsStringAsync());
+        Assert.Equal("invalid_origin_or_csrf", body.RootElement.GetProperty("error").GetString());
+        Assert.Equal(0, app.WorkOs.RefreshCount);
         Assert.Null(await app.Services.GetRequiredService<SessionStore>().ReadAsync(handle));
     }
 
