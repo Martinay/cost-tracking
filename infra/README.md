@@ -35,9 +35,10 @@ Add these GitHub **environment variables**:
 | `ENABLE_CUSTOM_DOMAINS`   | Initially `false`; change to `true` only after configuring both DNS records below |
 | `WORKOS_CLIENT_ID`        | WorkOS client ID                                                                  |
 | `AUTH_ISSUER`             | Exact token issuer URL                                                            |
-| `AUTH_AUDIENCE`           | Exact API token audience                                                          |
 | `AUTH_JWKS_URL`           | Exact JWKS URL                                                                    |
 | `OPERATIONS_EMAIL`        | Alert recipient                                                                   |
+
+AuthKit access tokens must contain exactly one string `client_id` matching `WORKOS_CLIENT_ID` (case-sensitive). The API validates that claim for bearer requests, callback tokens, and refreshed tokens, alongside signature, issuer, expiry, and user/session checks. No `aud` claim or `AUTH_AUDIENCE` setting is required; remove any old `AUTH_AUDIENCE` variable. For standard WorkOS AuthKit, set `AUTH_ISSUER=https://api.workos.com` and `AUTH_JWKS_URL=https://api.workos.com/sso/jwks/<WORKOS_CLIENT_ID>`. These remain explicit settings; the JWKS document contains signing keys, not issuer or client configuration.
 
 Add these GitHub **environment secrets**:
 
@@ -111,7 +112,7 @@ The Dockerfile pins .NET SDK `10.0.103` and runtime `10.0.3`, restores the API u
 
 ## Inputs and protected configuration
 
-Copy `parameters.example.json` to an operator-controlled secret store and replace every `DO-NOT-USE` value. Never commit the resulting file. Keep the storage defaults unless targeting an existing account/share, and supply the GHCR username and read token, WorkOS client/API credentials, exact issuer/audience/JWKS URL, app-owned sibling domains, and an operations email. Bicep enforces `StorageV2`, `Standard_LRS`, SMB, and the configured share quota. Existing accounts must already be compatible with these settings and Central India; changing the region does not migrate existing data. The secure Bicep parameters are marked `@secure()` and are not emitted as outputs.
+Copy `parameters.example.json` to an operator-controlled secret store and replace every `DO-NOT-USE` value. Never commit the resulting file. Keep the storage defaults unless targeting an existing account/share, and supply the GHCR username and read token, WorkOS client/API credentials, exact issuer/JWKS URL, app-owned sibling domains, and an operations email. Bicep enforces `StorageV2`, `Standard_LRS`, SMB, and the configured share quota. Existing accounts must already be compatible with these settings and Central India; changing the region does not migrate existing data. The secure Bicep parameters are marked `@secure()` and are not emitted as outputs.
 
 The Container Apps storage link requires an account key for Azure Files SMB. Bicep retrieves this key directly from the dedicated account. Limit account access to deployment operators and expose the mount only to the API container. The app runs under UID/GID `1654`; mount options set explicit identity/modes and `vers=3.0`. No `nobrl` or `nostrictsync` option is set. The effective mounted options still require the designated two-client SMB proof before release.
 

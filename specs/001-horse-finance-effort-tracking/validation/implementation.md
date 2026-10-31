@@ -1,5 +1,14 @@
 # Implementation evidence
 
+## WorkOS client-ID validation (2026-10-31)
+
+This change supersedes the audience-validation design in the historical entries below. Bearer requests, sign-in callbacks, and refreshed tokens now require a single string `client_id` exactly matching `WorkOS:ClientId`; no `aud` claim is required. Signature, issuer, RS256, expiry, subject, and session checks remain in place. Missing/wrong client IDs and array, numeric, or object values are rejected; a matching audience cannot substitute for the client ID. Deployment inputs and current auth documentation no longer require `AUTH_AUDIENCE`.
+
+- Full backend suite excluding `Category=AzureSmb`: **276/276 passed**.
+- Deployment parameter/policy tests: **10/10 passed**.
+- Bicep compilation, workflow YAML/example JSON parsing, and `git diff --check` passed.
+- Real hosted WorkOS sign-in/refresh remains an unverified staging gate.
+
 ## Setup (2026-10-08 resume)
 
 - T001: .NET SDK 10.0.103; Node v24.19.0; npm 11.17.0. Official Node darwin-arm64 archive SHA256 `8294b7aa9b03997481c06babf1e8b270c859358f27da57a11509afe537ac381d` verified. Node installed only in ignored `.local/toolchain`.

@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CostTracking.Api.Auth;
 
-public sealed class SessionTokenValidator(IOptionsMonitor<JwtBearerOptions> options)
+public sealed class SessionTokenValidator(IOptionsMonitor<JwtBearerOptions> options, IConfiguration appConfiguration)
 {
     public async Task<(string Subject, string SessionId, DateTimeOffset ExpiresAt)> ValidateAsync(string token, CancellationToken cancellationToken)
     {
@@ -22,6 +22,7 @@ public sealed class SessionTokenValidator(IOptionsMonitor<JwtBearerOptions> opti
         catch (ArgumentException exception) { throw new SecurityTokenException("Access token is invalid.", exception); }
         if (validatedToken is not JwtSecurityToken jwt || jwt.Header.Alg != SecurityAlgorithms.RsaSha256)
             throw new SecurityTokenException("Token algorithm is invalid.");
+        JwtAuthentication.ValidateClientId(validatedToken, appConfiguration["WorkOS:ClientId"]!);
         var sessionId = principal.FindFirst("sid")?.Value;
         if (string.IsNullOrWhiteSpace(sessionId)) throw new SecurityTokenException("Session identifier is missing.");
         return (CurrentOwner.Subject(principal), sessionId, new DateTimeOffset(jwt.ValidTo, TimeSpan.Zero));

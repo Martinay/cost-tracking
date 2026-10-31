@@ -132,7 +132,6 @@ jobs:
       ENABLE_CUSTOM_DOMAINS: ${{ vars.ENABLE_CUSTOM_DOMAINS || 'false' }}
       WORKOS_CLIENT_ID: ${{ vars.WORKOS_CLIENT_ID }}
       AUTH_ISSUER: ${{ vars.AUTH_ISSUER }}
-      AUTH_AUDIENCE: ${{ vars.AUTH_AUDIENCE }}
       AUTH_JWKS_URL: ${{ vars.AUTH_JWKS_URL }}
       OPERATIONS_EMAIL: ${{ vars.OPERATIONS_EMAIL }}
       WORKOS_API_KEY: ${{ secrets.WORKOS_API_KEY }}

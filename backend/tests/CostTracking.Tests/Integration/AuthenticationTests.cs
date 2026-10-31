@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -36,21 +37,91 @@ public sealed class AuthenticationTests
     }
 
     [Fact]
-    public async Task Rejects_tokens_with_wrong_audience()
+    public async Task Rejects_tokens_with_wrong_client_id()
     {
         using var app = new TestApplication();
         using var host = CreateProbe(app);
-        var response = await GetOwner(host, app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow(), audience: "another-api"));
+        var response = await GetOwner(host, app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow(), clientId: "client_other"));
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
-    public async Task Rejects_tokens_without_an_audience()
+    public async Task Rejects_tokens_without_a_client_id()
     {
         using var app = new TestApplication();
         using var host = CreateProbe(app);
-        var response = await GetOwner(host, app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow(), audience: null));
+        var response = await GetOwner(host, app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow(), clientId: null));
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Accepts_matching_client_id_without_an_audience()
+    {
+        using var app = new TestApplication();
+        using var host = CreateProbe(app);
+        var token = app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow());
+        Assert.Empty(new JwtSecurityTokenHandler().ReadJwtToken(token).Audiences);
+        Assert.Equal(HttpStatusCode.OK, (await GetOwner(host, token)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("client_other")]
+    [InlineData("CLIENT_TEST")]
+    [InlineData("client_test ")]
+    [InlineData("")]
+    [InlineData(null)]
+    public async Task Audience_cannot_replace_a_missing_or_incorrect_client_id(string? clientId)
+    {
+        using var app = new TestApplication();
+        using var host = CreateProbe(app);
+        var now = app.Clock.GetUtcNow();
+        var claims = new List<Claim> { new("sub", TestIdentityIssuer.Alice) };
+        if (clientId is not null) claims.Add(new Claim("client_id", clientId));
+        var jwt = new JwtSecurityToken(TestIdentityIssuer.Issuer, TestIdentityIssuer.ClientId, claims,
+            now.AddMinutes(-1).UtcDateTime, now.AddMinutes(10).UtcDateTime,
+            new SigningCredentials(app.Identity.Key, SecurityAlgorithms.RsaSha256));
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await GetOwner(host, new JwtSecurityTokenHandler().WriteToken(jwt))).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("number")]
+    [InlineData("multiple")]
+    [InlineData("array")]
+    [InlineData("object")]
+    public async Task Bearer_and_session_validation_reject_malformed_client_ids(string shape)
+    {
+        using var app = new TestApplication();
+        using var host = CreateProbe(app);
+        var now = app.Clock.GetUtcNow();
+        var jwt = new JwtSecurityToken(TestIdentityIssuer.Issuer, null,
+            [new Claim("sub", TestIdentityIssuer.Alice), new Claim("sid", "sid_test")],
+            now.AddMinutes(-1).UtcDateTime, now.AddMinutes(10).UtcDateTime,
+            new SigningCredentials(app.Identity.Key, SecurityAlgorithms.RsaSha256));
+        jwt.Payload["client_id"] = shape switch
+        {
+            "number" => 123,
+            "multiple" => new[] { TestIdentityIssuer.ClientId, "client_other" },
+            "array" => new[] { TestIdentityIssuer.ClientId },
+            _ => new Dictionary<string, string> { ["value"] = TestIdentityIssuer.ClientId }
+        };
+        var token = new JwtSecurityTokenHandler().WriteToken(jwt);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await GetOwner(host, token)).StatusCode);
+        var validator = host.Services.GetRequiredService<CostTracking.Api.Auth.SessionTokenValidator>();
+        await Assert.ThrowsAnyAsync<SecurityTokenException>(() => validator.ValidateAsync(token, CancellationToken.None));
+    }
+
+    [Fact]
+    public void Configuration_requires_the_WorkOS_client_id()
+    {
+        var configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Auth:Issuer"] = TestIdentityIssuer.Issuer,
+                ["Auth:JwksUrl"] = "https://issuer.test/jwks"
+            }).Build();
+        Assert.Contains("WorkOS:ClientId", Assert.Throws<InvalidOperationException>(() =>
+            CostTracking.Api.Auth.JwtAuthentication.ValidateConfiguration(configuration)).Message);
     }
 
     [Fact]
@@ -59,7 +130,7 @@ public sealed class AuthenticationTests
         using var app = new TestApplication();
         using var host = CreateProbe(app);
         var now = app.Clock.GetUtcNow();
-        var token = CreateToken(app.Identity.Key, [new Claim("sub", TestIdentityIssuer.Alice)], now.AddMinutes(-20).UtcDateTime, now.AddSeconds(-1).UtcDateTime);
+        var token = CreateToken(app.Identity.Key, [new Claim("sub", TestIdentityIssuer.Alice), new Claim("client_id", TestIdentityIssuer.ClientId)], now.AddMinutes(-20).UtcDateTime, now.AddSeconds(-1).UtcDateTime);
         var response = await GetOwner(host, token);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -70,8 +141,8 @@ public sealed class AuthenticationTests
         using var app = new TestApplication();
         using var host = CreateProbe(app);
         var now = app.Clock.GetUtcNow();
-        var missing = CreateToken(app.Identity.Key, [], now.AddMinutes(-1).UtcDateTime, now.AddMinutes(10).UtcDateTime);
-        var nonUser = CreateToken(app.Identity.Key, [new Claim("sub", "client_service")], now.AddMinutes(-1).UtcDateTime, now.AddMinutes(10).UtcDateTime);
+        var missing = CreateToken(app.Identity.Key, [new Claim("client_id", TestIdentityIssuer.ClientId)], now.AddMinutes(-1).UtcDateTime, now.AddMinutes(10).UtcDateTime);
+        var nonUser = CreateToken(app.Identity.Key, [new Claim("sub", "client_service"), new Claim("client_id", TestIdentityIssuer.ClientId)], now.AddMinutes(-1).UtcDateTime, now.AddMinutes(10).UtcDateTime);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await GetOwner(host, missing)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await GetOwner(host, nonUser)).StatusCode);
@@ -127,7 +198,7 @@ public sealed class AuthenticationTests
             builder.UseEnvironment("Production");
             builder.UseSetting("Auth:TestMode", unsafeSetting == "test-auth" ? "true" : "false");
             builder.UseSetting("Auth:Issuer", TestIdentityIssuer.Issuer);
-            builder.UseSetting("Auth:Audience", TestIdentityIssuer.Audience);
+            builder.UseSetting("WorkOS:ClientId", TestIdentityIssuer.ClientId);
             builder.UseSetting("Auth:JwksUrl", unsafeSetting == "insecure-jwks" ? "http://issuer.test/jwks" : "https://issuer.test/jwks");
             builder.UseSetting("Auth:DataProtectionKeyIdentifier", "https://test-vault.vault.azure.net/keys/test-protection");
         });
@@ -160,7 +231,7 @@ public sealed class AuthenticationTests
 
     private static string CreateToken(SecurityKey signingKey, IEnumerable<Claim> claims, DateTime notBefore, DateTime expires)
     {
-        var token = new JwtSecurityToken(TestIdentityIssuer.Issuer, TestIdentityIssuer.Audience, claims,
+        var token = new JwtSecurityToken(TestIdentityIssuer.Issuer, null, claims,
             notBefore, expires, new SigningCredentials(signingKey, SecurityAlgorithms.RsaSha256));
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

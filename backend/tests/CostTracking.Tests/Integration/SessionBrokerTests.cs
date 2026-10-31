@@ -12,6 +12,38 @@ namespace CostTracking.Tests.Integration;
 
 public sealed class SessionBrokerTests
 {
+    [Theory]
+    [InlineData(null)]
+    [InlineData("client_other")]
+    public async Task Callback_rejects_tokens_for_missing_or_wrong_client_id(string? clientId)
+    {
+        using var app = new TestApplication();
+        using var client = app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        app.WorkOs.NextExchangeAccessToken = app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow(), clientId: clientId);
+        using var login = await client.GetAsync("/auth/login?returnTo=%2Fhorses");
+        var cookie = login.Headers.GetValues("Set-Cookie").Single().Split(';', 2)[0];
+        var state = QueryHelpers.ParseQuery(login.Headers.Location!.Query)["state"].ToString();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/auth/callback?code=code&state=" + Uri.EscapeDataString(state));
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.DoesNotContain(response.Headers.GetValues("Set-Cookie"), value => value.StartsWith("__Host-cost-session=", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("client_other")]
+    public async Task Refresh_rejects_tokens_for_missing_or_wrong_client_id_and_removes_session(string? clientId)
+    {
+        using var app = new TestApplication();
+        using var client = app.CreateClient();
+        var handle = await CreateExpiringSessionAsync(app);
+        app.WorkOs.NextRefreshAccessToken = app.Identity.Issue(TestIdentityIssuer.Alice, app.Clock.GetUtcNow(), clientId: clientId);
+        using var response = await client.SendAsync(RefreshRequest(handle));
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Null(await app.Services.GetRequiredService<SessionStore>().ReadAsync(handle));
+    }
+
     [Fact]
     public async Task Missing_session_returns_no_store_unauthorized_without_refresh_side_effect()
     {

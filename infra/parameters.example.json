@@ -29,9 +29,6 @@
     "authIssuer": {
       "value": "https://issuer.example.test"
     },
-    "authAudience": {
-      "value": "cost-tracking-api-example"
-    },
     "authJwksUrl": {
       "value": "https://issuer.example.test/jwks"
     },

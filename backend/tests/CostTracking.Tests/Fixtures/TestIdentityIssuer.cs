@@ -8,7 +8,7 @@ namespace CostTracking.Tests.Fixtures;
 public sealed class TestIdentityIssuer : IDisposable
 {
     public const string Issuer = "https://issuer.test";
-    public const string Audience = "cost-tracking-tests";
+    public const string ClientId = "client_test";
     public const string Alice = "user_Alice";
     public const string Bob = "user_Bob";
     private readonly RSA rsa = RSA.Create(2048);
@@ -17,12 +17,13 @@ public sealed class TestIdentityIssuer : IDisposable
     public TestIdentityIssuer() => Key = new RsaSecurityKey(rsa) { KeyId = "test-key-1" };
 
     public string Issue(string subject, DateTimeOffset now, string? issuer = null,
-        string? audience = Audience, string? organization = null, string? sessionId = "session_test", TimeSpan? lifetime = null)
+        string? clientId = ClientId, string? organization = null, string? sessionId = "session_test", TimeSpan? lifetime = null)
     {
         var claims = new List<Claim> { new("sub", subject) };
+        if (clientId is not null) claims.Add(new Claim("client_id", clientId));
         if (sessionId is not null) claims.Add(new Claim("sid", sessionId));
         if (organization is not null) claims.Add(new Claim("org_id", organization));
-        var token = new JwtSecurityToken(issuer ?? Issuer, audience, claims,
+        var token = new JwtSecurityToken(issuer ?? Issuer, null, claims,
             now.AddMinutes(-1).UtcDateTime, now.Add(lifetime ?? TimeSpan.FromMinutes(10)).UtcDateTime,
             new SigningCredentials(Key, SecurityAlgorithms.RsaSha256));
         return new JwtSecurityTokenHandler().WriteToken(token);

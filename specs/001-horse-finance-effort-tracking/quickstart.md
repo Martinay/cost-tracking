@@ -9,7 +9,7 @@ Contracts: [HTTP](contracts/http-api.md), [authentication](contracts/auth.md), [
 - .NET SDK 10.0.103; Node.js 24.19.0 and npm 11.17.0; Git. Use the versions pinned in `global.json`, `.nvmrc`, and lockfiles. This workstation's verified Node distribution is in the ignored `.local/toolchain/node-v24.19.0-darwin-arm64/bin`; add it to `PATH` if Node is not otherwise installed.
 - Linux container runtime for native file-lock tests. The local Linux proof has passed; a local Linux filesystem is not Azure SMB evidence.
 - Isolated test directories and two test users; fixed owner date 2026-09-21 for deterministic cases (another fixture sets later dates). Test harness supplies clock and RSA issuer/JWKS; no production clock/auth bypass.
-- WorkOS staging environment, client ID and server-only API credential; template audience, registered callback/logout URLs and exact issuer/JWKS settings for real-auth smoke.
+- WorkOS staging environment, client ID and server-only API credential; registered callback/logout URLs and exact issuer/JWKS settings for real-auth smoke.
 - App-owned sibling HTTPS frontend/API hostnames for cookie session smoke; no paid WorkOS authentication custom domain required. A provisioned Azure Key Vault key and managed identity access for protected shared Data Protection keys in deployed environments. Never commit credentials/session tokens.
 - For release storage checks only: two test containers mounting the exact target Azure Files share and a separate backup destination. Use synthetic data in destructive fault tests.
 
@@ -19,7 +19,7 @@ Contracts: [HTTP](contracts/http-api.md), [authentication](contracts/auth.md), [
 |---|---|
 | `Storage__Root` | Dedicated local test path or `/data` mount |
 | `WorkOS__ClientId`, `WorkOS__ApiKey` | Public client ID and backend-only exchange credential |
-| `Auth__Issuer`, `Auth__Audience`, `Auth__JwksUrl` | Exact JWT validation configuration; HTTPS JWKS, not discovery URL |
+| `Auth__Issuer`, `Auth__JwksUrl` | Exact JWT issuer and HTTPS JWKS, not discovery URL; signed `client_id` must match `WorkOS__ClientId` |
 | `Auth__FrontendOrigin`, `Auth__CallbackUrl` | Allowlisted return origin and server callback |
 | `Auth__DataProtectionKeyPath` | Stable protected key-ring directory shared by API replicas |
 | `Auth__DataProtectionKeyIdentifier` | Azure Key Vault key identifier used to wrap persisted Data Protection keys; deployed API authentication uses its attached managed identity |

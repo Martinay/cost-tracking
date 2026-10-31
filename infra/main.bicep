@@ -35,7 +35,6 @@ param workOsClientId string
 @secure()
 param workOsApiKey string
 param authIssuer string
-param authAudience string
 param authJwksUrl string
 param operationsEmail string
 param fileCapacityAlertBytes int = 8589934592
@@ -238,7 +237,6 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'WorkOS__ClientId', value: workOsClientId }
             { name: 'WorkOS__ApiKey', secretRef: 'workos-api-key' }
             { name: 'Auth__Issuer', value: authIssuer }
-            { name: 'Auth__Audience', value: authAudience }
             { name: 'Auth__JwksUrl', value: authJwksUrl }
             { name: 'Auth__FrontendOrigin', value: 'https://${appDomain}' }
             { name: 'Auth__CallbackUrl', value: 'https://${apiDomain}/auth/callback' }

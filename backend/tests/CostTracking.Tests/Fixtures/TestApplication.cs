@@ -47,12 +47,11 @@ public sealed class TestApplication : WebApplicationFactory<Program>
         {
             ["Storage:Root"] = StorageRoot,
             ["Auth:Issuer"] = TestIdentityIssuer.Issuer,
-            ["Auth:Audience"] = TestIdentityIssuer.Audience,
             ["Auth:JwksUrl"] = "https://issuer.test/jwks",
             ["Auth:FrontendOrigin"] = frontendOrigin,
             ["Auth:CallbackUrl"] = "https://api.test/auth/callback",
             ["Cors:AllowedOrigin"] = frontendOrigin,
-            ["WorkOS:ClientId"] = "client_test",
+            ["WorkOS:ClientId"] = TestIdentityIssuer.ClientId,
             ["WorkOS:ApiKey"] = "sk_test_dummy",
             ["RateLimit:PermitLimit"] = rateLimitPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture)
         }));

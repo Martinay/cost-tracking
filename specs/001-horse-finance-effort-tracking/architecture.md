@@ -2,7 +2,7 @@
 
 **Status**: Design contract refined by planning, 2026-09-21. [Feature requirements](spec.md) take precedence for user behavior.
 
-Planning refinements are recorded in [research.md](research.md); canonical shapes and state rules are in [data-model.md](data-model.md) and [contracts/README.md](contracts/README.md). These clarify exact equal splits, verified locking, command hashes, JWT audience setup, and bounded complete queries.
+Planning refinements are recorded in [research.md](research.md); canonical shapes and state rules are in [data-model.md](data-model.md) and [contracts/README.md](contracts/README.md). These clarify exact equal splits, verified locking, command hashes, JWT client-ID validation, and bounded complete queries.
 
 ## 1. System and deployment
 
@@ -22,7 +22,7 @@ Azure Static Web Apps (free)       WorkOS AuthKit
                              append-only per-user JSONL
 ```
 
-The backend verifies access-token signature, issuer, audience, expiry and user `sub` against the configured WorkOS environment. It rejects missing, malformed and non-user subjects before storage access. `sub` is the sole account key; `org_id` never broadens access. Every resource lookup begins with the authenticated subject, not a client-supplied tenant ID. Return 404 for a foreign or unknown resource ID. Cache keys include the subject and are discarded on sign-out. A server-managed WorkOS session broker handles code exchange and refresh, as defined in [contracts/auth.md](contracts/auth.md); no long-lived token is placed in local storage. WorkOS documents `sub` as the user ID and its signing JWKS in [AuthKit sessions](https://workos.com/docs/authkit/sessions).
+The backend verifies access-token signature, issuer, exact `client_id` matching the configured WorkOS client ID, expiry and user `sub` against the configured WorkOS environment. It rejects missing, malformed and non-user subjects before storage access. `sub` is the sole account key; `org_id` never broadens access. Every resource lookup begins with the authenticated subject, not a client-supplied tenant ID. Return 404 for a foreign or unknown resource ID. Cache keys include the subject and are discarded on sign-out. A server-managed WorkOS session broker handles code exchange and refresh, as defined in [contracts/auth.md](contracts/auth.md); no long-lived token is placed in local storage. WorkOS documents `sub` as the user ID and its signing JWKS in [AuthKit sessions](https://workos.com/docs/authkit/sessions).
 
 Use Static Web Apps Free, Container Apps Consumption with HTTP ingress, `minReplicas: 0`, and initially `maxReplicas: 1`; mount a standard Azure Files SMB share at `/data`. The maximum of one is an operating default, not the integrity mechanism: verified file locking and version checks must remain correct across independent clients before deployment, even with the initial replica limit. The file share persists while the container scales to zero. Microsoft documents [Azure Files mounts in Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts-azure-files) and [zero-replica consumption billing](https://azure.microsoft.com/en-us/pricing/details/container-apps/). Cold starts must be measured separately from warm interactions. The **less than $5/month** objective is a budget gate, not a guaranteed price: price the chosen region's file capacity, operations, egress, logs, WorkOS plan and active container seconds, then set spending alerts. Azure Files incurs charges while compute is at zero.
 

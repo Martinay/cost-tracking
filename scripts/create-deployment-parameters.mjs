@@ -12,7 +12,6 @@ const required = [
   "WORKOS_CLIENT_ID",
   "WORKOS_API_KEY",
   "AUTH_ISSUER",
-  "AUTH_AUDIENCE",
   "AUTH_JWKS_URL",
   "OPERATIONS_EMAIL",
 ];
@@ -86,7 +85,6 @@ export function buildParameters(env) {
     workOsClientId: env.WORKOS_CLIENT_ID,
     workOsApiKey: env.WORKOS_API_KEY,
     authIssuer: env.AUTH_ISSUER,
-    authAudience: env.AUTH_AUDIENCE,
     authJwksUrl: env.AUTH_JWKS_URL,
     operationsEmail: env.OPERATIONS_EMAIL,
   };

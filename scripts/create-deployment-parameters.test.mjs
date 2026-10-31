@@ -21,7 +21,6 @@ function validEnvironment() {
     WORKOS_CLIENT_ID: "client-id",
     WORKOS_API_KEY: "workos-secret",
     AUTH_ISSUER: "https://issuer.example",
-    AUTH_AUDIENCE: "cost-tracking",
     AUTH_JWKS_URL: "https://issuer.example/jwks",
     OPERATIONS_EMAIL: "ops@example.test",
   };
@@ -34,6 +33,8 @@ test("first deployment leaves custom domains disabled and preserves secure param
   assert.equal(parameters.apiImage.value, validEnvironment().API_IMAGE);
   assert.equal(parameters.ghcrToken.value, "package-read-token");
   assert.equal(parameters.workOsApiKey.value, "workos-secret");
+  assert.equal(parameters.workOsClientId.value, "client-id");
+  assert.equal("authAudience" in parameters, false);
   assert.equal("dataProtectionCertificateBase64" in parameters, false);
   assert.equal("dataProtectionCertificatePassword" in parameters, false);
   assert.equal("previousDataProtectionCertificateBase64" in parameters, false);

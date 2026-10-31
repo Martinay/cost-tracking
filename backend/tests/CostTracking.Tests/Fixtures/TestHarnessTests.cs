@@ -26,11 +26,13 @@ public class TestHarnessTests
         {
             var principal = handler.ValidateToken(issuer.Issue(subject, clock), new TokenValidationParameters
             {
-                ValidIssuer = TestIdentityIssuer.Issuer, ValidAudience = TestIdentityIssuer.Audience,
+                ValidIssuer = TestIdentityIssuer.Issuer, ValidateAudience = false,
                 IssuerSigningKey = issuer.Key, ValidateLifetime = false,
                 ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
             }, out _);
             Assert.Equal(subject, principal.FindFirst("sub")!.Value);
+            Assert.Equal(TestIdentityIssuer.ClientId, principal.FindFirst("client_id")!.Value);
+            Assert.Null(principal.FindFirst("aud"));
         }
         var jwks = System.Text.Json.JsonSerializer.Serialize(issuer.Jwks());
         Assert.DoesNotContain("\"d\":", jwks);
