@@ -68,7 +68,7 @@ jobs:
 
       - name: Build frontend production assets
         env:
-          VITE_API_BASE_URL: https://api.cost-tracking.example.com
+          VITE_API_BASE_URL: https://api.cost-tracking.ayasse.cloud
         run: npm --prefix frontend run build
 
       - name: Run frontend component tests
