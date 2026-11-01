@@ -393,6 +393,9 @@ describe("one-time expense form", () => {
     );
     const amount = screen.getByLabelText("Amount");
     await userEvent.type(amount, "10.00");
+    expect(
+      screen.getByRole("combobox", { name: "Category" }),
+    ).toHaveAccessibleDescription(/driving.*mileage/i);
     await userEvent.selectOptions(screen.getByLabelText("Category"), "Feed");
     await userEvent.click(screen.getByLabelText("Misty"));
     await userEvent.click(

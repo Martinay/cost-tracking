@@ -60,7 +60,23 @@ describe("recurring expense occurrence editor", () => {
     );
 
     expect(screen.getByLabelText("Amount")).toHaveValue(63);
-    expect(screen.getByLabelText("Category")).toHaveValue("Veterinary");
+    const category = screen.getByRole("combobox", { name: "Category" });
+    expect(category).toHaveValue("Veterinary");
+    expect(
+      within(category)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "Choose a category",
+      "Stabling",
+      "Veterinary",
+      "Farrier",
+      "Feed",
+      "Equipment",
+      "Training",
+      "Other",
+    ]);
+    expect(category).toHaveAccessibleDescription(/driving.*mileage/i);
     expect(screen.getByLabelText("Description")).toHaveValue("Urgent visit");
     await userEvent.click(
       screen.getByRole("button", { name: "Preview change" }),

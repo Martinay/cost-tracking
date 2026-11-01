@@ -1,4 +1,6 @@
 export const german: Record<string, string> = {
+  "Record driving costs separately using mileage.":
+    "Fahrtkosten separat anhand der gefahrenen Kilometer erfassen.",
   "Select a time zone": "Zeitzone auswählen",
   "Sign out": "Abmelden",
   "Your horse ledger": "Dein Pferdebuch",

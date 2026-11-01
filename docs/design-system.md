@@ -67,6 +67,8 @@ Every input needs a persistent, associated label. Fields are at least 43px tall 
 
 Primary actions are forest green with white text; secondary actions are white with a subtle border. Use explicit button types, descriptive verbs, visible disabled states, and pending text during submission. Settings actions sit in a right-aligned footer separated by a rule. Preserve controlled drafts, confirmation previews, and existing financial safety checks when changing presentation.
 
+Expense categories use the shared `ExpenseCategorySelect` in one-off expenses, recurring rules and revisions, and occurrence edits. Use a required native dropdown with an explicit “Choose a category” prompt and the seven supported non-driving choices. Preserve the existing selection and preview invalidation callback. Associate adjacent help explaining the separate mileage flow for driving costs. Fixed category choices must not use free-text inputs or datalists.
+
 ### Data and feedback
 
 Tables have captions, scoped column/row headers, subtle horizontal rules, aligned numeric values, and restrained row hover. Keep financial units in headings or values. Preserve the existing accessible `ReportTableRegion` wrapper.
