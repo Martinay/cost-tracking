@@ -45,6 +45,12 @@ Below 700px, navigation becomes a horizontally scrollable row above content; kee
 
 ## Components and patterns
 
+### Horse-head identity
+
+The brand and Horses navigation use the same right-facing horse-head outline, with upright ears, a long muzzle, and a curved neck. `frontend/public/horse-head.svg` is the canonical geometry; the shared `Icon` references its `horse-head` group and inherits the surrounding text color. Keep the mark decorative alongside accessible text labels.
+
+Browser and shortcut icons use the same white outline on the `--brand` forest green. The SVG favicon has rounded corners; raster icons have a solid square background so devices can apply their own masks. Keep generous padding and check legibility at 16px. After editing the canonical SVG, run `node scripts/generate-icons.mjs` with the pinned Node runtime and installed Playwright Chromium to regenerate the SVG/ICO favicon and 180/192/512px PNG assets. The document head and `site.webmanifest` declare these local files; the manifest does not add an offline or standalone app flow.
+
 ### Page headings
 
 Use `PageHeading` with an existing heading ID, a concise title, and one sentence describing the page. Optional children provide page actions. Preserve one meaningful h1 per page. Loading and error screens retain their page heading.
