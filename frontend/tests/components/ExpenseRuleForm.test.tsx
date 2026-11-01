@@ -22,6 +22,58 @@ const examplePreview = {
 };
 
 describe("recurring expense rule form", () => {
+  test("exposes supported categories and invalidates the preview when selection changes", async () => {
+    const onPreview = vi.fn().mockResolvedValue(examplePreview);
+    render(
+      <ExpenseRuleForm
+        today="2026-10-09"
+        currency="EUR"
+        horses={horses}
+        onPreview={onPreview}
+        onCreate={vi.fn()}
+      />,
+    );
+    const category = screen.getByRole("combobox", { name: "Category" });
+    expect(category).toHaveValue("");
+    expect(
+      within(category)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "Choose a category",
+      "Stabling",
+      "Veterinary",
+      "Farrier",
+      "Feed",
+      "Equipment",
+      "Training",
+      "Other",
+    ]);
+    expect(category).toHaveAccessibleDescription(/driving.*mileage/i);
+    await userEvent.type(screen.getByLabelText("Start date"), "2026-10-12");
+    await userEvent.type(screen.getByLabelText("Amount"), "48.00");
+    await userEvent.selectOptions(category, "Feed");
+    await userEvent.type(screen.getByLabelText("Description"), "Hay");
+    await userEvent.click(screen.getByLabelText("Misty"));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Preview example occurrence" }),
+    );
+    await screen.findByRole("region", { name: "Example occurrence" });
+    await userEvent.selectOptions(category, "Veterinary");
+    expect(
+      screen.queryByRole("region", { name: "Example occurrence" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create expense rule" }),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/Preview/);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Preview example occurrence" }),
+    );
+    expect(onPreview).toHaveBeenLastCalledWith(
+      expect.objectContaining({ category: "Veterinary" }),
+    );
+  });
   test("previews server example allocation and creates only after review", async () => {
     const onPreview = vi.fn().mockResolvedValue(examplePreview);
     const onCreate = vi.fn().mockResolvedValue(undefined);
@@ -42,7 +94,7 @@ describe("recurring expense rule form", () => {
     );
     await userEvent.selectOptions(screen.getByLabelText("Cadence"), "Weekly");
     await userEvent.type(screen.getByLabelText("Amount"), "48.00");
-    await userEvent.type(screen.getByLabelText("Category"), "Feed");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "Feed");
     await userEvent.type(screen.getByLabelText("Description"), "Hay delivery");
     await userEvent.click(screen.getByLabelText("Misty"));
     await userEvent.click(screen.getByLabelText("Comet"));
@@ -177,7 +229,7 @@ describe("recurring expense rule form", () => {
     );
     await userEvent.type(screen.getByLabelText("Start date"), "2026-10-12");
     await userEvent.type(screen.getByLabelText("Amount"), "48.00");
-    await userEvent.type(screen.getByLabelText("Category"), "Feed");
+    await userEvent.selectOptions(screen.getByLabelText("Category"), "Feed");
     await userEvent.type(
       screen.getByLabelText("Description"),
       "Weekday delivery",

@@ -1,3 +1,4 @@
+import { ExpenseCategorySelect } from "../expenses/ExpenseCategorySelect";
 import { useState } from "react";
 import type {
   FinancialPreview,
@@ -216,15 +217,13 @@ export function ExpenseOccurrenceEditor({
             }}
             required
           />
-          <label htmlFor="occurrence-category">Category</label>
-          <input
+          <ExpenseCategorySelect
             id="occurrence-category"
             value={category}
-            onChange={(event) => {
+            onChange={(value) => {
               edited();
-              setCategory(event.currentTarget.value);
+              setCategory(value);
             }}
-            required
           />
           <label htmlFor="occurrence-description">Description</label>
           <input

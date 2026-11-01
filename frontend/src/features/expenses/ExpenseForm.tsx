@@ -1,3 +1,4 @@
+import { ExpenseCategorySelect } from "./ExpenseCategorySelect";
 import { useEffect, useRef } from "react";
 import { SplitFields } from "../finance/SplitFields";
 import { useFinancialForm } from "../finance/useFinancialForm";
@@ -46,26 +47,11 @@ export function ExpenseForm() {
         {form.errorFor("amountMinor") && (
           <p role="alert">{form.errorFor("amountMinor")}</p>
         )}
-        <label htmlFor="expense-category">Category</label>
-        <select
+        <ExpenseCategorySelect
           id="expense-category"
-          required
           value={form.detail}
-          onChange={(event) => form.setDetail(event.currentTarget.value)}
-        >
-          <option value="">Choose a category</option>
-          {[
-            "Stabling",
-            "Veterinary",
-            "Farrier",
-            "Feed",
-            "Equipment",
-            "Training",
-            "Other",
-          ].map((value) => (
-            <option key={value}>{value}</option>
-          ))}
-        </select>
+          onChange={form.setDetail}
+        />
         {form.errorFor("category") && (
           <p role="alert">{form.errorFor("category")}</p>
         )}

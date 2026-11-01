@@ -1,3 +1,4 @@
+import { ExpenseCategorySelect } from "../expenses/ExpenseCategorySelect";
 import { useRef, useState } from "react";
 import type {
   FinancialPreview,
@@ -287,15 +288,13 @@ export function ExpenseRuleForm({
         }}
         required
       />
-      <label htmlFor="rule-category">Category</label>
-      <input
+      <ExpenseCategorySelect
         id="rule-category"
         value={category}
-        onChange={(event) => {
+        onChange={(value) => {
           invalidatePreview();
-          setCategory(event.currentTarget.value);
+          setCategory(value);
         }}
-        required
       />
       <label htmlFor="rule-description">Description</label>
       <input
