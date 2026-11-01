@@ -17,7 +17,7 @@ public sealed class TestWorkOsClient(TestIdentityIssuer identity, TimeProvider c
     public Task<WorkOsTokens> ExchangeCodeAsync(string code, string verifier, CancellationToken cancellationToken)
     {
         LastVerifier = verifier;
-        if (NextExchangeAccessToken is not null) return Task.FromResult(new WorkOsTokens(NextExchangeAccessToken, "refresh_bad", 600));
+        if (NextExchangeAccessToken is not null) return Task.FromResult(new WorkOsTokens(NextExchangeAccessToken, "refresh_bad"));
         return Task.FromResult(CreateTokens());
     }
 
@@ -26,7 +26,7 @@ public sealed class TestWorkOsClient(TestIdentityIssuer identity, TimeProvider c
         RefreshCount++;
         if (FailRefreshTerminally) throw new WorkOsAuthenticationException(terminal: true);
         if (FailRefreshTransiently) throw new WorkOsAuthenticationException(terminal: false);
-        if (NextRefreshAccessToken is not null) return Task.FromResult(new WorkOsTokens(NextRefreshAccessToken, "refresh_bad", 600));
+        if (NextRefreshAccessToken is not null) return Task.FromResult(new WorkOsTokens(NextRefreshAccessToken, "refresh_bad"));
         return RefreshAfterDelayAsync(cancellationToken);
     }
 
@@ -41,6 +41,6 @@ public sealed class TestWorkOsClient(TestIdentityIssuer identity, TimeProvider c
     {
         var generation = Interlocked.Increment(ref tokenGeneration);
         return new WorkOsTokens(identity.Issue(TestIdentityIssuer.Alice, clock.GetUtcNow(), sessionId: "sid_test"),
-            $"refresh_{generation}", 600);
+            $"refresh_{generation}");
     }
 }

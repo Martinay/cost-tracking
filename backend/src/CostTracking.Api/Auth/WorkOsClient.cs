@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace CostTracking.Api.Auth;
 
-public sealed record WorkOsTokens(string AccessToken, string RefreshToken, long ExpiresIn);
+public sealed record WorkOsTokens(string AccessToken, string RefreshToken);
 
 public interface IWorkOsClient
 {
@@ -46,17 +46,17 @@ public sealed class WorkOsClient(HttpClient client, IConfiguration configuration
         try { payload = await response.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken: cancellationToken); }
         catch (System.Text.Json.JsonException) { throw new WorkOsAuthenticationException(terminal: false); }
         if (payload is null) throw new WorkOsAuthenticationException(terminal: false);
-        if (string.IsNullOrWhiteSpace(payload.AccessToken) || string.IsNullOrWhiteSpace(payload.RefreshToken) || payload.ExpiresIn <= 0)
+        // AuthKit returns no expires_in; session expiry comes from the validated JWT.
+        if (string.IsNullOrWhiteSpace(payload.AccessToken) || string.IsNullOrWhiteSpace(payload.RefreshToken))
             throw new WorkOsAuthenticationException(terminal: false);
-        return new WorkOsTokens(payload.AccessToken, payload.RefreshToken, payload.ExpiresIn);
+        return new WorkOsTokens(payload.AccessToken, payload.RefreshToken);
     }
 
     private static string Required(string? value, string name) =>
         string.IsNullOrWhiteSpace(value) ? throw new InvalidOperationException($"{name} is required.") : value;
 
     private sealed record TokenResponse([property: JsonPropertyName("access_token")] string AccessToken,
-        [property: JsonPropertyName("refresh_token")] string RefreshToken,
-        [property: JsonPropertyName("expires_in")] long ExpiresIn);
+        [property: JsonPropertyName("refresh_token")] string RefreshToken);
 }
 
 public sealed class WorkOsAuthenticationException(bool terminal) : Exception("Authentication provider request failed.")
