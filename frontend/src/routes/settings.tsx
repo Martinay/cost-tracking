@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -213,66 +214,124 @@ export function SettingsRoute() {
 
   return (
     <section aria-labelledby="settings-heading">
-      <h1 id="settings-heading">Settings</h1>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          setMessage("");
-          saveSettings.mutate();
-        }}
-      >
-        <label htmlFor="account-currency">Currency</label>
-        <select
-          id="account-currency"
-          disabled={locked || saveSettings.isPending}
-          onChange={(event) => setCurrency(event.currentTarget.value)}
-          value={currency}
-        >
-          {currencies.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="account-time-zone">Time zone</label>
-        <input
-          id="account-time-zone"
-          autoComplete="off"
-          required
-          disabled={locked || saveSettings.isPending}
-          onChange={(event) => setTimeZone(event.currentTarget.value)}
-          value={timeZone}
-          placeholder="Europe/Berlin"
-        />
-        {locked ? (
-          <p>Settings are locked after financial activity.</p>
-        ) : (
-          <button
-            disabled={!timeZone.trim() || saveSettings.isPending}
-            type="submit"
-          >
-            Save settings
-          </button>
-        )}
-        {saveSettings.isError && (
-          <p role="alert">{errorMessage(saveSettings.error)}</p>
-        )}
-        {message && <p role="status">{message}</p>}
-      </form>
-      <DrivingRateForm
-        savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
-        pending={saveDrivingRate.isPending}
-        errorMessage={
-          saveDrivingRate.isError
-            ? errorMessage(saveDrivingRate.error)
-            : undefined
-        }
-        onSave={(rate) =>
-          saveDrivingRate.mutateAsync(rate).then(() => undefined)
-        }
+      <PageHeading
+        id="settings-heading"
+        title="Settings"
+        description="The details that keep your ledger running smoothly."
       />
-      <section aria-labelledby="account-history-heading">
-        <h2 id="account-history-heading">Account history</h2>
+      <div className="settings-layout">
+        <div className="settings-main">
+          <section
+            className="settings-card"
+            aria-labelledby="preferences-heading"
+          >
+            <div className="card-heading">
+              <span className="section-number">01</span>
+              <div>
+                <h2 id="preferences-heading">Ledger preferences</h2>
+                <p>Set the defaults for your financial records.</p>
+              </div>
+            </div>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                setMessage("");
+                saveSettings.mutate();
+              }}
+            >
+              <div className="field-grid">
+                <div className="field">
+                  <label htmlFor="account-currency">Currency</label>
+                  <select
+                    id="account-currency"
+                    disabled={locked || saveSettings.isPending}
+                    onChange={(event) => setCurrency(event.currentTarget.value)}
+                    value={currency}
+                  >
+                    {currencies.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="field-hint">
+                    Used for all income, expenses, and reports.
+                  </p>
+                </div>
+                <div className="field">
+                  <label htmlFor="account-time-zone">Time zone</label>
+                  <input
+                    id="account-time-zone"
+                    autoComplete="off"
+                    required
+                    disabled={locked || saveSettings.isPending}
+                    onChange={(event) => setTimeZone(event.currentTarget.value)}
+                    value={timeZone}
+                    placeholder="Europe/Berlin"
+                  />
+                  <p className="field-hint">
+                    Dates and recurring schedules follow this time zone.
+                  </p>
+                </div>
+              </div>
+              <div className="form-footer">
+                {locked ? (
+                  <p>Settings are locked after financial activity.</p>
+                ) : (
+                  <button
+                    disabled={!timeZone.trim() || saveSettings.isPending}
+                    type="submit"
+                  >
+                    Save settings
+                  </button>
+                )}
+              </div>
+              {saveSettings.isError && (
+                <p role="alert">{errorMessage(saveSettings.error)}</p>
+              )}
+              {message && <p role="status">{message}</p>}
+            </form>
+          </section>
+          <DrivingRateForm
+            savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
+            pending={saveDrivingRate.isPending}
+            errorMessage={
+              saveDrivingRate.isError
+                ? errorMessage(saveDrivingRate.error)
+                : undefined
+            }
+            onSave={(rate) =>
+              saveDrivingRate.mutateAsync(rate).then(() => undefined)
+            }
+          />
+        </div>
+        <aside className="settings-aside">
+          <div className="settings-note">
+            <span className="eyebrow">Good to know</span>
+            <h2>A consistent ledger starts here.</h2>
+            <p>
+              Currency and time zone are locked after your first financial
+              activity to keep your records consistent.
+            </p>
+            <hr />
+            <p>
+              Your driving rate can be updated whenever your travel costs
+              change.
+            </p>
+          </div>
+        </aside>
+      </div>
+      <section
+        className="history-card"
+        aria-labelledby="account-history-heading"
+      >
+        <div className="card-heading">
+          <span className="section-number">03</span>
+          <div>
+            <h2 id="account-history-heading">Account history</h2>
+            <p>A record of changes to your workspace.</p>
+          </div>
+        </div>
         {history.isPending && <p role="status">Loading history…</p>}
         {history.isError && (
           <div role="alert">
@@ -288,7 +347,13 @@ export function SettingsRoute() {
         )}
         {history.data &&
           history.data.pages.flatMap((page) => page.items).length === 0 && (
-            <p>No account history yet.</p>
+            <div className="empty-state">
+              <span className="empty-state-symbol" aria-hidden="true">
+                ↺
+              </span>
+              <p>No account history yet.</p>
+              <small>Changes to your account will appear here.</small>
+            </div>
           )}
         {history.data &&
           history.data.pages.flatMap((page) => page.items).length > 0 && (

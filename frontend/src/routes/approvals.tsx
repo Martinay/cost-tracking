@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -209,7 +210,11 @@ export function ApprovalsRoute() {
 
   return (
     <section aria-labelledby="approvals-heading">
-      <h1 id="approvals-heading">Income approvals</h1>
+      <PageHeading
+        id="approvals-heading"
+        title="Income approvals"
+        description="Review scheduled payments and confirm what has arrived."
+      />
       <label htmlFor="approval-from">Scheduled dates from</label>
       <input
         id="approval-from"

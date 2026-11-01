@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -377,7 +378,11 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
   );
   return (
     <section aria-labelledby="horse-heading">
-      <h1 id="horse-heading">{item.name}</h1>
+      <PageHeading
+        id="horse-heading"
+        title={item.name}
+        description="Their details, their history, and the care behind it all."
+      />
       {notice && <p role="status">{notice}</p>}
       <HorseForm
         mode="edit"

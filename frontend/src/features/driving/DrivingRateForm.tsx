@@ -56,10 +56,16 @@ export function DrivingRateForm({
   }
 
   return (
-    <section aria-labelledby="driving-rate-heading">
-      <h2 id="driving-rate-heading">Driving rate</h2>
+    <section className="settings-card" aria-labelledby="driving-rate-heading">
+      <div className="card-heading">
+        <span className="section-number">02</span>
+        <div>
+          <h2 id="driving-rate-heading">Driving rate</h2>
+          <p>Your default rate for journeys to and from the stable.</p>
+        </div>
+      </div>
       {savedRateMinorPerKm === null ? (
-        <p>No saved driving rate.</p>
+        <p className="inline-note">No saved driving rate.</p>
       ) : (
         <p>
           Current saved rate: {savedRateMinorPerKm.toFixed(4)} minor units/km
@@ -93,9 +99,14 @@ export function DrivingRateForm({
           </p>
         )}
         {saved && <p role="status">Driving rate saved.</p>}
-        <button type="submit" disabled={pending}>
-          {pending ? "Saving driving rate…" : "Save driving rate"}
-        </button>
+        <p className="field-hint">
+          Enter minor currency units per km. For EUR, 30 means €0.30/km.
+        </p>
+        <div className="form-footer">
+          <button type="submit" disabled={pending}>
+            {pending ? "Saving driving rate…" : "Save driving rate"}
+          </button>
+        </div>
       </form>
     </section>
   );

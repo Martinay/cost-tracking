@@ -14,6 +14,7 @@ import type {
   createAuthSessionBootstrap,
 } from "../api/client";
 import type { SubjectQueryLifecycle } from "../api/queryKeys";
+import { Icon } from "../components/Icon";
 import { AppShell } from "../components/AppShell";
 
 type AuthSession = ReturnType<typeof createAuthSessionBootstrap>;
@@ -49,8 +50,13 @@ export function AuthSignOutControl() {
   const { subject, signOut } = useAuthServices();
   if (!subject) return null;
   return (
-    <button type="button" onClick={() => void signOut()}>
-      Sign out {subject}
+    <button
+      className="sign-out"
+      type="button"
+      title={subject}
+      onClick={() => void signOut()}
+    >
+      <Icon name="logout" /> Sign out
     </button>
   );
 }
@@ -136,6 +142,7 @@ export function AuthBoundary({
         statusMessage={state.statusMessage}
         statusKind={state.statusKind}
         authFallback={authFallback}
+        accountControls={state.subject ? <AuthSignOutControl /> : undefined}
       >
         {children}
       </AppShell>

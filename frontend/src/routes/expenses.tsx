@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -472,7 +473,11 @@ export function ExpensesRoute() {
 
   return (
     <section aria-labelledby="expenses-heading">
-      <h1 id="expenses-heading">Expenses</h1>
+      <PageHeading
+        id="expenses-heading"
+        title="Expenses"
+        description="Keep every cost in view, from daily care to the unexpected."
+      />
       {canLoadProtectedData && (
         <button type="button" onClick={() => setRecording(true)}>
           Record expense

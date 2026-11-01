@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useState } from "react";
 import {
   useInfiniteQuery,
@@ -221,7 +222,11 @@ export function ReportsRoute() {
 
   return (
     <section aria-labelledby="reports-heading">
-      <h1 id="reports-heading">Financial reports</h1>
+      <PageHeading
+        id="reports-heading"
+        title="Financial reports"
+        description="See the bigger picture, one horse and one month at a time."
+      />
       <section
         aria-labelledby="monthly-heading"
         data-testid={monthly.isSuccess ? "report-ready" : undefined}

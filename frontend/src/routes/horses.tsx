@@ -1,3 +1,5 @@
+import { Modal } from "../components/Modal";
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, type ApiCommand } from "../api/client";
@@ -99,7 +101,11 @@ export function HorsesRoute() {
 
   return (
     <section aria-labelledby="horses-heading">
-      <h1 id="horses-heading">Your horses</h1>
+      <PageHeading
+        id="horses-heading"
+        title="Your horses"
+        description="A little more clarity for every horse in your care."
+      />
       {notice && <p role="status">{notice}</p>}
       {needsSetup ? (
         <p>
@@ -133,11 +139,7 @@ export function HorsesRoute() {
         </ul>
       )}
       {adding && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-horse-heading"
-        >
+        <Modal labelledBy="add-horse-heading" onClose={() => setAdding(false)}>
           <h2 id="add-horse-heading">Add horse</h2>
           <HorseForm
             mode="create"
@@ -150,7 +152,7 @@ export function HorsesRoute() {
               createHorse.mutateAsync(value).then(() => undefined)
             }
           />
-        </div>
+        </Modal>
       )}
     </section>
   );

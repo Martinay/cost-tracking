@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -155,7 +156,11 @@ export function TasksRoute() {
 
   return (
     <section aria-labelledby="tasks-heading">
-      <h1 id="tasks-heading">Tasks</h1>
+      <PageHeading
+        id="tasks-heading"
+        title="Tasks"
+        description="Make the time and effort behind their care count."
+      />
       {(account.isPending || horses.isPending) && (
         <p role="status">Loading task setup…</p>
       )}

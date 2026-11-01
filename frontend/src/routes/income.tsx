@@ -1,3 +1,4 @@
+import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -215,7 +216,11 @@ export function IncomeRoute() {
 
   return (
     <section aria-labelledby="income-heading">
-      <h1 id="income-heading">Income</h1>
+      <PageHeading
+        id="income-heading"
+        title="Income"
+        description="Track your earnings and keep recurring payments on course."
+      />
       {canLoadProtectedData && (
         <button type="button" onClick={() => setRecording(true)}>
           Record income

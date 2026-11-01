@@ -2,6 +2,10 @@
 
 The application and local validation tooling are implemented; release readiness is not established. Current task acceptance and validation evidence are in `specs/001-horse-finance-effort-tracking/`.
 
+## UI design
+
+The [Horse ledger design system](docs/design-system.md) defines the visual language, shared components, responsive behavior, and accessibility standards. [AGENTS.md](AGENTS.md) requires future frontend changes to follow it.
+
 ## Pinned toolchain
 
 - .NET SDK 10.0.103 / C# 14 (`global.json`), verified with `dotnet --info`.

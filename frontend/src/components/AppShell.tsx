@@ -1,4 +1,11 @@
-import { createContext, useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from "react";
+import { Icon, type IconName } from "./Icon";
 
 const navigation = [
   ["Horses", "/horses"],
@@ -17,6 +24,7 @@ export interface AppShellProps {
   statusKind?: "polite" | "assertive";
   authFallback?: ReactNode;
   children: ReactNode;
+  accountControls?: ReactNode;
 }
 
 export interface AuthBoundaryState {
@@ -43,24 +51,78 @@ export function AppShell({
   statusKind = "polite",
   authFallback,
   children,
+  accountControls,
 }: AppShellProps) {
   const authenticated = authReady && subject !== null;
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (authenticated && window.innerWidth <= 700) {
+      const current = nav.current?.querySelector<HTMLElement>(
+        '[aria-current="page"]',
+      );
+      if (current && nav.current) {
+        nav.current.scrollLeft =
+          current.offsetLeft - nav.current.offsetLeft - 20;
+      }
+    }
+  }, [authenticated]);
   return (
     <div className="app-shell">
-      <header>
-        <a href="/horses" aria-label="Horse ledger home">
-          Horse ledger
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <header className="sidebar">
+        <a className="brand" href="/horses" aria-label="Horse ledger home">
+          <span className="brand-mark">
+            <Icon name="horses" />
+          </span>
+          <span>
+            Horse ledger<small>CARE. TRACK. THRIVE.</small>
+          </span>
         </a>
         {authenticated && (
-          <nav aria-label="Primary navigation">
-            {navigation.map(([label, href]) => (
-              <a href={href} key={href}>
-                {label}
-              </a>
-            ))}
-          </nav>
+          <>
+            <p className="nav-caption">Workspace</p>
+            <nav ref={nav} aria-label="Primary navigation">
+              {navigation.map(([label, href]) => (
+                <a
+                  href={href}
+                  key={href}
+                  aria-current={
+                    window.location.pathname === href ||
+                    (href === "/horses" &&
+                      (window.location.pathname === "/" ||
+                        window.location.pathname.startsWith("/horses/")))
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Icon name={label.toLowerCase() as IconName} />
+                  {label}
+                </a>
+              ))}
+            </nav>
+          </>
         )}
+        <div className="sidebar-footer">
+          <div className="workspace-note">
+            <span className="workspace-dot" />
+            Your private workspace
+          </div>
+          {accountControls}
+        </div>
       </header>
+      <div className="workspace-bar">
+        <span>
+          Workspace <span aria-hidden="true">/</span>{" "}
+          <strong>
+            {navigation.find(([, href]) =>
+              window.location.pathname.startsWith(href),
+            )?.[0] ?? "Horses"}
+          </strong>
+        </span>
+        <span className="workspace-label">Horse ledger</span>
+      </div>
       {!authReady && <p role="status">Loading your account…</p>}
       {authReady && !subject && (
         <p role="status">Sign in to open your private horse ledger.</p>
@@ -73,7 +135,7 @@ export function AppShell({
           {statusMessage}
         </p>
       )}
-      <main aria-busy={!authReady}>
+      <main id="main-content" tabIndex={-1} aria-busy={!authReady}>
         {subject !== null ? (
           <AuthBoundaryContext.Provider
             value={{

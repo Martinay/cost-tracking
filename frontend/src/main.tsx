@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { createApiClient, createAuthSessionBootstrap } from "./api/client";
 import { createSubjectQueryLifecycle } from "./api/queryKeys";
-import { AuthBoundary, AuthSignOutControl } from "./auth/AuthBoundary";
+import { AuthBoundary } from "./auth/AuthBoundary";
 import { HorsesRoute } from "./routes/horses";
 import { HorseDetailRoute } from "./routes/horses.$horseId";
 import { SettingsRoute } from "./routes/settings";
@@ -47,7 +47,6 @@ export function RootApp() {
         session={authSession}
         subjectLifecycle={subjectQueryLifecycle}
       >
-        <AuthSignOutControl />
         {routeContent()}
       </AuthBoundary>
     </QueryClientProvider>
