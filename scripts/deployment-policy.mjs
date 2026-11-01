@@ -2,7 +2,10 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export function isTrustedDeployment(eventName, ref) {
-  return ref === "refs/heads/main" && eventName === "workflow_dispatch";
+  return (
+    ref === "refs/heads/main" &&
+    (eventName === "push" || eventName === "workflow_dispatch")
+  );
 }
 
 if (
@@ -11,7 +14,9 @@ if (
 ) {
   const [eventName, ref] = process.argv.slice(2);
   if (!isTrustedDeployment(eventName, ref)) {
-    console.error("Deployment is restricted to manual runs on main.");
+    console.error(
+      "Deployment is restricted to pushes and manual runs on main.",
+    );
     process.exitCode = 1;
   }
 }

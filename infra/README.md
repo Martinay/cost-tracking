@@ -2,7 +2,7 @@
 
 `main.bicep` provisions the .NET API on Container Apps, a dedicated Standard LRS storage account and SMB file share, the Azure Files mount, Log Analytics, and operational alerts. Regional resources use **Central India** (`centralindia`). Static Web Apps is the agreed exception: it defaults to **West Europe** (`westeurope`) because Central India is unsupported, and its static assets are globally distributed. Azure Monitor action groups and metric alerts use the required `global` location.
 
-The GitHub Actions workflow deploys only on an explicit manual run on `main`, after validation succeeds. Pushes and pull requests run validation only. It publishes the validated API image to **GitHub Container Registry (GHCR)** and deploys application resources inside the existing `cost-tracking` resource group. No ACR or registry role assignments are required. Bicep creates a Key Vault and RSA key for Data Protection, rotates the key yearly, and creates the API's system-assigned identity. An Azure administrator manually grants that identity the built-in Key Vault Crypto Service Encryption User role at the individual key scope after the first deployment. DNS, WorkOS, and an independent backup target remain operator-managed. Local validation does not provision Azure resources.
+The GitHub Actions workflow automatically deploys every push to `main` after validation succeeds. Manual runs on `main` also deploy; pull requests run validation only. It publishes the validated API image to **GitHub Container Registry (GHCR)** and deploys application resources inside the existing `cost-tracking` resource group. No ACR or registry role assignments are required. Bicep creates a Key Vault and RSA key for Data Protection, rotates the key yearly, and creates the API's system-assigned identity. An Azure administrator manually grants that identity the built-in Key Vault Crypto Service Encryption User role at the individual key scope after the first deployment. DNS, WorkOS, and an independent backup target remain operator-managed. Local validation does not provision Azure resources.
 
 ## Infrastructure files
 
@@ -19,7 +19,7 @@ The GitHub Actions workflow deploys only on an explicit manual run on `main`, af
 
 Before enabling the workflow, confirm that resource group `cost-tracking` exists in Central India. Bicep creates and manages the dedicated storage account and file share. The account name defaults to `ct` plus a deterministic hash of the resource group ID, so it stays stable across deployments to the same resource group. The share name defaults to `ledger`. The default share quota is 10 GiB, with a capacity alert at 8 GiB and seven-day share soft deletion. Soft deletion does not replace independent backups. Redeploying reconciles the configured storage settings, so retain the account/share names to preserve access to existing data. If an earlier deployment used explicit names, preserve those names as Bicep parameter defaults before redeploying; generating a different account name does not migrate its data.
 
-Create a GitHub environment named `azure-production`, restrict its deployment branch to `main`, and configure required reviewers before storing the configuration below. Configure Microsoft Entra workload identity federation with subject `repo:<OWNER>/<REPOSITORY>:environment:azure-production` and audience `api://AzureADTokenExchange`. Grant the deployment principal **Contributor** on `cost-tracking` only. The template does not create role assignments; the GitHub identity needs no Role Based Access Control Administrator role or role-assignment write permission. An operator with permission to manage access performs the manual key grant described below. Azure login uses GitHub OIDC.
+Create a GitHub environment named `azure-production`, restrict its deployment branch to `main`, and configure any required reviewers before storing the configuration below. Required reviewers will pause each deployment for approval; omit them for fully automatic deployments. Configure Microsoft Entra workload identity federation with subject `repo:<OWNER>/<REPOSITORY>:environment:azure-production` and audience `api://AzureADTokenExchange`. Grant the deployment principal **Contributor** on `cost-tracking` only. The template does not create role assignments; the GitHub identity needs no Role Based Access Control Administrator role or role-assignment write permission. An operator with permission to manage access performs the manual key grant described below. Azure login uses GitHub OIDC.
 
 Add these GitHub **environment variables**:
 
@@ -42,10 +42,10 @@ AuthKit access tokens must contain exactly one string `client_id` matching `WORK
 
 Add these GitHub **environment secrets**:
 
-| Secret                                          | Value                                                                     |
-| ----------------------------------------------- | ------------------------------------------------------------------------- |
-| `GHCR_TOKEN`                                    | Classic PAT with `read:packages` for runtime image pulls                  |
-| `WORKOS_API_KEY`                                | WorkOS API key                                                            |
+| Secret           | Value                                                    |
+| ---------------- | -------------------------------------------------------- |
+| `GHCR_TOKEN`     | Classic PAT with `read:packages` for runtime image pulls |
+| `WORKOS_API_KEY` | WorkOS API key                                           |
 
 The workflow writes Bicep parameters to a mode-600 temporary file, removes that file after deployment, and never commits it. Static Web Apps deployment credentials are read from Azure at deploy time and masked in the Actions log.
 
@@ -137,6 +137,6 @@ docker build --file backend/Dockerfile --tag cost-tracking-api:local .
 
 CI pins Bicep CLI `v0.48.1` and builds the API image with `--platform linux/amd64`. Use the same version and platform when reproducing CI locally. Docker must be running for the image build.
 
-These commands do not create Azure resources. The GitHub Actions workflow deploys only after validation succeeds on an explicit manual run on `main`; configure its `azure-production` environment before enabling that job. Bicep compilation proves syntax and schema only; it cannot prove resource availability, DNS, WorkOS, mount options, costs, or actual restore behavior.
+These commands do not create Azure resources. The GitHub Actions workflow deploys after validation succeeds for pushes and manual runs on `main`; configure its `azure-production` environment before enabling that job. Bicep compilation proves syntax and schema only; it cannot prove resource availability, DNS, WorkOS, mount options, costs, or actual restore behavior.
 
 For backup and restore procedure, use [backup-restore.md](backup-restore.md). For cross-client lock evidence, use `scripts/verify-storage.sh --azure` only with the designated synthetic Azure Files share and approved credentials. Set `STORAGE_PROOF_STORAGE_ACCOUNT`, `STORAGE_PROOF_STORAGE_KEY`, `STORAGE_PROOF_FILE_SHARE`, `STORAGE_PROOF_MOUNT_OPTIONS`, `STORAGE_PROOF_SHARE_SKU`, and `STORAGE_PROOF_BILLING_MODEL` in the proof runner's environment. The runner requires an explicit SMB 3.x `vers=` option and rejects `nobrl` and `nostrictsync`; missing configuration exits with an `UNPROVEN` result. See the [storage proof contract](../specs/001-horse-finance-effort-tracking/contracts/storage.md#deployment-proof-gate) for the full release gate.

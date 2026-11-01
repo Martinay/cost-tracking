@@ -131,14 +131,23 @@ test("parameter file writes are exclusive and owner-only", async () => {
   });
 });
 
-test("deployment policy allows only manual runs on main", () => {
-  assert.equal(isTrustedDeployment("push", "refs/heads/main"), false);
+test("deployment policy allows pushes and manual runs on main only", () => {
+  assert.equal(isTrustedDeployment("push", "refs/heads/main"), true);
   assert.equal(
     isTrustedDeployment("workflow_dispatch", "refs/heads/main"),
     true,
   );
   assert.equal(isTrustedDeployment("pull_request", "refs/heads/main"), false);
   assert.equal(isTrustedDeployment("push", "refs/heads/feature"), false);
+  assert.equal(
+    isTrustedDeployment("workflow_dispatch", "refs/heads/feature"),
+    false,
+  );
+  assert.equal(isTrustedDeployment("push", "refs/tags/v1.0.0"), false);
+  assert.equal(
+    isTrustedDeployment("pull_request_target", "refs/heads/main"),
+    false,
+  );
   assert.equal(
     isTrustedDeployment("workflow_dispatch", "refs/tags/v1.0.0"),
     false,
