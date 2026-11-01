@@ -1,4 +1,5 @@
 import "./styles.css";
+import { I18nProvider } from "./i18n/I18nProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { createApiClient, createAuthSessionBootstrap } from "./api/client";
@@ -40,16 +41,18 @@ function routeContent() {
 
 export function RootApp() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthBoundary
-        apiBaseUrl={apiBaseUrl}
-        apiClient={apiClient}
-        session={authSession}
-        subjectLifecycle={subjectQueryLifecycle}
-      >
-        {routeContent()}
-      </AuthBoundary>
-    </QueryClientProvider>
+    <I18nProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthBoundary
+          apiBaseUrl={apiBaseUrl}
+          apiClient={apiClient}
+          session={authSession}
+          subjectLifecycle={subjectQueryLifecycle}
+        >
+          {routeContent()}
+        </AuthBoundary>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }
 

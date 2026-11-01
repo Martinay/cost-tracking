@@ -1,3 +1,5 @@
+import { formatDate } from "../i18n/format";
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
@@ -38,6 +40,7 @@ interface ApprovalPageParam {
 }
 
 export function ApprovalsRoute() {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const keys = subject ? createQueryKeys(subject) : null;
@@ -212,10 +215,12 @@ export function ApprovalsRoute() {
     <section aria-labelledby="approvals-heading">
       <PageHeading
         id="approvals-heading"
-        title="Income approvals"
-        description="Review scheduled payments and confirm what has arrived."
+        title={t("Income approvals")}
+        description={t(
+          "Review scheduled payments and confirm what has arrived.",
+        )}
       />
-      <label htmlFor="approval-from">Scheduled dates from</label>
+      <label htmlFor="approval-from">{t("Scheduled dates from")}</label>
       <input
         id="approval-from"
         type="date"
@@ -224,33 +229,39 @@ export function ApprovalsRoute() {
         onChange={(event) => setFromOverride(event.currentTarget.value)}
       />
       <p>
-        Window being viewed: {from} through {today} · as of{" "}
-        {approvals.data?.pages[0]?.asOfDate ?? today}
+        {t("Window being viewed: ")}
+        {formatDate(from, locale)} {t("through ")}
+        {formatDate(today, locale)} {t("· as of")}{" "}
+        {formatDate(approvals.data?.pages[0]?.asOfDate ?? today, locale)}
       </p>
-      {decisionNotice && <p role="status">{decisionNotice}</p>}
+      {decisionNotice && <p role="status">{t(decisionNotice)}</p>}
       {from > startOfMonth && (
         <button
           type="button"
           onClick={() => setFromOverride(previousMonth(from))}
         >
-          Earlier pending payments
+          {t("Earlier pending payments")}
         </button>
       )}
       {(account.isPending || horses.isPending) && (
-        <p role="status">Loading approval setup…</p>
+        <p role="status">{t("Loading approval setup…")}</p>
       )}
       {(account.isError || horses.isError) && (
         <p role="alert">
-          Approval setup could not be loaded. Retry the page after checking your
-          connection.
+          {t(
+            "Approval setup could not be loaded. Retry the page after checking your connection.",
+          )}
         </p>
       )}
-      {approvals.isPending && <p role="status">Loading pending payments…</p>}
+      {approvals.isPending && (
+        <p role="status">{t("Loading pending payments…")}</p>
+      )}
       {approvals.isError && (
         <div role="alert">
           <p>
-            {approvals.error.message || "Pending payments could not be loaded."}{" "}
-            If the window is too large, choose a later start date.
+            {errorText(approvals.error) ||
+              t("Pending payments could not be loaded.")}{" "}
+            {t("If the window is too large, choose a later start date.")}
           </p>
           <button
             type="button"
@@ -259,15 +270,15 @@ export function ApprovalsRoute() {
               setReload((value) => value + 1);
             }}
           >
-            Restart this window
+            {t("Restart this window")}
           </button>
         </div>
       )}
       {!approvals.isPending && !approvals.isError && items.length === 0 && (
-        <p>No pending payments in this window.</p>
+        <p>{t("No pending payments in this window.")}</p>
       )}
       {items.length > 0 && (
-        <section aria-label="Pending payments">
+        <section aria-label={t("Pending payments")}>
           {items.map((item) => (
             <IncomeDecisionDialogs
               key={`${item.ruleId}-${item.scheduledDate}`}
@@ -289,8 +300,8 @@ export function ApprovalsRoute() {
           onClick={() => void approvals.fetchNextPage()}
         >
           {approvals.isFetchingNextPage
-            ? "Loading earlier payments…"
-            : "Load more pending payments"}
+            ? t("Loading earlier payments…")
+            : t("Load more pending payments")}
         </button>
       )}
     </section>

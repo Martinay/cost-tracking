@@ -290,7 +290,7 @@ describe("financial report tables", () => {
       screen.getByText(
         (_text, element) =>
           element?.tagName === "P" &&
-          element.textContent?.includes("Through 2026-09-21") === true,
+          element.textContent?.includes("Through 9/21/2026") === true,
       ),
     ).toBeInTheDocument();
     expect(
@@ -493,7 +493,7 @@ test("horse detail includes monthly and complete lifetime financial summary, inc
       (_text, element) =>
         element?.tagName === "P" &&
         element.textContent?.replaceAll("\n", "").trim() ===
-          "Through 2026-09-21",
+          "Through 9/21/2026",
     ),
   ).toBeInTheDocument();
   expect(await screen.findByText("€500.00")).toBeInTheDocument();

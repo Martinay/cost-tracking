@@ -1,3 +1,5 @@
+import { useI18n } from "../../i18n/I18nProvider";
+
 const expenseCategories = [
   "Stabling",
   "Veterinary",
@@ -19,9 +21,10 @@ export function ExpenseCategorySelect({
   value,
   onChange,
 }: ExpenseCategorySelectProps) {
+  const { t } = useI18n();
   return (
     <>
-      <label htmlFor={id}>Category</label>
+      <label htmlFor={id}>{t("Category")}</label>
       <select
         id={id}
         value={value}
@@ -29,15 +32,15 @@ export function ExpenseCategorySelect({
         aria-describedby={`${id}-hint`}
         required
       >
-        <option value="">Choose a category</option>
+        <option value="">{t("Choose a category")}</option>
         {expenseCategories.map((category) => (
           <option key={category} value={category}>
-            {category}
+            {t(category)}
           </option>
         ))}
       </select>
       <p id={`${id}-hint`} className="field-hint">
-        Record driving costs separately using mileage.
+        {t("Record driving costs separately using mileage.")}
       </p>
     </>
   );

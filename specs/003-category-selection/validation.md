@@ -20,3 +20,8 @@ After implementation, all 15 affected component tests pass. Full frontend run: 7
 - `git diff --check`: PASS.
 
 No financial rules, API schemas, authentication behavior, persistence, or server-calculated allocations changed. Local validation does not establish release readiness. Not deployed.
+
+## PR integration validation
+Merged current main (English/German support) into this feature in an isolated worktree. The new German category regression failed before localization, then passed after translating the shared label, options, prompt, and driving guidance. Canonical option values and the current selection survive language changes. Full frontend suite now passes 85/85; the earlier baseline time-zone test failures were already fixed by main. Lint and production build pass.
+
+After conflict resolution, all 10 selected Playwright journeys pass across category, private ledger, and German desktop/mobile flows.

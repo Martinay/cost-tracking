@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../i18n/format";
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
@@ -37,18 +39,12 @@ function requestError(error: unknown): string {
     : "The horse could not be loaded or saved. Please try again.";
 }
 
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
-}
-
 export interface HorseDetailRouteProps {
   horseId: string;
 }
 
 export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState("");
@@ -355,16 +351,16 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
   if (horse.isPending)
     return (
       <section aria-busy="true">
-        <h1>Horse details</h1>
-        <p role="status">Loading horse…</p>
+        <h1>{t("Horse details")}</h1>
+        <p role="status">{t("Loading horse…")}</p>
       </section>
     );
   if (horse.isError)
     return (
       <section>
-        <h1>Horse details</h1>
-        <p role="alert">{requestError(horse.error)}</p>
-        <a href="/horses">Back to horses</a>
+        <h1>{t("Horse details")}</h1>
+        <p role="alert">{errorText(horse.error, requestError(horse.error))}</p>
+        <a href="/horses">{t("Back to horses")}</a>
       </section>
     );
   const item = horse.data;
@@ -381,15 +377,19 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
       <PageHeading
         id="horse-heading"
         title={item.name}
-        description="Their details, their history, and the care behind it all."
+        description={t(
+          "Their details, their history, and the care behind it all.",
+        )}
       />
-      {notice && <p role="status">{notice}</p>}
+      {notice && <p role="status">{t(notice)}</p>}
       <HorseForm
         mode="edit"
         initialValue={item}
         isSaving={updateDetails.isPending}
         errorMessage={
-          updateDetails.isError ? requestError(updateDetails.error) : undefined
+          updateDetails.isError
+            ? errorText(updateDetails.error, requestError(updateDetails.error))
+            : undefined
         }
         onSubmit={(value) =>
           updateDetails.mutateAsync(value).then(() => undefined)
@@ -404,43 +404,48 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
           updateStatus.mutate(field.value as HorseStatus);
         }}
       >
-        <label htmlFor="horse-status">Horse status</label>
+        <label htmlFor="horse-status">{t("Horse status")}</label>
         <select
           id="horse-status"
           name="horseStatus"
           defaultValue={item.status}
           disabled={updateStatus.isPending}
         >
-          <option value="Active">Active</option>
-          <option value="Leased">Leased</option>
-          <option value="Retired">Retired</option>
-          <option value="Sold">Sold</option>
+          <option value="Active">{t("Active")}</option>
+          <option value="Leased">{t("Leased")}</option>
+          <option value="Retired">{t("Retired")}</option>
+          <option value="Sold">{t("Sold")}</option>
         </select>
         <button type="submit" disabled={updateStatus.isPending}>
-          Update status
+          {t("Update status")}
         </button>
         {updateStatus.isError && (
-          <p role="alert">{requestError(updateStatus.error)}</p>
+          <p role="alert">
+            {errorText(updateStatus.error, requestError(updateStatus.error))}
+          </p>
         )}
       </form>
       <section aria-labelledby="horse-recurring-expenses-heading">
         <h2 id="horse-recurring-expenses-heading">
-          Affected recurring expenses
+          {t("Affected recurring expenses")}
         </h2>
         {!showAffectedRules &&
           item.status !== "Retired" &&
           item.status !== "Sold" && (
             <p>
-              Update the horse status to review any affected recurring
-              obligations.
+              {t(
+                "Update the horse status to review any affected recurring obligations.",
+              )}
             </p>
           )}
-        {expenseRules.isPending && <p>Loading recurring expenses…</p>}
+        {expenseRules.isPending && <p>{t("Loading recurring expenses…")}</p>}
         {expenseRules.isError && (
           <div role="alert">
-            <p>{requestError(expenseRules.error)}</p>
+            <p>
+              {errorText(expenseRules.error, requestError(expenseRules.error))}
+            </p>
             <button type="button" onClick={() => void expenseRules.refetch()}>
-              Retry recurring expenses
+              {t("Retry recurring expenses")}
             </button>
           </div>
         )}
@@ -450,26 +455,30 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
           !expenseRules.isPending &&
           !expenseRules.isError &&
           affectedExpenseRules.length === 0 && (
-            <p>No recurring expenses involve this horse.</p>
+            <p>{t("No recurring expenses involve this horse.")}</p>
           )}
         {affectedExpenseRules.length > 0 && (
-          <ul aria-label="Affected recurring expense rules">
+          <ul aria-label={t("Affected recurring expense rules")}>
             {affectedExpenseRules.map((rule) => (
               <li key={rule.ruleId}>
                 <h3>{rule.defaults.description || rule.defaults.category}</h3>
                 <p>
-                  {rule.schedule.cadence} from {rule.startDate}; inclusive
-                  through{" "}
-                  {rule.lastDate ?? rule.schedule.endDate ?? "no end date"}.
+                  {t(rule.schedule.cadence)} {t("from ")}
+                  {formatDate(rule.startDate, locale)}
+                  {t("; inclusive through")}{" "}
+                  {rule.lastDate ?? rule.schedule.endDate ?? t("no end date")}.
                 </p>
                 <p>
                   {money(
                     rule.defaults.amountMinor,
                     account.data?.currency ?? "EUR",
+                    locale,
                   )}{" "}
                   · {rule.defaults.category}
                 </p>
-                <a href="/expenses">Review scheduled expenses and history</a>
+                <a href="/expenses">
+                  {t("Review scheduled expenses and history")}
+                </a>
               </li>
             ))}
           </ul>
@@ -477,69 +486,88 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
         {(item.status === "Retired" || item.status === "Sold") &&
           affectedExpenseRules.length > 0 && (
             <p>
-              Existing recurring expense obligations remain scheduled after this
-              horse became {item.status.toLowerCase()}.
+              {t(
+                "Existing recurring expense obligations remain scheduled after this horse became ",
+              )}
+              {t(item.status)}.
             </p>
           )}
       </section>
-      <section aria-label="Financial summary">
-        <h2>Financial summary</h2>
-        <h3>Monthly profit and loss for {month}</h3>
-        {monthly.isPending && <p role="status">Loading monthly report…</p>}
-        {monthly.isError && <p role="alert">{requestError(monthly.error)}</p>}
+      <section aria-label={t("Financial summary")}>
+        <h2>{t("Financial summary")}</h2>
+        <h3>
+          {t("Monthly profit and loss for ")}
+          {month}
+        </h3>
+        {monthly.isPending && (
+          <p role="status">{t("Loading monthly report…")}</p>
+        )}
+        {monthly.isError && (
+          <p role="alert">
+            {errorText(monthly.error, requestError(monthly.error))}
+          </p>
+        )}
         {monthly.data &&
           Array.isArray(monthly.data.items) &&
           monthly.data.currency && (
             <dl>
-              <dt>Monthly income</dt>
+              <dt>{t("Monthly income")}</dt>
               <dd>
                 {money(
                   monthly.data.items.find((row) => row.horseId === horseId)
                     ?.incomeMinor ?? 0,
                   monthly.data.currency,
+                  locale,
                 )}
               </dd>
-              <dt>Monthly expenses</dt>
+              <dt>{t("Monthly expenses")}</dt>
               <dd>
                 {money(
                   monthly.data.items.find((row) => row.horseId === horseId)
                     ?.expenseMinor ?? 0,
                   monthly.data.currency,
+                  locale,
                 )}
               </dd>
-              <dt>Monthly net</dt>
+              <dt>{t("Monthly net")}</dt>
               <dd>
                 {money(
                   monthly.data.items.find((row) => row.horseId === horseId)
                     ?.netMinor ?? 0,
                   monthly.data.currency,
+                  locale,
                 )}
               </dd>
             </dl>
           )}
-        <h3>Lifetime</h3>
-        {lifetime.isPending && <p role="status">Loading lifetime report…</p>}
+        <h3>{t("Lifetime")}</h3>
+        {lifetime.isPending && (
+          <p role="status">{t("Loading lifetime report…")}</p>
+        )}
         {lifetime.isError && (
           <div role="alert">
-            <p>{requestError(lifetime.error)}</p>
+            <p>{errorText(lifetime.error, requestError(lifetime.error))}</p>
             <button
               type="button"
               onClick={() =>
                 void queryClient.resetQueries({ queryKey: lifetimeKey })
               }
             >
-              Restart lifetime report
+              {t("Restart lifetime report")}
             </button>
           </div>
         )}
         {lifetime.data?.pages[0]?.asOfDate && (
-          <p>Through {lifetime.data.pages[0].asOfDate}</p>
+          <p>
+            {t("Through ")}
+            {formatDate(lifetime.data.pages[0].asOfDate, locale)}
+          </p>
         )}
         {lifetime.data &&
           lifetime.data.pages.at(-1)?.complete &&
           lifetime.data.pages[0]?.currency && (
             <dl>
-              <dt>Lifetime income</dt>
+              <dt>{t("Lifetime income")}</dt>
               <dd>
                 {money(
                   lifetime.data.pages
@@ -549,9 +577,10 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
                     .filter((row) => row.horseId === horseId)
                     .at(-1)?.incomeMinor ?? 0,
                   lifetime.data.pages[0].currency,
+                  locale,
                 )}
               </dd>
-              <dt>Lifetime expenses</dt>
+              <dt>{t("Lifetime expenses")}</dt>
               <dd>
                 {money(
                   lifetime.data.pages
@@ -561,9 +590,10 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
                     .filter((row) => row.horseId === horseId)
                     .at(-1)?.expenseMinor ?? 0,
                   lifetime.data.pages[0].currency,
+                  locale,
                 )}
               </dd>
-              <dt>Lifetime net</dt>
+              <dt>{t("Lifetime net")}</dt>
               <dd>
                 {money(
                   lifetime.data.pages
@@ -573,14 +603,16 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
                     .filter((row) => row.horseId === horseId)
                     .at(-1)?.netMinor ?? 0,
                   lifetime.data.pages[0].currency,
+                  locale,
                 )}
               </dd>
             </dl>
           )}
         {lifetime.data && !lifetime.data.pages.at(-1)?.complete && (
           <p>
-            Lifetime totals are incomplete. Totals appear after every batch has
-            loaded.
+            {t(
+              "Lifetime totals are incomplete. Totals appear after every batch has loaded.",
+            )}
           </p>
         )}
         {lifetime.hasNextPage && !lifetime.isError && (
@@ -589,11 +621,11 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
             disabled={lifetime.isFetchingNextPage}
             onClick={() => void lifetime.fetchNextPage()}
           >
-            Load remaining lifetime results
+            {t("Load remaining lifetime results")}
           </button>
         )}
       </section>
-      <div role="tablist" aria-label="Horse details">
+      <div role="tablist" aria-label={t("Horse details")}>
         <button
           id="horse-history-tab"
           type="button"
@@ -602,7 +634,7 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
           aria-controls="horse-history-panel"
           onClick={() => setActiveDetailTab("history")}
         >
-          History
+          {t("History")}
         </button>
         <button
           id="horse-activity-tab"
@@ -612,7 +644,7 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
           aria-controls="horse-activity-panel"
           onClick={() => setActiveDetailTab("activity")}
         >
-          Activity
+          {t("Activity")}
         </button>
       </div>
       <section
@@ -621,30 +653,30 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
         aria-labelledby="horse-history-tab"
         hidden={activeDetailTab !== "history"}
       >
-        <h2 id="horse-history-heading">History</h2>
-        {history.isPending && <p role="status">Loading history…</p>}
+        <h2 id="horse-history-heading">{t("History")}</h2>
+        {history.isPending && <p role="status">{t("Loading history…")}</p>}
         {history.isError && (
           <div role="alert">
-            <p>{requestError(history.error)}</p>
+            <p>{errorText(history.error, requestError(history.error))}</p>
             <button type="button" onClick={() => void history.refetch()}>
-              Reload history
+              {t("Reload history")}
             </button>
           </div>
         )}
         {history.data &&
           history.data.pages.flatMap((page) => page.items).length === 0 && (
-            <p>No history yet.</p>
+            <p>{t("No history yet.")}</p>
           )}
         {history.data &&
           history.data.pages.flatMap((page) => page.items).length > 0 && (
-            <ol aria-label="Horse history">
+            <ol aria-label={t("Horse history")}>
               {history.data.pages
                 .flatMap((page) => page.items)
                 .map((item) => (
                   <li key={item.eventId}>
                     <p>{item.summary}</p>
                     <time dateTime={item.occurredAt}>
-                      {new Date(item.occurredAt).toLocaleString()}
+                      {new Date(item.occurredAt).toLocaleString(locale)}
                     </time>
                   </li>
                 ))}
@@ -657,8 +689,8 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
             onClick={() => void history.fetchNextPage()}
           >
             {history.isFetchingNextPage
-              ? "Loading older history…"
-              : "Load older history"}
+              ? t("Loading older history…")
+              : t("Load older history")}
           </button>
         )}
       </section>
@@ -668,31 +700,31 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
         aria-labelledby="horse-activity-tab"
         hidden={activeDetailTab !== "activity"}
       >
-        <h2 id="horse-activity-heading">Activity</h2>
-        {activity.isPending && <p role="status">Loading activity…</p>}
+        <h2 id="horse-activity-heading">{t("Activity")}</h2>
+        {activity.isPending && <p role="status">{t("Loading activity…")}</p>}
         {activity.isError && (
           <div role="alert">
-            <p>{requestError(activity.error)}</p>
+            <p>{errorText(activity.error, requestError(activity.error))}</p>
             <button type="button" onClick={() => void activity.refetch()}>
-              Reload activity
+              {t("Reload activity")}
             </button>
           </div>
         )}
         {activity.data && activity.data.items.length === 0 && (
-          <p>No activity recorded this month.</p>
+          <p>{t("No activity recorded this month.")}</p>
         )}
         {activity.data && activity.data.items.length > 0 && (
-          <ul aria-label="Horse activity summary">
+          <ul aria-label={t("Horse activity summary")}>
             {activity.data.items.map((row) => (
               <li key={row.taskType}>
-                {row.taskType.replace(/([a-z])([A-Z])/g, "$1 $2")}: {row.count}{" "}
-                tasks, {row.minutes} minutes
+                {t(row.taskType)}: {row.count} {t("tasks, ")}
+                {row.minutes} {t("minutes")}
               </li>
             ))}
           </ul>
         )}
       </section>
-      <a href="/horses">Back to horses</a>
+      <a href="/horses">{t("Back to horses")}</a>
     </section>
   );
 }

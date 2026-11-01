@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useEffect, useRef, useState } from "react";
 import type { ApiResponse } from "../../api/client";
 import type {
@@ -45,6 +47,7 @@ export function IncomeDecisionDialogs({
   onApprove(values: IncomeDecisionValues): Promise<void>;
   onReject(): Promise<void>;
 }) {
+  const { t, locale } = useI18n();
   const [editing, setEditing] = useState(false);
   const [receivedDate, setReceivedDate] = useState(today);
   const [amount, setAmount] = useState((item.amountMinor / 100).toFixed(2));
@@ -66,7 +69,7 @@ export function IncomeDecisionDialogs({
   const [previewFingerprint, setPreviewFingerprint] = useState("");
   const [rejecting, setRejecting] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
   const rejectTrigger = useRef<HTMLButtonElement>(null);
   const rejectDialog = useRef<HTMLDivElement>(null);
   const amountMinor = Number.isFinite(Number(amount))
@@ -113,7 +116,7 @@ export function IncomeDecisionDialogs({
     } catch (reason) {
       setError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The approval could not be previewed.",
       );
     } finally {
@@ -132,9 +135,7 @@ export function IncomeDecisionDialogs({
       await onApprove({ receivedDate, amountMinor, split });
     } catch (reason) {
       setError(
-        reason instanceof Error
-          ? reason.message
-          : "The payment could not be approved.",
+        reason instanceof Error ? reason : "The payment could not be approved.",
       );
     } finally {
       setPending(false);
@@ -149,9 +150,7 @@ export function IncomeDecisionDialogs({
       setRejecting(false);
     } catch (reason) {
       setError(
-        reason instanceof Error
-          ? reason.message
-          : "The payment could not be rejected.",
+        reason instanceof Error ? reason : "The payment could not be rejected.",
       );
       setRejecting(false);
     } finally {
@@ -163,11 +162,16 @@ export function IncomeDecisionDialogs({
     <article aria-labelledby={`pending-${item.ruleId}-${item.scheduledDate}`}>
       <h3 id={`pending-${item.ruleId}-${item.scheduledDate}`}>{item.source}</h3>
       <p>
-        Scheduled date:{" "}
-        <time dateTime={item.scheduledDate}>{item.scheduledDate}</time>
+        {t("Scheduled date:")}{" "}
+        <time dateTime={item.scheduledDate}>
+          {formatDate(item.scheduledDate, locale)}
+        </time>
       </p>
-      <p>Expected amount: {money(item.amountMinor, currency)}</p>
-      <p>Pending</p>
+      <p>
+        {t("Expected amount: ")}
+        {money(item.amountMinor, currency, locale)}
+      </p>
+      <p>{t("Pending")}</p>
       {item.allocations.some(
         (allocation) =>
           !horses.some(
@@ -177,14 +181,15 @@ export function IncomeDecisionDialogs({
           ),
       ) && (
         <p>
-          Keep the existing split to settle this inactive-horse obligation.
-          Changing targets requires active or leased horses.
+          {t(
+            "Keep the existing split to settle this inactive-horse obligation. Changing targets requires active or leased horses.",
+          )}
         </p>
       )}
       {editing && (
         <div>
           <label htmlFor={`received-${item.ruleId}-${item.scheduledDate}`}>
-            Actual received date
+            {t("Actual received date")}
           </label>
           <input
             id={`received-${item.ruleId}-${item.scheduledDate}`}
@@ -197,7 +202,7 @@ export function IncomeDecisionDialogs({
             }}
           />
           <label htmlFor={`amount-${item.ruleId}-${item.scheduledDate}`}>
-            Actual amount
+            {t("Actual amount")}
           </label>
           <input
             id={`amount-${item.ruleId}-${item.scheduledDate}`}
@@ -220,23 +225,31 @@ export function IncomeDecisionDialogs({
           />
         </div>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{t(error)}</p>}
       {previewCurrent && preview && (
-        <section aria-label="Approval preview">
-          <h4>Authoritative approval preview</h4>
+        <section aria-label={t("Approval preview")}>
+          <h4>{t("Authoritative approval preview")}</h4>
           <p>
-            Actual received date:{" "}
-            <time dateTime={receivedDate}>{receivedDate}</time>
+            {t("Actual received date:")}{" "}
+            <time dateTime={receivedDate}>
+              {formatDate(receivedDate, locale)}
+            </time>
           </p>
           <p>
-            Amount: {money(preview.amountMinor, preview.currency ?? currency)}
+            {t("Amount: ")}
+            {money(preview.amountMinor, preview.currency ?? currency, locale)}
           </p>
-          <ul aria-label="Approval preview allocations">
+          <ul aria-label={t("Approval preview allocations")}>
             {preview.allocations.map((allocation) => (
               <li key={allocation.horseId}>
                 {horses.find((horse) => horse.horseId === allocation.horseId)
                   ?.name ?? allocation.horseId}
-                : {money(allocation.amountMinor, preview.currency ?? currency)}
+                :{" "}
+                {money(
+                  allocation.amountMinor,
+                  preview.currency ?? currency,
+                  locale,
+                )}
               </li>
             ))}
           </ul>
@@ -251,7 +264,7 @@ export function IncomeDecisionDialogs({
             void previewApproval();
           }}
         >
-          Approve
+          {t("Approve")}
         </button>
         <button
           type="button"
@@ -261,7 +274,7 @@ export function IncomeDecisionDialogs({
             invalidatePreview();
           }}
         >
-          Edit and approve
+          {t("Edit and approve")}
         </button>
         {editing && !previewCurrent && (
           <button
@@ -269,7 +282,7 @@ export function IncomeDecisionDialogs({
             disabled={pending}
             onClick={() => void previewApproval()}
           >
-            Preview approval
+            {t("Preview approval")}
           </button>
         )}
         {previewCurrent && (
@@ -278,7 +291,7 @@ export function IncomeDecisionDialogs({
             disabled={pending}
             onClick={() => void approve()}
           >
-            Confirm approval
+            {t("Confirm approval")}
           </button>
         )}
         <button
@@ -287,7 +300,7 @@ export function IncomeDecisionDialogs({
           disabled={pending}
           onClick={() => setRejecting(true)}
         >
-          Reject
+          {t("Reject")}
         </button>
       </div>
       {rejecting && (
@@ -314,28 +327,21 @@ export function IncomeDecisionDialogs({
           }}
         >
           <h4 id={`reject-title-${item.ruleId}-${item.scheduledDate}`}>
-            Reject payment
+            {t("Reject payment")}
           </h4>
-          <p>This decision cannot be undone.</p>
+          <p>{t("This decision cannot be undone.")}</p>
           <button type="button" onClick={() => setRejecting(false)}>
-            Keep pending
+            {t("Keep pending")}
           </button>
           <button
             type="button"
             disabled={pending}
             onClick={() => void reject()}
           >
-            Confirm rejection
+            {t("Confirm rejection")}
           </button>
         </div>
       )}
     </article>
   );
-}
-
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
 }

@@ -1,3 +1,4 @@
+import { useI18n } from "../../i18n/I18nProvider";
 import { useState, type FormEvent } from "react";
 
 export type TaskType =
@@ -48,6 +49,7 @@ export function TaskForm({
   pending = false,
   errorMessage,
 }: TaskFormProps) {
+  const { t } = useI18n();
   const [horseId, setHorseId] = useState("");
   const [taskDate, setTaskDate] = useState(today);
   const [taskType, setTaskType] = useState<TaskType>("Riding");
@@ -56,7 +58,7 @@ export function TaskForm({
   const [quantityUnit, setQuantityUnit] = useState("");
   const [notes, setNotes] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [submissionError, setSubmissionError] = useState("");
+  const [submissionError, setSubmissionError] = useState<string | Error>("");
   const [saved, setSaved] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -97,28 +99,28 @@ export function TaskForm({
       setSaved(true);
     } catch (error) {
       setSubmissionError(
-        error instanceof Error ? error.message : "The task could not be saved.",
+        error instanceof Error ? error : "The task could not be saved.",
       );
     }
   }
 
   return (
     <form onSubmit={(event) => void submit(event)}>
-      <label htmlFor="task-horse">Horse</label>
+      <label htmlFor="task-horse">{t("Horse")}</label>
       <select
         id="task-horse"
         value={horseId}
         onChange={(event) => setHorseId(event.currentTarget.value)}
         required
       >
-        <option value="">Choose a horse</option>
+        <option value="">{t("Choose a horse")}</option>
         {horses.map((horse) => (
           <option key={horse.horseId} value={horse.horseId}>
             {horse.name}
           </option>
         ))}
       </select>
-      <label htmlFor="task-date">Task date</label>
+      <label htmlFor="task-date">{t("Task date")}</label>
       <input
         id="task-date"
         type="date"
@@ -127,7 +129,7 @@ export function TaskForm({
         onChange={(event) => setTaskDate(event.currentTarget.value)}
         required
       />
-      <label htmlFor="task-type">Task type</label>
+      <label htmlFor="task-type">{t("Task type")}</label>
       <select
         id="task-type"
         value={taskType}
@@ -135,11 +137,11 @@ export function TaskForm({
       >
         {TASK_TYPES.map((type) => (
           <option key={type} value={type}>
-            {type.replace(/([a-z])([A-Z])/g, "$1 $2")}
+            {t(type)}
           </option>
         ))}
       </select>
-      <label htmlFor="task-minutes">Minutes</label>
+      <label htmlFor="task-minutes">{t("Minutes")}</label>
       <input
         id="task-minutes"
         type="number"
@@ -149,7 +151,7 @@ export function TaskForm({
         value={minutes}
         onChange={(event) => setMinutes(event.currentTarget.value)}
       />
-      <label htmlFor="task-quantity">Quantity</label>
+      <label htmlFor="task-quantity">{t("Quantity")}</label>
       <input
         id="task-quantity"
         type="number"
@@ -159,14 +161,14 @@ export function TaskForm({
         value={quantity}
         onChange={(event) => setQuantity(event.currentTarget.value)}
       />
-      <label htmlFor="task-quantity-unit">Quantity unit</label>
+      <label htmlFor="task-quantity-unit">{t("Quantity unit")}</label>
       <input
         id="task-quantity-unit"
         maxLength={30}
         value={quantityUnit}
         onChange={(event) => setQuantityUnit(event.currentTarget.value)}
       />
-      <label htmlFor="task-notes">Notes</label>
+      <label htmlFor="task-notes">{t("Notes")}</label>
       <textarea
         id="task-notes"
         maxLength={1000}
@@ -174,11 +176,13 @@ export function TaskForm({
         onChange={(event) => setNotes(event.currentTarget.value)}
       />
       {(validationError || submissionError || errorMessage) && (
-        <p role="alert">{validationError || submissionError || errorMessage}</p>
+        <p role="alert">
+          {t(validationError) || t(submissionError) || t(errorMessage)}
+        </p>
       )}
-      {saved && <p role="status">Task saved.</p>}
+      {saved && <p role="status">{t("Task saved.")}</p>}
       <button type="submit" disabled={pending}>
-        {pending ? "Saving task…" : "Save task"}
+        {pending ? t("Saving task…") : t("Save task")}
       </button>
     </form>
   );

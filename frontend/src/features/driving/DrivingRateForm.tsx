@@ -1,3 +1,4 @@
+import { useI18n } from "../../i18n/I18nProvider";
 import { useState, type FormEvent } from "react";
 
 export interface DrivingRateFormProps {
@@ -13,6 +14,7 @@ export function DrivingRateForm({
   errorMessage,
   onSave,
 }: DrivingRateFormProps) {
+  const { t } = useI18n();
   const [editedValue, setEditedValue] = useState<{
     savedRate: number | null;
     value: string;
@@ -22,7 +24,7 @@ export function DrivingRateForm({
       ? editedValue.value
       : (savedRateMinorPerKm?.toString() ?? "");
   const [validationError, setValidationError] = useState("");
-  const [submissionError, setSubmissionError] = useState("");
+  const [submissionError, setSubmissionError] = useState<string | Error>("");
   const [saved, setSaved] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -49,7 +51,7 @@ export function DrivingRateForm({
     } catch (reason) {
       setSubmissionError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The driving rate could not be saved.",
       );
     }
@@ -60,20 +62,21 @@ export function DrivingRateForm({
       <div className="card-heading">
         <span className="section-number">02</span>
         <div>
-          <h2 id="driving-rate-heading">Driving rate</h2>
-          <p>Your default rate for journeys to and from the stable.</p>
+          <h2 id="driving-rate-heading">{t("Driving rate")}</h2>
+          <p>{t("Your default rate for journeys to and from the stable.")}</p>
         </div>
       </div>
       {savedRateMinorPerKm === null ? (
-        <p className="inline-note">No saved driving rate.</p>
+        <p className="inline-note">{t("No saved driving rate.")}</p>
       ) : (
         <p>
-          Current saved rate: {savedRateMinorPerKm.toFixed(4)} minor units/km
+          {t("Current saved rate: ")}
+          {savedRateMinorPerKm.toFixed(4)} {t("minor units/km")}
         </p>
       )}
       <form onSubmit={(event) => void submit(event)}>
         <label htmlFor="saved-driving-rate">
-          Driving rate (minor units per km)
+          {t("Driving rate (minor units per km)")}
         </label>
         <input
           id="saved-driving-rate"
@@ -95,16 +98,16 @@ export function DrivingRateForm({
         />
         {(validationError || submissionError || errorMessage) && (
           <p role="alert">
-            {validationError || submissionError || errorMessage}
+            {t(validationError) || t(submissionError) || t(errorMessage)}
           </p>
         )}
-        {saved && <p role="status">Driving rate saved.</p>}
+        {saved && <p role="status">{t("Driving rate saved.")}</p>}
         <p className="field-hint">
-          Enter minor currency units per km. For EUR, 30 means €0.30/km.
+          {t("Enter minor currency units per km. For EUR, 30 means €0.30/km.")}
         </p>
         <div className="form-footer">
           <button type="submit" disabled={pending}>
-            {pending ? "Saving driving rate…" : "Save driving rate"}
+            {pending ? t("Saving driving rate…") : t("Save driving rate")}
           </button>
         </div>
       </form>

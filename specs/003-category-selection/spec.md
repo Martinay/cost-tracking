@@ -37,6 +37,7 @@ As an owner, I use the same category choices for one-off expenses, rule revision
 - **FR-003**: Existing supported selections MUST remain selected during edits.
 - **FR-004**: Category controls MUST have persistent labels, keyboard operation, visible focus, and associated help explaining the separate driving flow.
 - **FR-005**: Category changes MUST preserve preview-before-save safeguards, server allocations, validation, and draft retention.
+- **FR-007**: Category labels, the empty prompt, and driving guidance MUST follow the selected English/German interface language while stored category values and selections remain unchanged.
 - **FR-006**: Automated regression tests MUST verify recurring selection, consistent choices, initial selection, and preview invalidation before implementation under the repository TDD rule.
 ### Key Entities
 - Expense category: Existing classification shared by one-off expenses, rule defaults, and changed occurrences. No persistence changes.

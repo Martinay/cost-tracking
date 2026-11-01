@@ -17,3 +17,6 @@
 
 ## Dependencies and implementation strategy
 T001 precedes all tasks. T002 precedes T003; T004 precedes T005. T006 follows integrations; T007 follows all changes. US1 is the MVP, followed by US2. Independent test-file updates can run in parallel, but execution here is sequential. Tests assert user-visible choices and preview behavior, not component internals.
+
+## Integration with main
+- [x] T008 Add a failing localization regression in frontend/tests/components/ExpenseCategorySelect.test.tsx, resolve form conflicts, and localize the shared picker via frontend/src/i18n/messages.ts.

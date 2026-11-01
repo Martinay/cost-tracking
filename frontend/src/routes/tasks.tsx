@@ -1,3 +1,5 @@
+import { formatDate } from "../i18n/format";
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
@@ -24,6 +26,7 @@ function startOfMonth(today: string): string {
 }
 
 export function TasksRoute() {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const [taskReloadGeneration, setTaskReloadGeneration] = useState(0);
@@ -158,14 +161,14 @@ export function TasksRoute() {
     <section aria-labelledby="tasks-heading">
       <PageHeading
         id="tasks-heading"
-        title="Tasks"
-        description="Make the time and effort behind their care count."
+        title={t("Tasks")}
+        description={t("Make the time and effort behind their care count.")}
       />
       {(account.isPending || horses.isPending) && (
-        <p role="status">Loading task setup…</p>
+        <p role="status">{t("Loading task setup…")}</p>
       )}
       {(account.isError || horses.isError) && (
-        <p role="alert">Task setup could not be loaded.</p>
+        <p role="alert">{t("Task setup could not be loaded.")}</p>
       )}
       {account.data && horses.data && (
         <TaskForm
@@ -183,11 +186,11 @@ export function TasksRoute() {
         />
       )}
       <section aria-labelledby="task-list-heading">
-        <h2 id="task-list-heading">Recent tasks</h2>
-        {tasks.isPending && <p role="status">Loading tasks…</p>}
+        <h2 id="task-list-heading">{t("Recent tasks")}</h2>
+        {tasks.isPending && <p role="status">{t("Loading tasks…")}</p>}
         {tasks.isError && (
           <div role="alert">
-            <p>{tasks.error.message}</p>
+            <p>{errorText(tasks.error)}</p>
             <button
               type="button"
               onClick={() => {
@@ -195,17 +198,17 @@ export function TasksRoute() {
                 setTaskReloadGeneration((generation) => generation + 1);
               }}
             >
-              Reload tasks
+              {t("Reload tasks")}
             </button>
           </div>
         )}
         {tasks.data &&
           tasks.data.pages.flatMap((page) => page.items).length === 0 && (
-            <p>No tasks recorded this month.</p>
+            <p>{t("No tasks recorded this month.")}</p>
           )}
         {tasks.data &&
           tasks.data.pages.flatMap((page) => page.items).length > 0 && (
-            <ul aria-label="Recent tasks">
+            <ul aria-label={t("Recent tasks")}>
               {tasks.data.pages
                 .flatMap((page) => page.items)
                 .map((item) => (
@@ -213,9 +216,13 @@ export function TasksRoute() {
                     <strong>
                       {horseNames.get(item.horseId) ?? item.horseId}
                     </strong>{" "}
-                    · {item.taskType.replace(/([a-z])([A-Z])/g, "$1 $2")} ·{" "}
-                    {item.taskDate}
-                    {item.minutes > 0 && <span> · {item.minutes} minutes</span>}
+                    · {t(item.taskType)} · {formatDate(item.taskDate, locale)}
+                    {item.minutes > 0 && (
+                      <span>
+                        {" "}
+                        · {item.minutes} {t("minutes")}
+                      </span>
+                    )}
                     {item.quantity !== undefined && (
                       <span>
                         {" "}
@@ -233,25 +240,27 @@ export function TasksRoute() {
             disabled={tasks.isFetchingNextPage}
             onClick={() => void tasks.fetchNextPage()}
           >
-            {tasks.isFetchingNextPage ? "Loading tasks…" : "Load more tasks"}
+            {tasks.isFetchingNextPage
+              ? t("Loading tasks…")
+              : t("Load more tasks")}
           </button>
         )}
       </section>
       <section aria-labelledby="activity-heading">
-        <h2 id="activity-heading">Activity this month</h2>
-        {activity.isPending && <p role="status">Loading activity…</p>}
+        <h2 id="activity-heading">{t("Activity this month")}</h2>
+        {activity.isPending && <p role="status">{t("Loading activity…")}</p>}
         {activity.isError && (
-          <p role="alert">Activity summary could not be loaded.</p>
+          <p role="alert">{t("Activity summary could not be loaded.")}</p>
         )}
         {activity.data && activity.data.items.length === 0 && (
-          <p>No activity recorded this month.</p>
+          <p>{t("No activity recorded this month.")}</p>
         )}
         {activity.data && activity.data.items.length > 0 && (
-          <ul aria-label="Activity summary">
+          <ul aria-label={t("Activity summary")}>
             {activity.data.items.map((row) => (
               <li key={row.taskType}>
-                {row.taskType.replace(/([a-z])([A-Z])/g, "$1 $2")}: {row.count}{" "}
-                tasks, {row.minutes} minutes
+                {t(row.taskType)}: {row.count} {t("tasks, ")}
+                {row.minutes} {t("minutes")}
               </li>
             ))}
           </ul>

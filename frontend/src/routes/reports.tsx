@@ -1,3 +1,5 @@
+import { formatDate } from "../i18n/format";
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useState } from "react";
 import {
@@ -23,6 +25,7 @@ interface LifetimePageParam {
 }
 
 export function ReportsRoute() {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const keys = subject ? createQueryKeys(subject) : null;
@@ -214,7 +217,7 @@ export function ReportsRoute() {
       horse.horseId,
       horse.status === "Active" || horse.status === "Leased"
         ? horse.name
-        : `${horse.name} (${horse.status})`,
+        : `${horse.name} (${t(horse.status)})`,
     ]),
   );
   const pages = lifetime.data?.pages ?? [];
@@ -224,46 +227,52 @@ export function ReportsRoute() {
     <section aria-labelledby="reports-heading">
       <PageHeading
         id="reports-heading"
-        title="Financial reports"
-        description="See the bigger picture, one horse and one month at a time."
+        title={t("Financial reports")}
+        description={t(
+          "See the bigger picture, one horse and one month at a time.",
+        )}
       />
       <section
         aria-labelledby="monthly-heading"
         data-testid={monthly.isSuccess ? "report-ready" : undefined}
       >
-        <h2 id="monthly-heading">Monthly profit and loss</h2>
-        <label htmlFor="report-month">Report month</label>
+        <h2 id="monthly-heading">{t("Monthly profit and loss")}</h2>
+        <label htmlFor="report-month">{t("Report month")}</label>
         <input
           id="report-month"
           type="month"
           value={month}
           onChange={(event) => setSelectedMonth(event.currentTarget.value)}
         />
-        <label htmlFor="report-horse">Horse filter</label>
+        <label htmlFor="report-horse">{t("Horse filter")}</label>
         <select
           id="report-horse"
           value={selectedHorseId}
           onChange={(event) => setSelectedHorseId(event.currentTarget.value)}
         >
-          <option value="">All horses</option>
+          <option value="">{t("All horses")}</option>
           {(horses.data?.items ?? []).map((horse) => (
             <option key={horse.horseId} value={horse.horseId}>
-              {horseNamesForSelect(horse.name, horse.status)}
+              {horse.status === "Active" || horse.status === "Leased"
+                ? horse.name
+                : `${horse.name} (${t(horse.status)})`}
             </option>
           ))}
         </select>
-        {monthly.isPending && <p role="status">Loading monthly report…</p>}
+        {monthly.isPending && (
+          <p role="status">{t("Loading monthly report…")}</p>
+        )}
         {monthly.isError && (
           <div role="alert">
-            <p>{monthly.error.message}</p>
+            <p>{errorText(monthly.error)}</p>
             <button type="button" onClick={() => void monthly.refetch()}>
-              Retry monthly report
+              {t("Retry monthly report")}
             </button>
           </div>
         )}
         {monthly.data &&
           (monthly.data.items.length === 0 ? (
-            <p>No financial activity for this selection.</p>
+            <p>{t("No financial activity for this selection.")}</p>
           ) : (
             <PnlTable
               month={monthly.data.month}
@@ -276,24 +285,24 @@ export function ReportsRoute() {
           ))}
       </section>
       <section aria-labelledby="breakdown-heading">
-        <h2 id="breakdown-heading">Category and source</h2>
+        <h2 id="breakdown-heading">{t("Category and source")}</h2>
         {expenseBreakdown.isPending && (
-          <p role="status">Loading expense categories…</p>
+          <p role="status">{t("Loading expense categories…")}</p>
         )}
         {expenseBreakdown.isError && (
           <div role="alert">
-            <p>Expense categories could not be loaded.</p>
+            <p>{t("Expense categories could not be loaded.")}</p>
             <button
               type="button"
               onClick={() => void expenseBreakdown.refetch()}
             >
-              Retry expense categories
+              {t("Retry expense categories")}
             </button>
           </div>
         )}
         {expenseBreakdown.data &&
           (expenseBreakdown.data.items.length === 0 ? (
-            <p>No expenses in this period.</p>
+            <p>{t("No expenses in this period.")}</p>
           ) : (
             <BreakdownTable
               kind="expense"
@@ -308,22 +317,22 @@ export function ReportsRoute() {
             />
           ))}
         {incomeBreakdown.isPending && (
-          <p role="status">Loading income sources…</p>
+          <p role="status">{t("Loading income sources…")}</p>
         )}
         {incomeBreakdown.isError && (
           <div role="alert">
-            <p>Income sources could not be loaded.</p>
+            <p>{t("Income sources could not be loaded.")}</p>
             <button
               type="button"
               onClick={() => void incomeBreakdown.refetch()}
             >
-              Retry income sources
+              {t("Retry income sources")}
             </button>
           </div>
         )}
         {incomeBreakdown.data &&
           (incomeBreakdown.data.items.length === 0 ? (
-            <p>No income in this period.</p>
+            <p>{t("No income in this period.")}</p>
           ) : (
             <BreakdownTable
               kind="income"
@@ -339,19 +348,21 @@ export function ReportsRoute() {
           ))}
       </section>
       <section aria-labelledby="activity-report-heading">
-        <h2 id="activity-report-heading">Activity</h2>
-        {activity.isPending && <p role="status">Loading activity summary…</p>}
+        <h2 id="activity-report-heading">{t("Activity")}</h2>
+        {activity.isPending && (
+          <p role="status">{t("Loading activity summary…")}</p>
+        )}
         {activity.isError && (
           <div role="alert">
-            <p>Activity summary could not be loaded.</p>
+            <p>{t("Activity summary could not be loaded.")}</p>
             <button type="button" onClick={() => void activity.refetch()}>
-              Retry activity
+              {t("Retry activity")}
             </button>
           </div>
         )}
         {activity.data &&
           (activity.data.items.length === 0 ? (
-            <p>No activity in this period.</p>
+            <p>{t("No activity in this period.")}</p>
           ) : (
             <ActivitySummary
               from={from}
@@ -364,26 +375,34 @@ export function ReportsRoute() {
           ))}
       </section>
       <section aria-labelledby="lifetime-heading">
-        <h2 id="lifetime-heading">Lifetime report</h2>
-        {lifetime.isPending && <p role="status">Loading lifetime report…</p>}
+        <h2 id="lifetime-heading">{t("Lifetime report")}</h2>
+        {lifetime.isPending && (
+          <p role="status">{t("Loading lifetime report…")}</p>
+        )}
         {lifetime.isError && (
           <div role="alert">
-            <p>{lifetime.error.message}</p>
+            <p>{errorText(lifetime.error)}</p>
             <button
               type="button"
               onClick={() =>
                 void queryClient.resetQueries({ queryKey: lifetimeKey })
               }
             >
-              Restart lifetime report
+              {t("Restart lifetime report")}
             </button>
           </div>
         )}
-        {pages.length > 0 && <p>Through {pages[0].asOfDate}</p>}
+        {pages.length > 0 && (
+          <p>
+            {t("Through ")}
+            {formatDate(pages[0].asOfDate, locale)}
+          </p>
+        )}
         {lifetime.data && !isComplete && !lifetime.isError && (
           <p role="status">
-            Lifetime totals are incomplete. Totals appear after every batch has
-            loaded.
+            {t(
+              "Lifetime totals are incomplete. Totals appear after every batch has loaded.",
+            )}
           </p>
         )}
         {lifetime.data && isComplete && (
@@ -396,8 +415,8 @@ export function ReportsRoute() {
             onClick={() => void lifetime.fetchNextPage()}
           >
             {lifetime.isFetchingNextPage
-              ? "Loading lifetime results…"
-              : "Load remaining lifetime results"}
+              ? t("Loading lifetime results…")
+              : t("Load remaining lifetime results")}
           </button>
         )}
       </section>
@@ -409,10 +428,4 @@ function monthEnd(month: string): string {
   const [year, monthNumber] = month.split("-").map(Number);
   const date = new Date(Date.UTC(year, monthNumber, 0));
   return date.toISOString().slice(0, 10);
-}
-
-function horseNamesForSelect(name: string, status: string): string {
-  return status === "Active" || status === "Leased"
-    ? name
-    : `${name} (${status})`;
 }

@@ -1,3 +1,4 @@
+import { useI18n } from "../i18n/I18nProvider";
 import {
   createContext,
   useCallback,
@@ -47,6 +48,7 @@ export function useAuthServices(): AuthServices {
 }
 
 export function AuthSignOutControl() {
+  const { t } = useI18n();
   const { subject, signOut } = useAuthServices();
   if (!subject) return null;
   return (
@@ -56,7 +58,7 @@ export function AuthSignOutControl() {
       title={subject}
       onClick={() => void signOut()}
     >
-      <Icon name="logout" /> Sign out
+      <Icon name="logout" /> {t("Sign out")}
     </button>
   );
 }
@@ -69,6 +71,7 @@ export function AuthBoundary({
   navigate,
   children,
 }: AuthBoundaryProps) {
+  const { t } = useI18n();
   const [state, setState] = useState<AuthBootstrapState>({
     authReady: false,
     subject: null,
@@ -113,9 +116,11 @@ export function AuthBoundary({
 
   const authFallback = (
     <section aria-labelledby="welcome-heading">
-      <h1 id="welcome-heading">Your horse ledger</h1>
+      <h1 id="welcome-heading">{t("Your horse ledger")}</h1>
       {state.authReady && state.signInRequired && (
-        <a href={`${apiBaseUrl}/auth/login?returnTo=%2Fhorses`}>Sign in</a>
+        <a href={`${apiBaseUrl}/auth/login?returnTo=%2Fhorses`}>
+          {t("Sign in")}
+        </a>
       )}
       {!state.authReady && state.statusKind === "assertive" && (
         <button
@@ -128,7 +133,7 @@ export function AuthBoundary({
             void checkSession();
           }}
         >
-          Retry session check
+          {t("Retry session check")}
         </button>
       )}
     </section>

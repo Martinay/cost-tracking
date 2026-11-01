@@ -28,3 +28,6 @@ Post-design PASS: no dependencies, storage changes, abstractions beyond the conc
 - `frontend/tests/e2e/recurring-expenses.spec.ts`: real browser selection regression.
 - `docs/design-system.md`: reusable selection guidance.
 - `specs/003-category-selection/`: feature artifacts and validation evidence.
+
+## Integration with current main
+Main introduced English/German interface support before merging this feature. Resolve form import and field conflicts by retaining both changes, translate the shared selector through useI18n, and add German driving guidance. Add a regression for translated labels and canonical values before implementation.

@@ -1,3 +1,4 @@
+import { useI18n } from "../../i18n/I18nProvider";
 export type ScheduleCadence = "Daily" | "Weekly" | "Weekdays" | "Monthly";
 
 export interface ScheduleValue {
@@ -26,6 +27,7 @@ export function ScheduleFields({
   value: ScheduleValue;
   onChange(value: ScheduleValue): void;
 }) {
+  const { t } = useI18n();
   function change<K extends keyof ScheduleValue>(
     key: K,
     next: ScheduleValue[K],
@@ -35,8 +37,8 @@ export function ScheduleFields({
 
   return (
     <fieldset>
-      <legend>Schedule</legend>
-      <label htmlFor="schedule-cadence">Cadence</label>
+      <legend>{t("Schedule")}</legend>
+      <label htmlFor="schedule-cadence">{t("Cadence")}</label>
       <select
         id="schedule-cadence"
         value={value.cadence}
@@ -51,14 +53,14 @@ export function ScheduleFields({
           });
         }}
       >
-        <option value="Daily">Daily</option>
-        <option value="Weekly">Weekly</option>
-        <option value="Weekdays">Selected weekdays</option>
-        <option value="Monthly">Monthly</option>
+        <option value="Daily">{t("Daily")}</option>
+        <option value="Weekly">{t("Weekly")}</option>
+        <option value="Weekdays">{t("Selected weekdays")}</option>
+        <option value="Monthly">{t("Monthly")}</option>
       </select>
       {value.cadence !== "Weekdays" && (
         <>
-          <label htmlFor="schedule-interval">Interval</label>
+          <label htmlFor="schedule-interval">{t("Interval")}</label>
           <input
             id="schedule-interval"
             type="number"
@@ -75,7 +77,7 @@ export function ScheduleFields({
       )}
       {value.cadence === "Weekdays" && (
         <fieldset>
-          <legend>Weekdays</legend>
+          <legend>{t("Weekdays")}</legend>
           {isoWeekdays.map(([day, label]) => (
             <label key={day}>
               <input
@@ -90,14 +92,14 @@ export function ScheduleFields({
                   )
                 }
               />
-              {label}
+              {t(label)}
             </label>
           ))}
         </fieldset>
       )}
       {value.cadence === "Monthly" && (
         <>
-          <label htmlFor="schedule-day-of-month">Day of month</label>
+          <label htmlFor="schedule-day-of-month">{t("Day of month")}</label>
           <input
             id="schedule-day-of-month"
             type="number"
@@ -117,7 +119,7 @@ export function ScheduleFields({
           />
         </>
       )}
-      <label htmlFor="schedule-start-date">Start date</label>
+      <label htmlFor="schedule-start-date">{t("Start date")}</label>
       <input
         id="schedule-start-date"
         type="date"
@@ -125,7 +127,7 @@ export function ScheduleFields({
         onChange={(event) => change("startDate", event.currentTarget.value)}
         required
       />
-      <label htmlFor="schedule-end-date">End date (inclusive)</label>
+      <label htmlFor="schedule-end-date">{t("End date (inclusive)")}</label>
       <input
         id="schedule-end-date"
         type="date"
@@ -135,7 +137,7 @@ export function ScheduleFields({
           change("endDate", event.currentTarget.value || null)
         }
       />
-      <p>Start and end dates are inclusive.</p>
+      <p>{t("Start and end dates are inclusive.")}</p>
     </fieldset>
   );
 }

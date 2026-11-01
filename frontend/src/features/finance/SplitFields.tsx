@@ -1,3 +1,4 @@
+import { useI18n } from "../../i18n/I18nProvider";
 import type { FinancialHorse, SplitValue } from "./useFinancialForm";
 
 export function SplitFields({
@@ -9,6 +10,7 @@ export function SplitFields({
   value: SplitValue;
   onChange(next: SplitValue): void;
 }) {
+  const { t } = useI18n();
   const mode = value.mode;
   const selected =
     value.mode === "Equal"
@@ -51,8 +53,8 @@ export function SplitFields({
   }
   return (
     <fieldset>
-      <legend>Split across horses</legend>
-      <label htmlFor="split-mode">Allocation</label>
+      <legend>{t("Split across horses")}</legend>
+      <label htmlFor="split-mode">{t("Allocation")}</label>
       <select
         id="split-mode"
         value={mode}
@@ -60,8 +62,8 @@ export function SplitFields({
           selectMode(event.currentTarget.value as "Equal" | "Custom")
         }
       >
-        <option value="Equal">Equal split</option>
-        <option value="Custom">Custom weights</option>
+        <option value="Equal">{t("Equal split")}</option>
+        <option value="Custom">{t("Custom weights")}</option>
       </select>
       {horses.map((horse) => {
         const active = horse.status === "Active" || horse.status === "Leased";
@@ -75,7 +77,10 @@ export function SplitFields({
               <input
                 aria-label={
                   horse.status === "Retired" || horse.status === "Sold"
-                    ? `${horse.name} (${horse.status})`
+                    ? t("{value0} ({value1})", {
+                        value0: horse.name,
+                        value1: t(horse.status),
+                      })
                     : horse.name
                 }
                 checked={selected.includes(horse.horseId)}
@@ -85,15 +90,19 @@ export function SplitFields({
                 }
                 type="checkbox"
               />
-              {horse.name} {active ? "" : `(${horse.status})`}
+              {horse.name}{" "}
+              {active ? "" : t("({value0})", { value0: t(horse.status) })}
             </label>
             {mode === "Custom" &&
               active &&
               selected.includes(horse.horseId) && (
                 <label>
-                  Weight for {horse.name}
+                  {t("Weight for ")}
+                  {horse.name}
                   <input
-                    aria-label={`Weight for ${horse.name}`}
+                    aria-label={t("Weight for {value0}", {
+                      value0: horse.name,
+                    })}
                     min="1"
                     step="1"
                     type="number"

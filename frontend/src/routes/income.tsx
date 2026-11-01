@@ -1,3 +1,5 @@
+import { formatMoney as money } from "../i18n/format";
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
@@ -39,6 +41,7 @@ interface IncomeRulePageParam {
 }
 
 export function IncomeRoute() {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const [recording, setRecording] = useState(false);
@@ -46,7 +49,7 @@ export function IncomeRoute() {
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [stoppingRuleId, setStoppingRuleId] = useState<string | null>(null);
   const [lastDate, setLastDate] = useState("");
-  const [ruleError, setRuleError] = useState("");
+  const [ruleError, setRuleError] = useState<string | Error>("");
   const [ruleNotice, setRuleNotice] = useState("");
   const pendingRuleCommand = useRef<IncomeRuleCommand | null>(null);
   const keys = subject ? createQueryKeys(subject) : null;
@@ -218,18 +221,20 @@ export function IncomeRoute() {
     <section aria-labelledby="income-heading">
       <PageHeading
         id="income-heading"
-        title="Income"
-        description="Track your earnings and keep recurring payments on course."
+        title={t("Income")}
+        description={t(
+          "Track your earnings and keep recurring payments on course.",
+        )}
       />
       {canLoadProtectedData && (
         <button type="button" onClick={() => setRecording(true)}>
-          Record income
+          {t("Record income")}
         </button>
       )}
       {canLoadProtectedData && recording && <IncomeForm />}
       {canLoadProtectedData && (
         <section aria-labelledby="income-rules-heading">
-          <h2 id="income-rules-heading">Recurring income</h2>
+          <h2 id="income-rules-heading">{t("Recurring income")}</h2>
           <button
             type="button"
             onClick={() => {
@@ -237,15 +242,17 @@ export function IncomeRoute() {
               setShowRuleForm((value) => !value);
             }}
           >
-            Create recurring income rule
+            {t("Create recurring income rule")}
           </button>
-          {ruleNotice && <p role="status">{ruleNotice}</p>}
-          {incomeRules.isPending && <p role="status">Loading income rules…</p>}
+          {ruleNotice && <p role="status">{t(ruleNotice)}</p>}
+          {incomeRules.isPending && (
+            <p role="status">{t("Loading income rules…")}</p>
+          )}
           {incomeRules.isError && (
             <div role="alert">
-              <p>{incomeRules.error.message}</p>
+              <p>{errorText(incomeRules.error)}</p>
               <button type="button" onClick={() => void incomeRules.refetch()}>
-                Retry income rules
+                {t("Retry income rules")}
               </button>
             </div>
           )}
@@ -268,14 +275,14 @@ export function IncomeRoute() {
             <section
               aria-label={
                 editingRule
-                  ? "Revise recurring income rule"
-                  : "Create recurring income rule"
+                  ? t("Revise recurring income rule")
+                  : t("Create recurring income rule")
               }
             >
               <h3>
                 {editingRule
-                  ? "Revise recurring income rule"
-                  : "Create recurring income rule"}
+                  ? t("Revise recurring income rule")
+                  : t("Create recurring income rule")}
               </h3>
               <IncomeRuleForm
                 currency={currency}
@@ -306,13 +313,13 @@ export function IncomeRoute() {
                   setEditingRuleId(null);
                 }}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </section>
           )}
           {stoppingRuleId && (
             <form
-              aria-label="Stop income rule"
+              aria-label={t("Stop income rule")}
               onSubmit={(event) => {
                 event.preventDefault();
                 const path =
@@ -325,14 +332,14 @@ export function IncomeRoute() {
                   .catch((reason) =>
                     setRuleError(
                       reason instanceof Error
-                        ? reason.message
+                        ? reason
                         : "The income rule could not be stopped.",
                     ),
                   );
               }}
             >
               <label htmlFor="income-rule-last-date">
-                Last date (inclusive)
+                {t("Last date (inclusive)")}
               </label>
               <input
                 id="income-rule-last-date"
@@ -342,29 +349,31 @@ export function IncomeRoute() {
                 onChange={(event) => setLastDate(event.currentTarget.value)}
                 required
               />
-              {ruleError && <p role="alert">{ruleError}</p>}
-              <button type="submit">Confirm stop</button>
+              {ruleError && <p role="alert">{t(ruleError)}</p>}
+              <button type="submit">{t("Confirm stop")}</button>
               <button type="button" onClick={() => setStoppingRuleId(null)}>
-                Cancel stop
+                {t("Cancel stop")}
               </button>
             </form>
           )}
         </section>
       )}
-      {account.isPending && <p role="status">Loading account settings…</p>}
+      {account.isPending && (
+        <p role="status">{t("Loading account settings…")}</p>
+      )}
       {account.isError && (
         <div role="alert">
-          <p>Account settings could not be loaded.</p>
+          <p>{t("Account settings could not be loaded.")}</p>
           <button type="button" onClick={() => void account.refetch()}>
-            Retry account
+            {t("Retry account")}
           </button>
         </div>
       )}
       {horses.isError && (
         <div role="alert">
-          <p>Horse names could not be loaded.</p>
+          <p>{t("Horse names could not be loaded.")}</p>
           <button type="button" onClick={() => void horses.refetch()}>
-            Retry horses
+            {t("Retry horses")}
           </button>
         </div>
       )}
@@ -372,13 +381,13 @@ export function IncomeRoute() {
         aria-labelledby="income-ledger-heading"
         data-testid={ledger.isSuccess ? "ledger-ready" : undefined}
       >
-        <h2 id="income-ledger-heading">This month’s income</h2>
+        <h2 id="income-ledger-heading">{t("This month’s income")}</h2>
         {!account.isError && ledger.isPending && (
-          <p role="status">Loading income…</p>
+          <p role="status">{t("Loading income…")}</p>
         )}
         {ledger.isError && (
           <div role="alert">
-            <p>{ledger.error.message || "Income could not be loaded."}</p>
+            <p>{errorText(ledger.error) || t("Income could not be loaded.")}</p>
             <button
               type="button"
               onClick={() =>
@@ -387,31 +396,35 @@ export function IncomeRoute() {
                 })
               }
             >
-              Retry income
+              {t("Retry income")}
             </button>
           </div>
         )}
         {!ledger.isPending && !ledger.isError && entries.length === 0 && (
-          <p>No income this month.</p>
+          <p>{t("No income this month.")}</p>
         )}
         {entries.length > 0 && (
-          <ol aria-label="Income ledger">
+          <ol aria-label={t("Income ledger")}>
             {entries.map((item) => (
               <li key={item.id}>
                 <h3>{item.source}</h3>
                 <time dateTime={item.receivedDate}>
-                  {new Date(
-                    `${item.receivedDate}T00:00:00`,
-                  ).toLocaleDateString()}
+                  {new Date(`${item.receivedDate}T00:00:00`).toLocaleDateString(
+                    locale,
+                  )}
                 </time>
-                <p>{money(item.contributionMinor, currency)}</p>
-                <ul aria-label={`Allocations for ${item.source}`}>
+                <p>{money(item.contributionMinor, currency, locale)}</p>
+                <ul
+                  aria-label={t("Allocations for {value0}", {
+                    value0: item.source,
+                  })}
+                >
                   {item.allocations.map((allocation) => (
                     <li key={allocation.horseId}>
                       {horses.data?.items.find(
                         (horse) => horse.horseId === allocation.horseId,
                       )?.name ?? allocation.horseId}
-                      : {money(allocation.amountMinor, currency)}
+                      : {money(allocation.amountMinor, currency, locale)}
                     </li>
                   ))}
                 </ul>
@@ -426,18 +439,11 @@ export function IncomeRoute() {
             onClick={() => void ledger.fetchNextPage()}
           >
             {ledger.isFetchingNextPage
-              ? "Loading older income…"
-              : "Load older income"}
+              ? t("Loading older income…")
+              : t("Load older income")}
           </button>
         )}
       </section>
     </section>
   );
-}
-
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
 }
