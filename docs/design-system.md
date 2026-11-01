@@ -61,6 +61,8 @@ Use sections with accessible headings for coherent groups. Settings cards pair a
 
 Horse collections use responsive cards. Activity, recurring rules, and ledger entries use divided lists with clear descriptions, dates, and actions. Supporting allocations sit beneath their parent entry. Status badges always include visible text.
 
+Horse cards extend their single native View link across the whole card with a positioned pseudo-element. Keep one translated accessible link name and one tab stop per card, with a brand border on hover and the standard focus outline around the card. Preserve native link actions and encoded destinations. Do not place additional interactive controls beneath the stretched link; revisit the pattern if cards gain other actions.
+
 ### Forms and actions
 
 Every input needs a persistent, associated label. Fields are at least 43px tall and normally bounded to 440px, with full available width on mobile. Keep helper text adjacent to its field. Checkboxes and radios retain their native semantics and use the brand accent.
