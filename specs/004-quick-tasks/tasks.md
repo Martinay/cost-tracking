@@ -24,7 +24,7 @@ Independent test: create, apply, edit, delete, reload and isolate custom shortcu
 - [X] T010 Update browser acceptance for simplified task entry and quick tasks in `frontend/tests/e2e/activities.spec.ts`.
 - [X] T011 Run checks and desktop/mobile primary-task acceptance; record evidence in `specs/004-quick-tasks/validation.md`.
 - [X] T012 Review scope and create the authorized local feature commit; record check results in `specs/004-quick-tasks/validation.md`.
-- [ ] T013 Push `004-quick-tasks` to `https://github.com/Martinay/cost-tracking.git` after destination-specific approval; automatic approval review blocked the initial push.
+- [X] T013 Push `004-quick-tasks` to `https://github.com/Martinay/cost-tracking.git` after destination-specific approval; user approved the destination and the push succeeded on 2026-11-01.
 
 ## Dependencies and strategy
 T001 → T002 → tests T004/T006 → T003/T005/T007/T008 → T009/T010 → T011 → T012. MVP is US1; extend the same form with US2. Independent documentation and style review may run in parallel; implementation is sequential in this run. No extension hooks configured.
