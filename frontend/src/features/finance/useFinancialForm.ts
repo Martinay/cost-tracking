@@ -1,3 +1,4 @@
+import { useI18n } from "../../i18n/I18nProvider";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,6 +35,7 @@ function today(account?: FinancialAccount): string {
 }
 
 export function useFinancialForm(kind: FinanceKind) {
+  const { errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const keys = subject ? createQueryKeys(subject) : null;
@@ -212,7 +214,7 @@ export function useFinancialForm(kind: FinanceKind) {
     previewing: previewMutation.isPending,
     saving: commitMutation.isPending,
     notice,
-    errorMessage: error ? message(error) : "",
+    errorMessage: error ? errorText(error, message(error)) : "",
     canPreview: Boolean(
       values &&
       minor &&

@@ -6,6 +6,10 @@ The application and local validation tooling are implemented; release readiness 
 
 The [Horse ledger design system](docs/design-system.md) defines the visual language, shared components, responsive behavior, and accessibility standards. [AGENTS.md](AGENTS.md) requires future frontend changes to follow it.
 
+## Interface languages
+
+Use the **Language / Sprache** selector to choose English or Deutsch. English is the default; the explicit choice is remembered in this browser. The selector is also available in dialogs. Changing language preserves drafts and financial previews, and does not change account currency or time zone. User-entered content and stored history summaries stay in their original language. Implementation and validation notes are in [specs/003-german-language/](specs/003-german-language/).
+
 ## Pinned toolchain
 
 - .NET SDK 10.0.103 / C# 14 (`global.json`), verified with `dotnet --info`.

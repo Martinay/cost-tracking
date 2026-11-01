@@ -1,3 +1,4 @@
+import { useI18n } from "../../i18n/I18nProvider";
 import { useState, type FormEvent } from "react";
 
 export type HorseStatus = "Active" | "Leased" | "Retired" | "Sold";
@@ -26,6 +27,7 @@ export function HorseForm({
   errorMessage,
   isSaving = false,
 }: HorseFormProps) {
+  const { t } = useI18n();
   const [name, setName] = useState(initialValue?.name ?? "");
   const [breed, setBreed] = useState(initialValue?.breed ?? "");
   const [dateOfBirth, setDateOfBirth] = useState(
@@ -51,7 +53,7 @@ export function HorseForm({
 
   return (
     <form onSubmit={(event) => void submit(event)}>
-      <label htmlFor="horse-name">Name</label>
+      <label htmlFor="horse-name">{t("Name")}</label>
       <input
         autoComplete="off"
         id="horse-name"
@@ -61,7 +63,7 @@ export function HorseForm({
         required
         value={name}
       />
-      <label htmlFor="horse-breed">Breed</label>
+      <label htmlFor="horse-breed">{t("Breed")}</label>
       <input
         autoComplete="off"
         id="horse-breed"
@@ -70,7 +72,7 @@ export function HorseForm({
         onChange={(event) => setBreed(event.currentTarget.value)}
         value={breed}
       />
-      <label htmlFor="horse-date-of-birth">Date of birth</label>
+      <label htmlFor="horse-date-of-birth">{t("Date of birth")}</label>
       <input
         id="horse-date-of-birth"
         name="dateOfBirth"
@@ -80,27 +82,27 @@ export function HorseForm({
       />
       {mode === "create" && (
         <>
-          <label htmlFor="horse-status">Status</label>
+          <label htmlFor="horse-status">{t("Status")}</label>
           <select
             id="horse-status"
             name="status"
             onChange={(event) =>
               setStatus(event.currentTarget.value as HorseStatus)
             }
-            value={status}
+            value={t(status)}
           >
-            <option value="Active">Active</option>
-            <option value="Leased">Leased</option>
+            <option value="Active">{t("Active")}</option>
+            <option value="Leased">{t("Leased")}</option>
           </select>
         </>
       )}
-      {errorMessage && <p role="alert">{errorMessage}</p>}
+      {errorMessage && <p role="alert">{t(errorMessage)}</p>}
       <button disabled={isSaving} type="submit">
-        {isSaving ? "Saving horse…" : "Save horse"}
+        {isSaving ? t("Saving horse…") : t("Save horse")}
       </button>
       {onCancel && (
         <button disabled={isSaving} onClick={onCancel} type="button">
-          Cancel
+          {t("Cancel")}
         </button>
       )}
     </form>

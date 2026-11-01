@@ -289,7 +289,7 @@ test("an owner creates and revises a recurring expense, changes one date, skips 
     },
   });
 
-  await page.getByRole("button", { name: /Change.*2026-10-12/ }).click();
+  await page.getByRole("button", { name: /Change.*10\/12\/2026/ }).click();
   await page.getByLabel("Amount").fill("63.00");
   await page.getByLabel("Category").fill("Veterinary");
   await page.getByLabel("Description").fill("Urgent visit");
@@ -309,7 +309,7 @@ test("an owner creates and revises a recurring expense, changes one date, skips 
   });
   await expect(page.getByText("Changed")).toBeVisible();
 
-  await page.getByRole("button", { name: /Skip.*2026-10-15/ }).click();
+  await page.getByRole("button", { name: /Skip.*10\/15\/2026/ }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Skip this occurrence" }).click();
   await expect(
@@ -323,7 +323,7 @@ test("an owner creates and revises a recurring expense, changes one date, skips 
   await expect(page.getByText("Skipped")).toBeVisible();
   await expect(page.getByText(/Contribution: €0\.00/)).toBeVisible();
 
-  await page.getByRole("button", { name: /Restore.*2026-10-15/ }).click();
+  await page.getByRole("button", { name: /Restore.*10\/15\/2026/ }).click();
   await page
     .getByRole("button", { name: "Restore occurrence", exact: true })
     .click();
@@ -386,10 +386,10 @@ test("a real backend expense rule projects occurrences and persists change, skip
   await page.getByRole("button", { name: "Create expense rule" }).click();
 
   await expect(
-    page.getByRole("button", { name: "Skip occurrence 2026-09-21" }),
+    page.getByRole("button", { name: "Skip occurrence 9/21/2026" }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Change occurrence 2026-09-20" })
+    .getByRole("button", { name: "Change occurrence 9/20/2026" })
     .click();
   await page.getByLabel("Amount").fill("63.00");
   await page.getByLabel("Category").fill("Veterinary");
@@ -401,9 +401,7 @@ test("a real backend expense rule projects occurrences and persists change, skip
   await page.getByRole("button", { name: "Save occurrence change" }).click();
   await expect(page.getByText("Changed")).toBeVisible();
 
-  await page
-    .getByRole("button", { name: "Skip occurrence 2026-09-21" })
-    .click();
+  await page.getByRole("button", { name: "Skip occurrence 9/21/2026" }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Skip this occurrence" }).click();
   await page.getByRole("button", { name: "Save occurrence change" }).click();
@@ -411,7 +409,7 @@ test("a real backend expense rule projects occurrences and persists change, skip
   await expect(page.getByText(/Contribution: €0\.00/)).toBeVisible();
 
   await page
-    .getByRole("button", { name: "Restore occurrence 2026-09-21" })
+    .getByRole("button", { name: "Restore occurrence 9/21/2026" })
     .click();
   await page
     .getByRole("button", { name: "Restore occurrence", exact: true })
@@ -430,7 +428,7 @@ test("a real backend expense rule projects occurrences and persists change, skip
     .click();
   await expect(
     page.getByRole("region", { name: "Example occurrence" }),
-  ).toContainText("2026-09-22");
+  ).toContainText("9/22/2026");
   await page.getByRole("button", { name: "Save rule revision" }).click();
   await expect(page.getByText("Expense rule revision saved.")).toBeVisible();
 

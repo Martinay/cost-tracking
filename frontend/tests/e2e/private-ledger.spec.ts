@@ -556,7 +556,7 @@ test("an owner can review complete monthly and lifetime reports", async ({
     .click();
   const totals = page.getByRole("table", { name: "Lifetime totals" });
   await expect(totals).toBeVisible();
-  await expect(totals).toContainText("Through 2026-09-21");
+  await expect(totals).toContainText("Through 9/21/2026");
   await expect(totals).toContainText("€300.00");
   await expect(totals).toContainText("€120.00");
   await expect(totals).toContainText("€180.00");

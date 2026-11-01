@@ -1,3 +1,4 @@
+import { LanguageSelector } from "./LanguageSelector";
 import { useEffect, useRef, type ReactNode } from "react";
 
 export function Modal({
@@ -52,6 +53,9 @@ export function Modal({
       }}
     >
       {children}
+      <div className="modal-language">
+        <LanguageSelector />
+      </div>
     </div>
   );
 }

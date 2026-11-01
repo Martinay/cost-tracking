@@ -1,3 +1,4 @@
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
@@ -46,6 +47,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function SettingsRoute() {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const [currency, setCurrency] = useState("EUR");
@@ -196,17 +198,19 @@ export function SettingsRoute() {
   if (account.isPending)
     return (
       <section aria-busy="true">
-        <h1>Settings</h1>
-        <p role="status">Loading account settings…</p>
+        <h1>{t("Settings")}</h1>
+        <p role="status">{t("Loading account settings…")}</p>
       </section>
     );
   if (account.isError)
     return (
       <section>
-        <h1>Settings</h1>
-        <p role="alert">{errorMessage(account.error)}</p>
+        <h1>{t("Settings")}</h1>
+        <p role="alert">
+          {errorText(account.error, errorMessage(account.error))}
+        </p>
         <button type="button" onClick={() => void account.refetch()}>
-          Retry
+          {t("Retry")}
         </button>
       </section>
     );
@@ -223,8 +227,8 @@ export function SettingsRoute() {
     <section aria-labelledby="settings-heading">
       <PageHeading
         id="settings-heading"
-        title="Settings"
-        description="The details that keep your ledger running smoothly."
+        title={t("Settings")}
+        description={t("The details that keep your ledger running smoothly.")}
       />
       <div className="settings-layout">
         <div className="settings-main">
@@ -235,8 +239,8 @@ export function SettingsRoute() {
             <div className="card-heading">
               <span className="section-number">01</span>
               <div>
-                <h2 id="preferences-heading">Ledger preferences</h2>
-                <p>Set the defaults for your financial records.</p>
+                <h2 id="preferences-heading">{t("Ledger preferences")}</h2>
+                <p>{t("Set the defaults for your financial records.")}</p>
               </div>
             </div>
             <form
@@ -248,7 +252,7 @@ export function SettingsRoute() {
             >
               <div className="field-grid">
                 <div className="field">
-                  <label htmlFor="account-currency">Currency</label>
+                  <label htmlFor="account-currency">{t("Currency")}</label>
                   <select
                     id="account-currency"
                     disabled={locked || saveSettings.isPending}
@@ -262,11 +266,11 @@ export function SettingsRoute() {
                     ))}
                   </select>
                   <p className="field-hint">
-                    Used for all income, expenses, and reports.
+                    {t("Used for all income, expenses, and reports.")}
                   </p>
                 </div>
                 <div className="field">
-                  <label htmlFor="account-time-zone">Time zone</label>
+                  <label htmlFor="account-time-zone">{t("Time zone")}</label>
                   <select
                     id="account-time-zone"
                     aria-describedby="account-time-zone-hint"
@@ -276,7 +280,7 @@ export function SettingsRoute() {
                     value={timeZone}
                   >
                     <option value="" disabled>
-                      Select a time zone
+                      {t("Select a time zone")}
                     </option>
                     {timeZones.map((zone) => (
                       <option key={zone} value={zone}>
@@ -285,26 +289,31 @@ export function SettingsRoute() {
                     ))}
                   </select>
                   <p id="account-time-zone-hint" className="field-hint">
-                    Dates and recurring schedules follow this time zone.
+                    {t("Dates and recurring schedules follow this time zone.")}
                   </p>
                 </div>
               </div>
               <div className="form-footer">
                 {locked ? (
-                  <p>Settings are locked after financial activity.</p>
+                  <p>{t("Settings are locked after financial activity.")}</p>
                 ) : (
                   <button
                     disabled={!timeZone.trim() || saveSettings.isPending}
                     type="submit"
                   >
-                    Save settings
+                    {t("Save settings")}
                   </button>
                 )}
               </div>
               {saveSettings.isError && (
-                <p role="alert">{errorMessage(saveSettings.error)}</p>
+                <p role="alert">
+                  {errorText(
+                    saveSettings.error,
+                    errorMessage(saveSettings.error),
+                  )}
+                </p>
               )}
-              {message && <p role="status">{message}</p>}
+              {message && <p role="status">{t(message)}</p>}
             </form>
           </section>
           <DrivingRateForm
@@ -312,7 +321,10 @@ export function SettingsRoute() {
             pending={saveDrivingRate.isPending}
             errorMessage={
               saveDrivingRate.isError
-                ? errorMessage(saveDrivingRate.error)
+                ? errorText(
+                    saveDrivingRate.error,
+                    errorMessage(saveDrivingRate.error),
+                  )
                 : undefined
             }
             onSave={(rate) =>
@@ -322,16 +334,18 @@ export function SettingsRoute() {
         </div>
         <aside className="settings-aside">
           <div className="settings-note">
-            <span className="eyebrow">Good to know</span>
-            <h2>A consistent ledger starts here.</h2>
+            <span className="eyebrow">{t("Good to know")}</span>
+            <h2>{t("A consistent ledger starts here.")}</h2>
             <p>
-              Currency and time zone are locked after your first financial
-              activity to keep your records consistent.
+              {t(
+                "Currency and time zone are locked after your first financial activity to keep your records consistent.",
+              )}
             </p>
             <hr />
             <p>
-              Your driving rate can be updated whenever your travel costs
-              change.
+              {t(
+                "Your driving rate can be updated whenever your travel costs change.",
+              )}
             </p>
           </div>
         </aside>
@@ -343,20 +357,20 @@ export function SettingsRoute() {
         <div className="card-heading">
           <span className="section-number">03</span>
           <div>
-            <h2 id="account-history-heading">Account history</h2>
-            <p>A record of changes to your workspace.</p>
+            <h2 id="account-history-heading">{t("Account history")}</h2>
+            <p>{t("A record of changes to your workspace.")}</p>
           </div>
         </div>
-        {history.isPending && <p role="status">Loading history…</p>}
+        {history.isPending && <p role="status">{t("Loading history…")}</p>}
         {history.isError && (
           <div role="alert">
             <p>
               {history.error instanceof Error
-                ? history.error.message
-                : "History could not be loaded. Please try again."}
+                ? errorText(history.error)
+                : t("History could not be loaded. Please try again.")}
             </p>
             <button type="button" onClick={() => void history.refetch()}>
-              Reload history
+              {t("Reload history")}
             </button>
           </div>
         )}
@@ -366,20 +380,20 @@ export function SettingsRoute() {
               <span className="empty-state-symbol" aria-hidden="true">
                 ↺
               </span>
-              <p>No account history yet.</p>
-              <small>Changes to your account will appear here.</small>
+              <p>{t("No account history yet.")}</p>
+              <small>{t("Changes to your account will appear here.")}</small>
             </div>
           )}
         {history.data &&
           history.data.pages.flatMap((page) => page.items).length > 0 && (
-            <ol aria-label="Account history entries">
+            <ol aria-label={t("Account history entries")}>
               {history.data.pages
                 .flatMap((page) => page.items)
                 .map((item) => (
                   <li key={item.eventId}>
                     <p>{item.summary}</p>
                     <time dateTime={item.occurredAt}>
-                      {new Date(item.occurredAt).toLocaleString()}
+                      {new Date(item.occurredAt).toLocaleString(locale)}
                     </time>
                   </li>
                 ))}
@@ -392,8 +406,8 @@ export function SettingsRoute() {
             onClick={() => void history.fetchNextPage()}
           >
             {history.isFetchingNextPage
-              ? "Loading older history…"
-              : "Load older history"}
+              ? t("Loading older history…")
+              : t("Load older history")}
           </button>
         )}
       </section>

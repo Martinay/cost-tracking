@@ -1,3 +1,4 @@
+import { useI18n } from "../i18n/I18nProvider";
 import {
   createContext,
   useContext,
@@ -5,6 +6,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { LanguageSelector } from "./LanguageSelector";
 import { Icon, type IconName } from "./Icon";
 
 const navigation = [
@@ -53,6 +55,7 @@ export function AppShell({
   children,
   accountControls,
 }: AppShellProps) {
+  const { t } = useI18n();
   const authenticated = authReady && subject !== null;
   const nav = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -69,21 +72,22 @@ export function AppShell({
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
-        Skip to content
+        {t("Skip to content")}
       </a>
       <header className="sidebar">
-        <a className="brand" href="/horses" aria-label="Horse ledger home">
+        <a className="brand" href="/horses" aria-label={t("Horse ledger home")}>
           <span className="brand-mark">
             <Icon name="horses" />
           </span>
           <span>
-            Horse ledger<small>CARE. TRACK. THRIVE.</small>
+            {t("Horse ledger")}
+            <small>{t("CARE. TRACK. THRIVE.")}</small>
           </span>
         </a>
         {authenticated && (
           <>
-            <p className="nav-caption">Workspace</p>
-            <nav ref={nav} aria-label="Primary navigation">
+            <p className="nav-caption">{t("Workspace")}</p>
+            <nav ref={nav} aria-label={t("Primary navigation")}>
               {navigation.map(([label, href]) => (
                 <a
                   href={href}
@@ -98,7 +102,7 @@ export function AppShell({
                   }
                 >
                   <Icon name={label.toLowerCase() as IconName} />
-                  {label}
+                  {t(label)}
                 </a>
               ))}
             </nav>
@@ -107,32 +111,36 @@ export function AppShell({
         <div className="sidebar-footer">
           <div className="workspace-note">
             <span className="workspace-dot" />
-            Your private workspace
+            {t("Your private workspace")}
           </div>
+          <LanguageSelector />
           {accountControls}
         </div>
       </header>
       <div className="workspace-bar">
         <span>
-          Workspace <span aria-hidden="true">/</span>{" "}
+          {t("Workspace ")}
+          <span aria-hidden="true">/</span>{" "}
           <strong>
-            {navigation.find(([, href]) =>
-              window.location.pathname.startsWith(href),
-            )?.[0] ?? "Horses"}
+            {t(
+              navigation.find(([, href]) =>
+                window.location.pathname.startsWith(href),
+              )?.[0] ?? "Horses",
+            )}
           </strong>
         </span>
-        <span className="workspace-label">Horse ledger</span>
+        <span className="workspace-label">{t("Horse ledger")}</span>
       </div>
-      {!authReady && <p role="status">Loading your account…</p>}
+      {!authReady && <p role="status">{t("Loading your account…")}</p>}
       {authReady && !subject && (
-        <p role="status">Sign in to open your private horse ledger.</p>
+        <p role="status">{t("Sign in to open your private horse ledger.")}</p>
       )}
       {statusMessage && (
         <p
           role={statusKind === "assertive" ? "alert" : "status"}
           aria-live={statusKind}
         >
-          {statusMessage}
+          {t(statusMessage)}
         </p>
       )}
       <main id="main-content" tabIndex={-1} aria-busy={!authReady}>

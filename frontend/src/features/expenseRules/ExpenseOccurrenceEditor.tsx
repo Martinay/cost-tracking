@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useState } from "react";
 import type {
   FinancialPreview,
@@ -40,13 +42,6 @@ export interface ExpenseOccurrenceEditorProps {
   error?: string;
 }
 
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
-}
-
 export function ExpenseOccurrenceEditor({
   ruleId,
   scheduledDate,
@@ -58,6 +53,7 @@ export function ExpenseOccurrenceEditor({
   onSave,
   error: externalError,
 }: ExpenseOccurrenceEditorProps) {
+  const { t, locale } = useI18n();
   const initialAction: ExpenseOccurrenceAction =
     current.action === "Skipped" ? "Skipped" : "Changed";
   const [action, setAction] = useState<ExpenseOccurrenceAction>(initialAction);
@@ -80,7 +76,7 @@ export function ExpenseOccurrenceEditor({
   );
   const [preview, setPreview] = useState<FinancialPreview | null>(null);
   const [previewKey, setPreviewKey] = useState("");
-  const [localError, setLocalError] = useState("");
+  const [localError, setLocalError] = useState<string | Error>("");
   const [saved, setSaved] = useState(false);
   const amountMinor =
     typeof amount === "number"
@@ -143,7 +139,7 @@ export function ExpenseOccurrenceEditor({
     } catch (reason) {
       setLocalError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The occurrence change could not be previewed.",
       );
     }
@@ -172,7 +168,7 @@ export function ExpenseOccurrenceEditor({
     } catch (reason) {
       setLocalError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The occurrence change could not be saved.",
       );
     }
@@ -180,26 +176,34 @@ export function ExpenseOccurrenceEditor({
 
   return (
     <form
-      aria-label={`Occurrence on ${scheduledDate}`}
+      aria-label={t("Occurrence on {value0}", { value0: scheduledDate })}
       onSubmit={(event) => {
         event.preventDefault();
         void save();
       }}
     >
       <p>
-        Scheduled date: <time dateTime={scheduledDate}>{scheduledDate}</time>
+        {t("Scheduled date: ")}
+        <time dateTime={scheduledDate}>
+          {formatDate(scheduledDate, locale)}
+        </time>
       </p>
-      {current.action && <p>Current state: {current.action}</p>}
+      {current.action && (
+        <p>
+          {t("Current state: ")}
+          {t(current.action)}
+        </p>
+      )}
       {action === "Skipped" && (
         <p>
-          Scheduled amount remains{" "}
-          {money(defaults.amountMinor, displayedCurrency)}. Contribution:{" "}
-          {money(0, displayedCurrency)}.
+          {t("Scheduled amount remains")}{" "}
+          {money(defaults.amountMinor, displayedCurrency, locale)}
+          {t(". Contribution:")} {money(0, displayedCurrency, locale)}.
         </p>
       )}
       {action === "Changed" && (
         <>
-          <label htmlFor="occurrence-amount">Amount</label>
+          <label htmlFor="occurrence-amount">{t("Amount")}</label>
           <input
             id="occurrence-amount"
             type="number"
@@ -216,7 +220,7 @@ export function ExpenseOccurrenceEditor({
             }}
             required
           />
-          <label htmlFor="occurrence-category">Category</label>
+          <label htmlFor="occurrence-category">{t("Category")}</label>
           <input
             id="occurrence-category"
             value={category}
@@ -226,7 +230,7 @@ export function ExpenseOccurrenceEditor({
             }}
             required
           />
-          <label htmlFor="occurrence-description">Description</label>
+          <label htmlFor="occurrence-description">{t("Description")}</label>
           <input
             id="occurrence-description"
             value={description}
@@ -246,25 +250,27 @@ export function ExpenseOccurrenceEditor({
           />
         </>
       )}
-      {error && <p role="alert">{error}</p>}
-      {saved && <p role="status">Occurrence change saved.</p>}
+      {error && <p role="alert">{t(error)}</p>}
+      {saved && <p role="status">{t("Occurrence change saved.")}</p>}
       {previewCurrent && preview && (
-        <section aria-label="Occurrence preview">
-          <h3>Occurrence preview</h3>
+        <section aria-label={t("Occurrence preview")}>
+          <h3>{t("Occurrence preview")}</h3>
           <p>
-            Scheduled amount:{" "}
-            {money(preview.amountMinor, preview.currency ?? "EUR")}
+            {t("Scheduled amount:")}{" "}
+            {money(preview.amountMinor, preview.currency ?? "EUR", locale)}
           </p>
-          <ul aria-label="Occurrence preview monthly deltas">
+          <ul aria-label={t("Occurrence preview monthly deltas")}>
             {preview.monthlyEffect.map((effect, index) => (
               <li key={`${effect.month}-${effect.horseId}-${index}`}>
                 {effect.month} ·{" "}
                 {horses.find((horse) => horse.horseId === effect.horseId)
                   ?.name ?? effect.horseId}{" "}
-                · expense change {effect.expenseDeltaMinor < 0 ? "−" : "+"}
+                {t("· expense change ")}
+                {effect.expenseDeltaMinor < 0 ? "−" : "+"}
                 {money(
                   Math.abs(effect.expenseDeltaMinor),
                   preview.currency ?? "EUR",
+                  locale,
                 )}
               </li>
             ))}
@@ -273,25 +279,25 @@ export function ExpenseOccurrenceEditor({
       )}
       {current.action === "Skipped" ? (
         <button type="button" onClick={() => void restore()}>
-          Restore occurrence
+          {t("Restore occurrence")}
         </button>
       ) : (
         <button type="button" onClick={() => void skip()}>
-          Skip this occurrence
+          {t("Skip this occurrence")}
         </button>
       )}
       {action === "Changed" && (
         <button type="button" onClick={() => void previewValues()}>
-          Preview change
+          {t("Preview change")}
         </button>
       )}
       {action === "Skipped" && !previewCurrent && (
         <button type="button" onClick={() => void previewValues()}>
-          Preview skip
+          {t("Preview skip")}
         </button>
       )}
       <button type="submit" disabled={!previewCurrent}>
-        Save occurrence change
+        {t("Save occurrence change")}
       </button>
     </form>
   );

@@ -127,7 +127,7 @@ test("owner reviews a pending payment with scheduled and received dates before a
 
   await page.goto("/approvals");
   const card = page.getByRole("article", { name: "Boarding" });
-  await expect(card).toContainText("Scheduled date: 2026-10-01");
+  await expect(card).toContainText("Scheduled date: 10/1/2026");
   await expect(card).toContainText("Pending");
   const approve = page.getByRole("button", { name: "Approve", exact: true });
   await approve.focus();
@@ -306,18 +306,18 @@ test("a real backend recurring income rule creates pending payments and approval
   await page.getByRole("link", { name: "Approvals" }).click();
   const pending = page.getByRole("region", { name: "Pending payments" });
   await expect(pending).toContainText("Browser lesson");
-  await expect(pending).toContainText("Scheduled date: 2026-09-19");
+  await expect(pending).toContainText("Scheduled date: 9/19/2026");
   const firstPayment = page
     .getByRole("article")
-    .filter({ hasText: "Scheduled date: 2026-09-19" });
+    .filter({ hasText: "Scheduled date: 9/19/2026" });
   await firstPayment
     .getByRole("button", { name: "Approve", exact: true })
     .click();
   await page.getByRole("button", { name: "Confirm approval" }).click();
-  await expect(pending).not.toContainText("Scheduled date: 2026-09-19");
+  await expect(pending).not.toContainText("Scheduled date: 9/19/2026");
   const editedPayment = page
     .getByRole("article")
-    .filter({ hasText: "Scheduled date: 2026-09-20" });
+    .filter({ hasText: "Scheduled date: 9/20/2026" });
   await editedPayment.getByRole("button", { name: "Edit and approve" }).click();
   await editedPayment.getByLabel("Actual amount").fill("150.00");
   await editedPayment.getByRole("button", { name: "Preview approval" }).click();
@@ -325,10 +325,10 @@ test("a real backend recurring income rule creates pending payments and approval
     editedPayment.getByRole("region", { name: "Approval preview" }),
   ).toContainText("€150.00");
   await editedPayment.getByRole("button", { name: "Confirm approval" }).click();
-  await expect(pending).not.toContainText("Scheduled date: 2026-09-20");
+  await expect(pending).not.toContainText("Scheduled date: 9/20/2026");
   const rejectedPayment = page
     .getByRole("article")
-    .filter({ hasText: "Scheduled date: 2026-09-21" });
+    .filter({ hasText: "Scheduled date: 9/21/2026" });
   await rejectedPayment.getByRole("button", { name: "Reject" }).click();
   const rejectionResponsePromise = page.waitForResponse(
     (response) =>
@@ -407,7 +407,7 @@ test("a real backend recurring income rule creates pending payments and approval
     .click();
   await expect(
     page.getByRole("region", { name: "Example occurrence" }),
-  ).toContainText("2026-09-22");
+  ).toContainText("9/22/2026");
   await page.getByRole("button", { name: "Save income rule revision" }).click();
   await expect(page.getByText("Income rule revision saved.")).toBeVisible();
   await page.getByRole("button", { name: "Stop income rule" }).click();
@@ -510,8 +510,12 @@ test("two approval tabs resolve a concurrent decision without a false success", 
     ]);
     const firstCard = page.getByRole("article", { name: source });
     const secondCard = secondPage.getByRole("article", { name: source });
-    await expect(firstCard).toContainText(`Scheduled date: ${scheduleDate}`);
-    await expect(secondCard).toContainText(`Scheduled date: ${scheduleDate}`);
+    await expect(firstCard).toContainText(
+      `Scheduled date: ${new Intl.DateTimeFormat("en-US", { timeZone: "UTC" }).format(new Date(`${scheduleDate}T12:00:00Z`))}`,
+    );
+    await expect(secondCard).toContainText(
+      `Scheduled date: ${new Intl.DateTimeFormat("en-US", { timeZone: "UTC" }).format(new Date(`${scheduleDate}T12:00:00Z`))}`,
+    );
     const firstInitialInboxGets = firstInboxGets;
     const secondInitialInboxGets = secondInboxGets;
 

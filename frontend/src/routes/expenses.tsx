@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../i18n/format";
+import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
 import {
@@ -104,6 +106,7 @@ function defaultsForDate(
 }
 
 export function ExpensesRoute() {
+  const { t, locale, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const [recording, setRecording] = useState(false);
@@ -475,12 +478,14 @@ export function ExpensesRoute() {
     <section aria-labelledby="expenses-heading">
       <PageHeading
         id="expenses-heading"
-        title="Expenses"
-        description="Keep every cost in view, from daily care to the unexpected."
+        title={t("Expenses")}
+        description={t(
+          "Keep every cost in view, from daily care to the unexpected.",
+        )}
       />
       {canLoadProtectedData && (
         <button type="button" onClick={() => setRecording(true)}>
-          Record expense
+          {t("Record expense")}
         </button>
       )}
       {canLoadProtectedData && (
@@ -491,17 +496,17 @@ export function ExpensesRoute() {
             setRecordingDriving(true);
           }}
         >
-          Record driving expense
+          {t("Record driving expense")}
         </button>
       )}
-      {drivingSaved && <p role="status">Driving expense saved.</p>}
+      {drivingSaved && <p role="status">{t("Driving expense saved.")}</p>}
       {canLoadProtectedData && recording && <ExpenseForm />}
       {canLoadProtectedData &&
         recordingDriving &&
         account.data &&
         horses.data && (
           <section aria-labelledby="driving-expense-heading">
-            <h2 id="driving-expense-heading">Record driving expense</h2>
+            <h2 id="driving-expense-heading">{t("Record driving expense")}</h2>
             <DrivingForm
               horses={horses.data.items}
               today={account.data.ownerToday}
@@ -522,7 +527,7 @@ export function ExpensesRoute() {
         )}
       {canLoadProtectedData && (
         <section aria-labelledby="expense-rules-heading">
-          <h2 id="expense-rules-heading">Recurring expenses</h2>
+          <h2 id="expense-rules-heading">{t("Recurring expenses")}</h2>
           <button
             type="button"
             onClick={() => {
@@ -532,40 +537,46 @@ export function ExpensesRoute() {
             }}
           >
             {showRuleForm && !editingRuleId
-              ? "Cancel recurring rule"
-              : "Create recurring rule"}
+              ? t("Cancel recurring rule")
+              : t("Create recurring rule")}
           </button>
-          {ruleNotice && <p role="status">{ruleNotice}</p>}
-          {rules.isPending && <p>Loading recurring rules…</p>}
+          {ruleNotice && <p role="status">{t(ruleNotice)}</p>}
+          {rules.isPending && <p>{t("Loading recurring rules…")}</p>}
           {rules.isError && (
             <div role="alert">
               <p>
-                {rules.error.message || "Recurring rules could not be loaded."}
+                {errorText(rules.error) ||
+                  t("Recurring rules could not be loaded.")}
               </p>
               <button type="button" onClick={() => void rules.refetch()}>
-                Retry recurring rules
+                {t("Retry recurring rules")}
               </button>
             </div>
           )}
           {ruleEntries.length > 0 && (
-            <ol aria-label="Recurring expense rules">
+            <ol aria-label={t("Recurring expense rules")}>
               {ruleEntries.map((rule) => (
                 <li key={rule.ruleId}>
                   <h3>{rule.defaults.description || rule.defaults.category}</h3>
                   <p>
-                    {rule.schedule.cadence} ·{" "}
-                    {money(rule.defaults.amountMinor, currency)} · starts{" "}
-                    {rule.startDate} · inclusive through{" "}
-                    {rule.lastDate ?? rule.schedule.endDate ?? "no end date"}
+                    {t(rule.schedule.cadence)} ·{" "}
+                    {money(rule.defaults.amountMinor, currency, locale)}{" "}
+                    {t("· starts")} {formatDate(rule.startDate, locale)}{" "}
+                    {t("· inclusive through")}{" "}
+                    {rule.lastDate ?? rule.schedule.endDate ?? t("no end date")}
                   </p>
                   <ol
-                    aria-label={`Revisions for ${rule.defaults.description || rule.defaults.category}`}
+                    aria-label={t("Revisions for {value0}", {
+                      value0:
+                        rule.defaults.description || rule.defaults.category,
+                    })}
                   >
                     {rule.revisions.map((revision) => (
                       <li key={revision.effectiveFrom}>
-                        Effective {revision.effectiveFrom}:{" "}
-                        {revision.schedule.cadence},{" "}
-                        {money(revision.defaults.amountMinor, currency)}
+                        {t("Effective ")}
+                        {formatDate(revision.effectiveFrom, locale)}:{" "}
+                        {t(revision.schedule.cadence)},{" "}
+                        {money(revision.defaults.amountMinor, currency, locale)}
                       </li>
                     ))}
                   </ol>
@@ -574,7 +585,7 @@ export function ExpensesRoute() {
                       <a
                         href={`/horses/${encodeURIComponent(allocation.horseId)}`}
                       >
-                        View history for{" "}
+                        {t("View history for")}{" "}
                         {horses.data?.items.find(
                           (horse) => horse.horseId === allocation.horseId,
                         )?.name ?? allocation.horseId}
@@ -591,7 +602,7 @@ export function ExpensesRoute() {
                           setShowRuleForm(true);
                         }}
                       >
-                        Revise recurring rule
+                        {t("Revise recurring rule")}
                       </button>
                       <button
                         type="button"
@@ -601,13 +612,16 @@ export function ExpensesRoute() {
                           setLastDate("");
                         }}
                       >
-                        Stop recurring rule
+                        {t("Stop recurring rule")}
                       </button>
                     </>
                   )}
                   {stoppingRuleId === rule.ruleId && (
                     <form
-                      aria-label={`Stop ${rule.defaults.description || rule.defaults.category}`}
+                      aria-label={t("Stop {value0}", {
+                        value0:
+                          rule.defaults.description || rule.defaults.category,
+                      })}
                       noValidate
                       onSubmit={(event) => {
                         event.preventDefault();
@@ -624,7 +638,7 @@ export function ExpensesRoute() {
                       }}
                     >
                       <label htmlFor={`rule-last-date-${rule.ruleId}`}>
-                        Last date (inclusive)
+                        {t("Last date (inclusive)")}
                       </label>
                       <input
                         id={`rule-last-date-${rule.ruleId}`}
@@ -640,13 +654,13 @@ export function ExpensesRoute() {
                         type="submit"
                         disabled={stopRuleMutation.isPending}
                       >
-                        Confirm stop
+                        {t("Confirm stop")}
                       </button>
                       <button
                         type="button"
                         onClick={() => setStoppingRuleId(null)}
                       >
-                        Cancel
+                        {t("Cancel")}
                       </button>
                     </form>
                   )}
@@ -661,19 +675,19 @@ export function ExpensesRoute() {
               onClick={() => void rules.fetchNextPage()}
             >
               {rules.isFetchingNextPage
-                ? "Loading more recurring rules…"
-                : "Load more recurring rules"}
+                ? t("Loading more recurring rules…")
+                : t("Load more recurring rules")}
             </button>
           )}
           {showRuleForm && account.data && horses.data && (
             <section aria-labelledby="rule-form-heading">
               <h3 id="rule-form-heading">
                 {editingRule
-                  ? "Revise recurring expense"
-                  : "New recurring expense"}
+                  ? t("Revise recurring expense")
+                  : t("New recurring expense")}
               </h3>
               {editingRuleId && !editingRule && (
-                <p role="status">Loading selected recurring rule…</p>
+                <p role="status">{t("Loading selected recurring rule…")}</p>
               )}
               {(!editingRuleId || editingRule) && (
                 <ExpenseRuleForm
@@ -716,41 +730,47 @@ export function ExpensesRoute() {
             reviseRuleMutation.isError ||
             stopRuleMutation.isError) && (
             <p role="alert">
-              {[
-                createRuleMutation.error,
-                reviseRuleMutation.error,
-                stopRuleMutation.error,
-              ].find((error) => error instanceof Error)?.message ??
-                "The recurring rule could not be saved."}
+              {errorText(
+                [
+                  createRuleMutation.error,
+                  reviseRuleMutation.error,
+                  stopRuleMutation.error,
+                ].find((error) => error instanceof Error),
+                "The recurring rule could not be saved.",
+              )}
             </p>
           )}
         </section>
       )}
-      {account.isPending && <p role="status">Loading account settings…</p>}
+      {account.isPending && (
+        <p role="status">{t("Loading account settings…")}</p>
+      )}
       {account.isError && (
         <div role="alert">
-          <p>Account settings could not be loaded.</p>
+          <p>{t("Account settings could not be loaded.")}</p>
           <button type="button" onClick={() => void account.refetch()}>
-            Retry account
+            {t("Retry account")}
           </button>
         </div>
       )}
       {horses.isError && (
         <div role="alert">
-          <p>Horse names could not be loaded.</p>
+          <p>{t("Horse names could not be loaded.")}</p>
           <button type="button" onClick={() => void horses.refetch()}>
-            Retry horses
+            {t("Retry horses")}
           </button>
         </div>
       )}
       <section aria-labelledby="expenses-ledger-heading">
-        <h2 id="expenses-ledger-heading">This month’s expenses</h2>
+        <h2 id="expenses-ledger-heading">{t("This month’s expenses")}</h2>
         {!account.isError && ledger.isPending && (
-          <p role="status">Loading expenses…</p>
+          <p role="status">{t("Loading expenses…")}</p>
         )}
         {ledger.isError && (
           <div role="alert">
-            <p>{ledger.error.message || "Expenses could not be loaded."}</p>
+            <p>
+              {errorText(ledger.error) || t("Expenses could not be loaded.")}
+            </p>
             <button
               type="button"
               onClick={() =>
@@ -759,37 +779,40 @@ export function ExpensesRoute() {
                 })
               }
             >
-              Retry expenses
+              {t("Retry expenses")}
             </button>
           </div>
         )}
         {!ledger.isPending && !ledger.isError && entries.length === 0 && (
-          <p>No expenses this month.</p>
+          <p>{t("No expenses this month.")}</p>
         )}
         {entries.length > 0 && (
-          <ol aria-label="Expense ledger">
+          <ol aria-label={t("Expense ledger")}>
             {entries.map((item) => (
               <li key={item.id}>
                 <h3>{item.description || item.category}</h3>
                 <time dateTime={item.expenseDate}>
-                  {new Date(
-                    `${item.expenseDate}T00:00:00`,
-                  ).toLocaleDateString()}
+                  {new Date(`${item.expenseDate}T00:00:00`).toLocaleDateString(
+                    locale,
+                  )}
                 </time>
                 <p>
-                  {item.category} · {money(item.contributionMinor, currency)}
+                  {item.category} ·{" "}
+                  {money(item.contributionMinor, currency, locale)}
                 </p>
                 {item.origin === "Recurring" && item.scheduledDate && (
                   <>
                     <p>
-                      Scheduled amount: {money(item.amountMinor, currency)}.
-                      Contribution: {money(item.contributionMinor, currency)}.
+                      {t("Scheduled amount: ")}
+                      {money(item.amountMinor, currency, locale)}
+                      {t(". Contribution: ")}
+                      {money(item.contributionMinor, currency, locale)}.
                     </p>
                     <p>
-                      Occurrence state:{" "}
+                      {t("Occurrence state:")}{" "}
                       {item.occurrenceState === "Virtual"
-                        ? "Computed"
-                        : item.occurrenceState}
+                        ? t("Computed")
+                        : t(item.occurrenceState)}
                     </p>
                     {item.ruleId && (
                       <>
@@ -797,21 +820,24 @@ export function ExpensesRoute() {
                           type="button"
                           onClick={() => setSelectedOccurrenceId(item.id)}
                         >
-                          Change occurrence {item.scheduledDate}
+                          {t("Change occurrence ")}
+                          {formatDate(item.scheduledDate, locale)}
                         </button>
                         {item.skipped ? (
                           <button
                             type="button"
                             onClick={() => setSelectedOccurrenceId(item.id)}
                           >
-                            Restore occurrence {item.scheduledDate}
+                            {t("Restore occurrence ")}
+                            {formatDate(item.scheduledDate, locale)}
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setSelectedOccurrenceId(item.id)}
                           >
-                            Skip occurrence {item.scheduledDate}
+                            {t("Skip occurrence ")}
+                            {formatDate(item.scheduledDate, locale)}
                           </button>
                         )}
                       </>
@@ -820,19 +846,22 @@ export function ExpensesRoute() {
                 )}
                 {item.driving && (
                   <p>
-                    {item.driving.kilometers} km at{" "}
-                    {item.driving.rateMinorPerKm.toFixed(4)} minor units/km
+                    {item.driving.kilometers} {t("km at")}{" "}
+                    {item.driving.rateMinorPerKm.toFixed(4)}{" "}
+                    {t("minor units/km")}
                   </p>
                 )}
                 <ul
-                  aria-label={`Allocations for ${item.description || item.category}`}
+                  aria-label={t("Allocations for {value0}", {
+                    value0: item.description || item.category,
+                  })}
                 >
                   {item.allocations.map((allocation) => (
                     <li key={allocation.horseId}>
                       {horses.data?.items.find(
                         (horse) => horse.horseId === allocation.horseId,
                       )?.name ?? allocation.horseId}
-                      : {money(allocation.amountMinor, currency)}
+                      : {money(allocation.amountMinor, currency, locale)}
                     </li>
                   ))}
                 </ul>
@@ -846,7 +875,8 @@ export function ExpensesRoute() {
           selectedOccurrence.ruleId && (
             <section aria-labelledby="occurrence-editor-heading">
               <h3 id="occurrence-editor-heading">
-                Edit scheduled expense on {selectedScheduledDate}
+                {t("Edit scheduled expense on ")}
+                {formatDate(selectedScheduledDate, locale)}
               </h3>
               <ExpenseOccurrenceEditor
                 ruleId={selectedOccurrence.ruleId}
@@ -888,15 +918,15 @@ export function ExpensesRoute() {
                 type="button"
                 onClick={() => setSelectedOccurrenceId(null)}
               >
-                Close occurrence editor
+                {t("Close occurrence editor")}
               </button>
             </section>
           )}
         {occurrenceMutation.isError && !selectedOccurrence && (
           <p role="alert">
             {occurrenceMutation.error instanceof Error
-              ? occurrenceMutation.error.message
-              : "The occurrence could not be saved."}
+              ? errorText(occurrenceMutation.error)
+              : t("The occurrence could not be saved.")}
           </p>
         )}
         {ledger.hasNextPage && (
@@ -906,22 +936,17 @@ export function ExpensesRoute() {
             onClick={() => void ledger.fetchNextPage()}
           >
             {ledger.isFetchingNextPage
-              ? "Loading older expenses…"
-              : "Load older expenses"}
+              ? t("Loading older expenses…")
+              : t("Load older expenses")}
           </button>
         )}
         <span className="sr-only">
-          Ledger period {rangeStart.toISOString().slice(0, 10)} through{" "}
-          {rangeEnd.toISOString().slice(0, 10)}.
+          {t("Ledger period ")}
+          {formatDate(rangeStart.toISOString().slice(0, 10), locale)}{" "}
+          {t("through")}{" "}
+          {formatDate(rangeEnd.toISOString().slice(0, 10), locale)}.
         </span>
       </section>
     </section>
   );
-}
-
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
 }
