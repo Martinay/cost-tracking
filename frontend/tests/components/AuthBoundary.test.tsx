@@ -471,8 +471,10 @@ describe("first-use settings", () => {
     );
     await screen.findByLabelText("Currency");
     await userEvent.selectOptions(screen.getByLabelText("Currency"), "EUR");
-    await userEvent.clear(screen.getByLabelText("Time zone"));
-    await userEvent.type(screen.getByLabelText("Time zone"), "Europe/Berlin");
+    await userEvent.selectOptions(
+      screen.getByLabelText("Time zone"),
+      "Europe/Berlin",
+    );
     await userEvent.click(
       screen.getByRole("button", { name: "Save settings" }),
     );
@@ -621,8 +623,10 @@ describe("first-use settings", () => {
       </QueryClientProvider>,
     );
     await screen.findByLabelText("Currency");
-    await userEvent.clear(screen.getByLabelText("Time zone"));
-    await userEvent.type(screen.getByLabelText("Time zone"), "Europe/Berlin");
+    await userEvent.selectOptions(
+      screen.getByLabelText("Time zone"),
+      "Europe/Berlin",
+    );
     await userEvent.click(
       screen.getByRole("button", { name: "Save settings" }),
     );

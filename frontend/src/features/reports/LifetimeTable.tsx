@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import type { ApiResponse } from "../../api/client";
 import { ReportTableRegion } from "./ReportTableRegion";
 
@@ -11,6 +13,7 @@ export function LifetimeTable({
   pages: LifetimeReportPage[];
   horseNames: ReadonlyMap<string, string>;
 }) {
+  const { t, locale } = useI18n();
   const lastPage = pages.at(-1);
   if (!lastPage?.complete) return null;
 
@@ -31,15 +34,18 @@ export function LifetimeTable({
   );
 
   return (
-    <ReportTableRegion label="Lifetime totals table">
-      <table aria-label="Lifetime totals">
-        <caption>Lifetime totals — Through {lastPage.asOfDate}</caption>
+    <ReportTableRegion label={t("Lifetime totals table")}>
+      <table aria-label={t("Lifetime totals")}>
+        <caption>
+          {t("Lifetime totals — Through ")}
+          {formatDate(lastPage.asOfDate, locale)}
+        </caption>
         <thead>
           <tr>
-            <th scope="col">Horse</th>
-            <th scope="col">Income</th>
-            <th scope="col">Expenses</th>
-            <th scope="col">Net</th>
+            <th scope="col">{t("Horse")}</th>
+            <th scope="col">{t("Income")}</th>
+            <th scope="col">{t("Expenses")}</th>
+            <th scope="col">{t("Net")}</th>
           </tr>
         </thead>
         <tbody>
@@ -48,26 +54,19 @@ export function LifetimeTable({
               <th scope="row">
                 {horseNames.get(item.horseId) ?? item.horseId}
               </th>
-              <td>{money(item.incomeMinor, lastPage.currency)}</td>
-              <td>{money(item.expenseMinor, lastPage.currency)}</td>
-              <td>{money(item.netMinor, lastPage.currency)}</td>
+              <td>{money(item.incomeMinor, lastPage.currency, locale)}</td>
+              <td>{money(item.expenseMinor, lastPage.currency, locale)}</td>
+              <td>{money(item.netMinor, lastPage.currency, locale)}</td>
             </tr>
           ))}
           <tr>
-            <th scope="row">Total income</th>
-            <td>{money(totals.incomeMinor, lastPage.currency)}</td>
-            <td>{money(totals.expenseMinor, lastPage.currency)}</td>
-            <td>{money(totals.netMinor, lastPage.currency)}</td>
+            <th scope="row">{t("Total income")}</th>
+            <td>{money(totals.incomeMinor, lastPage.currency, locale)}</td>
+            <td>{money(totals.expenseMinor, lastPage.currency, locale)}</td>
+            <td>{money(totals.netMinor, lastPage.currency, locale)}</td>
           </tr>
         </tbody>
       </table>
     </ReportTableRegion>
   );
-}
-
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
 }

@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useState } from "react";
 import type {
   FinancialHorse,
@@ -70,6 +72,7 @@ export function IncomeRuleForm({
   onCreate(values: IncomeRuleValues): Promise<void>;
   onRevise?(values: IncomeRuleRevisionValues): Promise<void>;
 }) {
+  const { t, locale } = useI18n();
   const [schedule, setSchedule] = useState<ScheduleValue>(
     initialRule?.schedule ?? {
       cadence: "Weekly",
@@ -92,7 +95,7 @@ export function IncomeRuleForm({
   );
   const [preview, setPreview] = useState<FinancialPreview | null>(null);
   const [previewKey, setPreviewKey] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
   const [status, setStatus] = useState("");
   const [pending, setPending] = useState(false);
   const amountMinor = parseMinor(amount);
@@ -162,7 +165,7 @@ export function IncomeRuleForm({
     } catch (reason) {
       setError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The example occurrence could not be previewed.",
       );
     } finally {
@@ -196,7 +199,7 @@ export function IncomeRuleForm({
     } catch (reason) {
       setError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The income rule could not be saved.",
       );
     } finally {
@@ -206,7 +209,7 @@ export function IncomeRuleForm({
 
   return (
     <form
-      aria-label="Recurring income rule form"
+      aria-label={t("Recurring income rule form")}
       onSubmit={(event) => {
         event.preventDefault();
         void save();
@@ -222,7 +225,7 @@ export function IncomeRuleForm({
       {initialRule && (
         <>
           <label htmlFor="income-rule-effective-from">
-            Effective from (future date)
+            {t("Effective from (future date)")}
           </label>
           <input
             id="income-rule-effective-from"
@@ -236,11 +239,13 @@ export function IncomeRuleForm({
             required
           />
           <p>
-            The revision keeps the original start date as its cadence anchor.
+            {t(
+              "The revision keeps the original start date as its cadence anchor.",
+            )}
           </p>
         </>
       )}
-      <label htmlFor="income-rule-amount">Amount</label>
+      <label htmlFor="income-rule-amount">{t("Amount")}</label>
       <input
         id="income-rule-amount"
         type="number"
@@ -253,7 +258,7 @@ export function IncomeRuleForm({
         }}
         required
       />
-      <label htmlFor="income-rule-source">Source</label>
+      <label htmlFor="income-rule-source">{t("Source")}</label>
       <input
         id="income-rule-source"
         maxLength={100}
@@ -272,21 +277,26 @@ export function IncomeRuleForm({
           setSplit(next);
         }}
       />
-      {error && <p role="alert">{error}</p>}
-      {status && <p role="status">{status}</p>}
+      {error && <p role="alert">{t(error)}</p>}
+      {status && <p role="status">{t(status)}</p>}
       {previewCurrent && preview && (
-        <section aria-label="Example occurrence">
-          <h3>Example occurrence</h3>
+        <section aria-label={t("Example occurrence")}>
+          <h3>{t("Example occurrence")}</h3>
           <p>
-            {preview.date} ·{" "}
-            {money(preview.amountMinor, preview.currency || currency)}
+            {formatDate(preview.date, locale)} ·{" "}
+            {money(preview.amountMinor, preview.currency || currency, locale)}
           </p>
-          <ul aria-label="Example occurrence allocations">
+          <ul aria-label={t("Example occurrence allocations")}>
             {preview.allocations.map((allocation) => (
               <li key={allocation.horseId}>
                 {horses.find((horse) => horse.horseId === allocation.horseId)
                   ?.name ?? allocation.horseId}
-                : {money(allocation.amountMinor, preview.currency || currency)}
+                :{" "}
+                {money(
+                  allocation.amountMinor,
+                  preview.currency || currency,
+                  locale,
+                )}
               </li>
             ))}
           </ul>
@@ -297,14 +307,14 @@ export function IncomeRuleForm({
         disabled={pending}
         onClick={() => void previewExample()}
       >
-        {pending ? "Previewing…" : "Preview example occurrence"}
+        {pending ? t("Previewing…") : t("Preview example occurrence")}
       </button>
       <button type="submit" disabled={pending || !previewCurrent}>
         {pending
-          ? "Saving income rule…"
+          ? t("Saving income rule…")
           : initialRule
-            ? "Save income rule revision"
-            : "Create income rule"}
+            ? t("Save income rule revision")
+            : t("Create income rule")}
       </button>
     </form>
   );
@@ -314,13 +324,6 @@ function parseMinor(value: string): number | null {
   if (!/^\d+(?:\.\d{1,2})?$/.test(value.trim())) return null;
   const [units, cents = ""] = value.trim().split(".");
   return Number(units) * 100 + Number(cents.padEnd(2, "0"));
-}
-
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
 }
 
 function incomeSplit(defaults: IncomeRuleInitialValue["defaults"]): SplitValue {

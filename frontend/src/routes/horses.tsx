@@ -1,3 +1,4 @@
+import { useI18n } from "../i18n/I18nProvider";
 import { Modal } from "../components/Modal";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
@@ -14,6 +15,7 @@ function requestError(error: unknown): string {
 }
 
 export function HorsesRoute() {
+  const { t, errorText } = useI18n();
   const { apiClient, canLoadProtectedData, subject } = useAuthServices();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
@@ -76,15 +78,20 @@ export function HorsesRoute() {
   if (account.isPending || horses.isPending)
     return (
       <section aria-busy="true">
-        <h1>Your horses</h1>
-        <p role="status">Loading your horses…</p>
+        <h1>{t("Your horses")}</h1>
+        <p role="status">{t("Loading your horses…")}</p>
       </section>
     );
   if (account.isError || horses.isError)
     return (
       <section>
-        <h1>Your horses</h1>
-        <p role="alert">{requestError(account.error ?? horses.error)}</p>
+        <h1>{t("Your horses")}</h1>
+        <p role="alert">
+          {errorText(
+            account.error ?? horses.error,
+            requestError(account.error ?? horses.error),
+          )}
+        </p>
         <button
           type="button"
           onClick={() => {
@@ -92,7 +99,7 @@ export function HorsesRoute() {
             void horses.refetch();
           }}
         >
-          Retry
+          {t("Retry")}
         </button>
       </section>
     );
@@ -103,36 +110,38 @@ export function HorsesRoute() {
     <section aria-labelledby="horses-heading">
       <PageHeading
         id="horses-heading"
-        title="Your horses"
-        description="A little more clarity for every horse in your care."
+        title={t("Your horses")}
+        description={t("A little more clarity for every horse in your care.")}
       />
-      {notice && <p role="status">{notice}</p>}
+      {notice && <p role="status">{t(notice)}</p>}
       {needsSetup ? (
         <p>
-          Set your account currency and time zone before adding horses.{" "}
-          <a href="/settings">Configure settings</a>
+          {t("Set your account currency and time zone before adding horses.")}{" "}
+          <a href="/settings">{t("Configure settings")}</a>
         </p>
       ) : (
         <button type="button" onClick={() => setAdding(true)}>
-          Add horse
+          {t("Add horse")}
         </button>
       )}
       {horses.data.items.length === 0 ? (
-        <p>No horses yet.</p>
+        <p>{t("No horses yet.")}</p>
       ) : (
-        <ul aria-label="Horses">
+        <ul className="horse-grid" aria-label={t("Horses")}>
           {horses.data.items.map((horse) => (
             <li key={horse.horseId}>
               <h2>{horse.name}</h2>
-              <p>{horse.breed || "Breed not specified"}</p>
+              <p>{horse.breed || t("Breed not specified")}</p>
               <p>
-                Status: <span>{horse.status}</span>
+                {t("Status: ")}
+                <span>{t(horse.status)}</span>
               </p>
               <a
                 href={`/horses/${encodeURIComponent(horse.horseId)}`}
-                aria-label={`View ${horse.name}`}
+                aria-label={t("View {value0}", { value0: horse.name })}
               >
-                View {horse.name}
+                {t("View ")}
+                {horse.name}
               </a>
             </li>
           ))}
@@ -140,12 +149,14 @@ export function HorsesRoute() {
       )}
       {adding && (
         <Modal labelledBy="add-horse-heading" onClose={() => setAdding(false)}>
-          <h2 id="add-horse-heading">Add horse</h2>
+          <h2 id="add-horse-heading">{t("Add horse")}</h2>
           <HorseForm
             mode="create"
             isSaving={createHorse.isPending}
             errorMessage={
-              createHorse.isError ? requestError(createHorse.error) : undefined
+              createHorse.isError
+                ? errorText(createHorse.error, requestError(createHorse.error))
+                : undefined
             }
             onCancel={() => setAdding(false)}
             onSubmit={(value) =>

@@ -74,13 +74,13 @@ test("shows queued income revisions and offers stop only for an active rule", as
   );
   expect(
     screen.getByRole("list", { name: "Revisions for Boarding" }),
-  ).toHaveTextContent("2026-10-01");
+  ).toHaveTextContent("10/1/2026");
   expect(
     screen.getByRole("list", { name: "Revisions for Boarding" }),
   ).toHaveTextContent("€100.00");
   expect(
     screen.getByRole("list", { name: "Revisions for Boarding" }),
-  ).toHaveTextContent("2026-11-01");
+  ).toHaveTextContent("11/1/2026");
   await userEvent.click(
     screen.getByRole("button", { name: "Revise income rule" }),
   );

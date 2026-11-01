@@ -32,7 +32,11 @@ test("a modal contains keyboard focus, closes with Escape, and restores the trig
   expect(screen.getByRole("textbox")).toHaveFocus();
   expect(document.body.style.overflow).toBe("hidden");
   await user.tab({ shift: true });
+  expect(screen.getByRole("combobox", { name: "Language" })).toHaveFocus();
+  await user.tab({ shift: true });
   expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("combobox", { name: "Language" })).toHaveFocus();
   await user.tab();
   expect(screen.getByRole("textbox")).toHaveFocus();
   await user.keyboard("{Escape}");

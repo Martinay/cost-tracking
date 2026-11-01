@@ -1,3 +1,5 @@
+import { formatDate } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import type { ApiResponse } from "../../api/client";
 import { ReportTableRegion } from "./ReportTableRegion";
 
@@ -17,27 +19,31 @@ export function ActivitySummary({
   items: ActivityItem[];
   horseName?: string;
 }) {
+  const { t, locale } = useI18n();
   return (
-    <ReportTableRegion label="Activity summary table">
-      <table aria-label="Activity summary">
+    <ReportTableRegion label={t("Activity summary table")}>
+      <table aria-label={t("Activity summary")}>
         <caption>
-          Activity{horseName ? ` for ${horseName}` : ""} · {from} through {to}
+          {t("Activity")}
+          {horseName ? t(" for {value0}", { value0: horseName }) : ""} ·{" "}
+          {formatDate(from, locale)} {t("through ")}
+          {formatDate(to, locale)}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Activity</th>
-            <th scope="col">Tasks</th>
-            <th scope="col">Duration</th>
+            <th scope="col">{t("Activity")}</th>
+            <th scope="col">{t("Tasks")}</th>
+            <th scope="col">{t("Duration")}</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
             <tr key={item.taskType}>
-              <th scope="row">
-                {item.taskType.replace(/([a-z])([A-Z])/g, "$1 $2")}
-              </th>
+              <th scope="row">{t(item.taskType)}</th>
               <td>{item.count}</td>
-              <td>{item.minutes} minutes</td>
+              <td>
+                {item.minutes} {t("minutes")}
+              </td>
             </tr>
           ))}
         </tbody>

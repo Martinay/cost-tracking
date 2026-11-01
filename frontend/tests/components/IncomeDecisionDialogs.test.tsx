@@ -140,7 +140,7 @@ describe("income decision dialogs", () => {
     await user.click(screen.getByRole("button", { name: "Preview approval" }));
     expect(
       await screen.findByRole("region", { name: "Approval preview" }),
-    ).toHaveTextContent("Actual received date: 2026-10-08");
+    ).toHaveTextContent("Actual received date: 10/8/2026");
     await user.clear(screen.getByLabelText("Actual amount"));
     await user.type(screen.getByLabelText("Actual amount"), "130.00");
     expect(

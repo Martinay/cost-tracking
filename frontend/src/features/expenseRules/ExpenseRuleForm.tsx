@@ -1,3 +1,5 @@
+import { formatDate, formatMoney as money } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useRef, useState } from "react";
 import type {
   FinancialPreview,
@@ -93,13 +95,6 @@ function parseMinor(value: string): number | null {
   return Number(units) * 100 + Number(cents.padEnd(2, "0"));
 }
 
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
-}
-
 export function ExpenseRuleForm({
   today,
   currency,
@@ -109,6 +104,7 @@ export function ExpenseRuleForm({
   onCreate,
   onRevise,
 }: ExpenseRuleFormProps) {
+  const { t, locale } = useI18n();
   const [schedule, setSchedule] = useState<ScheduleValue>(
     initialRule?.schedule ?? emptySchedule(),
   );
@@ -129,7 +125,7 @@ export function ExpenseRuleForm({
   );
   const [preview, setPreview] = useState<FinancialPreview | null>(null);
   const [previewKey, setPreviewKey] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
   const [status, setStatus] = useState("");
   const pendingPreview = useRef(0);
   const amountMinor = parseMinor(amount);
@@ -194,7 +190,7 @@ export function ExpenseRuleForm({
       if (generation === pendingPreview.current)
         setError(
           reason instanceof Error
-            ? reason.message
+            ? reason
             : "The example occurrence could not be previewed.",
         );
     }
@@ -231,7 +227,7 @@ export function ExpenseRuleForm({
     } catch (reason) {
       setError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The expense rule could not be saved.",
       );
     }
@@ -239,7 +235,7 @@ export function ExpenseRuleForm({
 
   return (
     <form
-      aria-label="Recurring expense rule form"
+      aria-label={t("Recurring expense rule form")}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -256,7 +252,7 @@ export function ExpenseRuleForm({
       {initialRule && (
         <>
           <label htmlFor="rule-effective-from">
-            Effective from (future date)
+            {t("Effective from (future date)")}
           </label>
           <input
             id="rule-effective-from"
@@ -270,11 +266,13 @@ export function ExpenseRuleForm({
             required
           />
           <p>
-            The revision keeps the original start date as its cadence anchor.
+            {t(
+              "The revision keeps the original start date as its cadence anchor.",
+            )}
           </p>
         </>
       )}
-      <label htmlFor="rule-amount">Amount</label>
+      <label htmlFor="rule-amount">{t("Amount")}</label>
       <input
         id="rule-amount"
         type="number"
@@ -287,7 +285,7 @@ export function ExpenseRuleForm({
         }}
         required
       />
-      <label htmlFor="rule-category">Category</label>
+      <label htmlFor="rule-category">{t("Category")}</label>
       <input
         id="rule-category"
         value={category}
@@ -297,7 +295,7 @@ export function ExpenseRuleForm({
         }}
         required
       />
-      <label htmlFor="rule-description">Description</label>
+      <label htmlFor="rule-description">{t("Description")}</label>
       <input
         id="rule-description"
         value={description}
@@ -315,33 +313,38 @@ export function ExpenseRuleForm({
           setSplit(next);
         }}
       />
-      {error && <p role="alert">{error}</p>}
-      {status && <p role="status">{status}</p>}
+      {error && <p role="alert">{t(error)}</p>}
+      {status && <p role="status">{t(status)}</p>}
       {previewCurrent && (
-        <section aria-label="Example occurrence">
-          <h3>Example occurrence</h3>
+        <section aria-label={t("Example occurrence")}>
+          <h3>{t("Example occurrence")}</h3>
           <p>
-            {preview.date}:{" "}
-            {money(preview.amountMinor, preview.currency ?? currency)}
+            {formatDate(preview.date, locale)}:{" "}
+            {money(preview.amountMinor, preview.currency ?? currency, locale)}
           </p>
-          <ul aria-label="Example occurrence allocations">
+          <ul aria-label={t("Example occurrence allocations")}>
             {preview.allocations.map((allocation) => (
               <li key={allocation.horseId}>
                 {horses.find((horse) => horse.horseId === allocation.horseId)
                   ?.name ?? allocation.horseId}
-                : {money(allocation.amountMinor, preview.currency ?? currency)}
+                :{" "}
+                {money(
+                  allocation.amountMinor,
+                  preview.currency ?? currency,
+                  locale,
+                )}
               </li>
             ))}
           </ul>
         </section>
       )}
       <button type="button" onClick={() => void previewExample()}>
-        Preview example occurrence
+        {t("Preview example occurrence")}
       </button>
       {!initialRule ? (
-        <button type="submit">Create expense rule</button>
+        <button type="submit">{t("Create expense rule")}</button>
       ) : (
-        <button type="submit">Save rule revision</button>
+        <button type="submit">{t("Save rule revision")}</button>
       )}
     </form>
   );

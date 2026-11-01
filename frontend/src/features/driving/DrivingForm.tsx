@@ -1,3 +1,5 @@
+import { formatMoney as money } from "../../i18n/format";
+import { useI18n } from "../../i18n/I18nProvider";
 import { useRef, useState, type FormEvent } from "react";
 import { SplitFields } from "../finance/SplitFields";
 import type { SplitValue } from "../finance/useFinancialForm";
@@ -45,6 +47,7 @@ export function DrivingForm({
   onPreview,
   onCommit,
 }: DrivingFormProps) {
+  const { t, locale } = useI18n();
   const [expenseDate, setExpenseDate] = useState(today);
   const [kilometers, setKilometers] = useState("");
   const [rateMinorPerKm, setRateMinorPerKm] = useState("");
@@ -55,7 +58,7 @@ export function DrivingForm({
   });
   const [preview, setPreview] = useState<DrivingPreview | null>(null);
   const [previewKey, setPreviewKey] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
   const [saved, setSaved] = useState(false);
   const [committed, setCommitted] = useState(false);
   const requestGeneration = useRef(0);
@@ -134,9 +137,7 @@ export function DrivingForm({
     } catch (reason) {
       if (generation === requestGeneration.current)
         setError(
-          reason instanceof Error
-            ? reason.message
-            : "The trip could not be previewed.",
+          reason instanceof Error ? reason : "The trip could not be previewed.",
         );
     }
   }
@@ -155,7 +156,7 @@ export function DrivingForm({
     } catch (reason) {
       setError(
         reason instanceof Error
-          ? reason.message
+          ? reason
           : "The driving expense could not be saved.",
       );
     }
@@ -168,7 +169,7 @@ export function DrivingForm({
 
   return (
     <form onSubmit={(event) => void handlePreview(event)}>
-      <label htmlFor="driving-date">Trip date</label>
+      <label htmlFor="driving-date">{t("Trip date")}</label>
       <input
         id="driving-date"
         type="date"
@@ -177,7 +178,7 @@ export function DrivingForm({
         onChange={(event) => update(setExpenseDate, event.currentTarget.value)}
         required
       />
-      <label htmlFor="driving-distance">Distance (km)</label>
+      <label htmlFor="driving-distance">{t("Distance (km)")}</label>
       <input
         id="driving-distance"
         type="number"
@@ -187,7 +188,7 @@ export function DrivingForm({
         onChange={(event) => update(setKilometers, event.currentTarget.value)}
         required
       />
-      <label htmlFor="driving-rate">Rate per km (optional)</label>
+      <label htmlFor="driving-rate">{t("Rate per km (optional)")}</label>
       <input
         id="driving-rate"
         type="number"
@@ -201,10 +202,15 @@ export function DrivingForm({
       />
       <p>
         {savedRateMinorPerKm === null
-          ? "No saved driving rate; enter one for this trip or save one in settings."
-          : `Saved rate: ${savedRateMinorPerKm.toFixed(4)} minor units/km. Leave the rate blank to use it.`}
+          ? t(
+              "No saved driving rate; enter one for this trip or save one in settings.",
+            )
+          : t(
+              "Saved rate: {value0} minor units/km. Leave the rate blank to use it.",
+              { value0: savedRateMinorPerKm.toFixed(4) },
+            )}
       </p>
-      <label htmlFor="driving-description">Description</label>
+      <label htmlFor="driving-description">{t("Description")}</label>
       <input
         id="driving-description"
         maxLength={500}
@@ -217,30 +223,33 @@ export function DrivingForm({
         value={split}
         onChange={(value) => update(setSplit, value)}
       />
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{t(error)}</p>}
       {preview && isCurrentPreview && (
-        <section aria-label="Driving expense preview">
-          <h3>Driving expense preview</h3>
+        <section aria-label={t("Driving expense preview")}>
+          <h3>{t("Driving expense preview")}</h3>
           <p>
-            {preview.driving!.kilometers} km ·{" "}
-            {preview.driving!.rateMinorPerKm.toFixed(4)} minor units/km
+            {preview.driving!.kilometers} {t("km ·")}{" "}
+            {preview.driving!.rateMinorPerKm.toFixed(4)} {t("minor units/km")}
           </p>
-          <p>Total: {money(preview.amountMinor, displayCurrency)}</p>
-          <ul aria-label="Driving allocations">
+          <p>
+            {t("Total: ")}
+            {money(preview.amountMinor, displayCurrency, locale)}
+          </p>
+          <ul aria-label={t("Driving allocations")}>
             {preview.allocations.map((allocation) => (
               <li key={allocation.horseId}>
                 {horseNames.get(allocation.horseId) ?? allocation.horseId}:{" "}
-                {money(allocation.amountMinor, displayCurrency)}
+                {money(allocation.amountMinor, displayCurrency, locale)}
               </li>
             ))}
           </ul>
         </section>
       )}
-      {saved && <p role="status">Driving expense saved.</p>}
+      {saved && <p role="status">{t("Driving expense saved.")}</p>}
       <button type="submit" disabled={!isPreviewDraftValid(draft)}>
         {preview && isCurrentPreview
-          ? "Refresh driving preview"
-          : "Preview driving expense"}
+          ? t("Refresh driving preview")
+          : t("Preview driving expense")}
       </button>
       {preview && isCurrentPreview && (
         <button
@@ -248,7 +257,7 @@ export function DrivingForm({
           disabled={committed}
           onClick={() => void handleCommit()}
         >
-          {committed ? "Driving expense saved" : "Save driving expense"}
+          {committed ? t("Driving expense saved") : t("Save driving expense")}
         </button>
       )}
     </form>
@@ -267,11 +276,4 @@ function isPreviewDraftValid(draft: DrivingDraftBody): boolean {
     draft.description.trim().length > 0 &&
     ids.length > 0
   );
-}
-
-function money(amountMinor: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-  }).format(amountMinor / 100);
 }
