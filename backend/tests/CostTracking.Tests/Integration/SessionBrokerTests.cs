@@ -27,6 +27,9 @@ public sealed class SessionBrokerTests
         request.Headers.TryAddWithoutValidation("Cookie", cookie);
         using var response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        using var error = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("authentication_failed", error.RootElement.GetProperty("error").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(error.RootElement.GetProperty("correlationId").GetString()));
         Assert.DoesNotContain(response.Headers.GetValues("Set-Cookie"), value => value.StartsWith("__Host-cost-session=", StringComparison.Ordinal));
     }
 

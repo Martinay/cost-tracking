@@ -46,7 +46,7 @@ public static class SessionEndpoints
 
     private static async Task<IResult> CallbackAsync(HttpContext context, IConfiguration configuration,
         IDataProtectionProvider protection, TimeProvider clock, IWorkOsClient workOs, SessionTokenValidator validator,
-        SessionStore store, CancellationToken cancellationToken)
+        SessionStore store, ILoggerFactory loggerFactory, CancellationToken cancellationToken)
     {
         NoStore(context);
         context.Response.Cookies.Delete(LoginCookie, CookieOptions(TimeSpan.Zero));
@@ -57,24 +57,42 @@ public static class SessionEndpoints
             return Results.BadRequest(new { error = "invalid_login_state" });
         var code = context.Request.Query["code"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(code) || code.Length > 4096) return Results.BadRequest(new { error = "invalid_callback" });
+        var logger = loggerFactory.CreateLogger("CostTracking.Auth.Callback");
+        var stage = "code_exchange";
         try
         {
+            logger.LogInformation("Authentication callback started {CorrelationId}", context.TraceIdentifier);
             var tokens = await workOs.ExchangeCodeAsync(code, correlation.Verifier, cancellationToken);
+            stage = "token_validation";
+            logger.LogInformation("Authentication callback reached {Stage} {CorrelationId}", stage, context.TraceIdentifier);
             var identity = await validator.ValidateAsync(tokens.AccessToken, cancellationToken);
             var now = clock.GetUtcNow();
             var handle = store.Handle();
             var session = new StoredSession(identity.Subject, identity.SessionId, tokens.AccessToken, tokens.RefreshToken,
                 identity.ExpiresAt, now.Add(SessionLifetime), WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32)));
+            stage = "session_storage";
+            logger.LogInformation("Authentication callback reached {Stage} {CorrelationId}", stage, context.TraceIdentifier);
             await store.WriteAsync(handle, session, cancellationToken);
             context.Response.Cookies.Append(SessionCookie, handle, CookieOptions(SessionLifetime));
             var frontend = RequiredHttps(configuration["Auth:FrontendOrigin"], "Auth:FrontendOrigin");
+            logger.LogInformation("Authentication callback completed {CorrelationId}", context.TraceIdentifier);
             return Results.Redirect(new Uri(new Uri(frontend), correlation.ReturnTo).ToString());
         }
-        catch (WorkOsAuthenticationException exception) when (exception.Terminal) { return Results.Unauthorized(); }
-        catch (Microsoft.IdentityModel.Tokens.SecurityTokenException) { return Results.Unauthorized(); }
-        catch (OwnerAuthenticationException) { return Results.Unauthorized(); }
-        catch (WorkOsAuthenticationException) { return Unavailable(context); }
-        catch (Exception exception) when (exception is HttpRequestException or TimeoutException) { return Unavailable(context); }
+        catch (Exception exception) when (exception is WorkOsAuthenticationException { Terminal: true } or
+            Microsoft.IdentityModel.Tokens.SecurityTokenException or OwnerAuthenticationException)
+        {
+            // Exception messages can contain token material; log only the class and stage.
+            logger.LogWarning("Authentication callback rejected at {Stage} {ErrorClass} {CorrelationId}",
+                stage, exception.GetType().Name, context.TraceIdentifier);
+            return Results.Json(new { error = "authentication_failed", correlationId = context.TraceIdentifier },
+                statusCode: StatusCodes.Status401Unauthorized);
+        }
+        catch (Exception exception) when (exception is WorkOsAuthenticationException or HttpRequestException or TimeoutException)
+        {
+            logger.LogWarning("Authentication callback unavailable at {Stage} {ErrorClass} {CorrelationId}",
+                stage, exception.GetType().Name, context.TraceIdentifier);
+            return Unavailable(context);
+        }
     }
 
     private static async Task<IResult> SessionAsync(HttpContext context, SessionStore store, TimeProvider clock,
