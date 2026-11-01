@@ -4,7 +4,7 @@ import {
   ensureLocalAccountAndHorse,
 } from "./localBackend";
 
-test("an owner logs quantity-only effort and sees the activity summary update", async ({
+test("an owner logs minutes without quantity fields and sees the activity summary update", async ({
   page,
 }) => {
   let streamVersion = 7;
@@ -73,7 +73,7 @@ test("an owner logs quantity-only effort and sees the activity summary update", 
       contentType: "application/json",
       body: JSON.stringify({
         items: logged
-          ? [{ taskType: "PaddockDuty", count: 1, minutes: 0 }]
+          ? [{ taskType: "PaddockDuty", count: 1, minutes: 150 }]
           : [],
         streamVersion,
       }),
@@ -86,8 +86,9 @@ test("an owner logs quantity-only effort and sees the activity summary update", 
   ).toBeVisible();
   await page.getByLabel("Horse", { exact: true }).selectOption("horse-a");
   await page.getByLabel("Task type").selectOption("PaddockDuty");
-  await page.getByRole("spinbutton", { name: "Quantity" }).fill("2.5");
-  await page.getByLabel("Quantity unit").fill("hours");
+  await expect(page.getByLabel("Quantity", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Quantity unit")).toHaveCount(0);
+  await page.getByLabel("Minutes", { exact: true }).fill("150");
   await page.getByRole("button", { name: "Save task" }).focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toHaveText("Task saved.");
@@ -95,15 +96,13 @@ test("an owner logs quantity-only effort and sees the activity summary update", 
     horseId: "horse-a",
     taskDate: "2026-10-09",
     taskType: "PaddockDuty",
-    minutes: 0,
-    quantity: 2.5,
-    quantityUnit: "hours",
+    minutes: 150,
   });
   await expect(page.getByRole("list", { name: "Recent tasks" })).toContainText(
     "Paddock Duty",
   );
   await expect(page.getByRole("list", { name: "Recent tasks" })).toContainText(
-    "2.5 hours",
+    "150 minutes",
   );
   await expect(
     page.getByRole("list", { name: "Activity summary" }),
@@ -111,7 +110,7 @@ test("an owner logs quantity-only effort and sees the activity summary update", 
   await expect(page.getByText("Retired horse")).toHaveCount(0);
 });
 
-test("a real backend quantity-only task updates activity without financial balance changes", async ({
+test("a real backend quick task retains its custom name and updates activity", async ({
   page,
   request,
 }) => {
@@ -120,17 +119,72 @@ test("a real backend quantity-only task updates activity without financial balan
   const owner = await ensureLocalAccountAndHorse(request, session, horseName);
   await page.goto(new URL("/tasks", session.webUrl).toString());
   await page.getByLabel("Horse", { exact: true }).selectOption(owner.horseId);
-  await page.getByLabel("Task type").selectOption("PaddockDuty");
-  await page.getByRole("spinbutton", { name: "Quantity" }).fill("2.5");
-  await page.getByLabel("Quantity unit").fill("hours");
+  await page.getByRole("button", { name: "New quick task" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name", { exact: true }).fill("Putzen");
+  await dialog.getByLabel("Activity type").selectOption("Grooming");
+  await dialog.getByLabel("Default minutes").fill("15");
+  await dialog.getByRole("button", { name: "Save quick task" }).click();
+  await page.getByRole("button", { name: "Putzen 15 min" }).click();
   await page.getByRole("button", { name: "Save task" }).click();
   await expect(page.getByText("Task saved.")).toBeVisible();
   await expect(page.getByRole("list", { name: "Recent tasks" })).toContainText(
-    "2.5 hours",
+    "Putzen",
   );
   const activity = page.getByRole("list", { name: "Activity summary" });
-  await expect(activity).toContainText("Paddock Duty");
-  await expect(activity).toContainText("1 tasks, 0 minutes");
+  await expect(activity).toContainText("Grooming");
+  await expect(activity).toContainText("1 tasks, 15 minutes");
+
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Putzen 15 min" }),
+  ).toBeVisible();
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 375, height: 812 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(page.getByLabel("Horse", { exact: true })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.getByRole("button", { name: "New quick task" }).click();
+    await expect(
+      page.getByRole("dialog").getByLabel("Name", { exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("button", { name: "New quick task" }),
+    ).toBeFocused();
+    await page.screenshot({
+      path: `test-results/quick-tasks-${viewport.width}.png`,
+      fullPage: true,
+    });
+  }
+  await page.getByRole("button", { name: "Manage quick tasks" }).click();
+  await page.getByRole("button", { name: "Edit Putzen" }).click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Name", { exact: true })
+    .fill("Putzen und Pflege");
+  await page.getByRole("dialog").getByLabel("Default minutes").fill("20");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Save quick task" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Putzen und Pflege 20 min" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Delete Putzen und Pflege" }).click();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Putzen und Pflege 20 min" }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Recent tasks" })).toContainText(
+    "Putzen",
+  );
 
   const headers = { Authorization: `Bearer ${session.accessToken}` };
   const [tasks, report] = await Promise.all([
@@ -152,22 +206,28 @@ test("a real backend quantity-only task updates activity without financial balan
   expect(tasks.status()).toBe(200);
   expect(report.status()).toBe(200);
   const taskPage = (await tasks.json()) as {
-    items: { horseId: string; taskType: string; quantity: number }[];
+    items: {
+      horseId: string;
+      taskType: string;
+      minutes: number;
+      notes: string;
+    }[];
   };
   expect(taskPage.items).toContainEqual(
     expect.objectContaining({
       horseId: owner.horseId,
-      taskType: "PaddockDuty",
-      quantity: 2.5,
+      taskType: "Grooming",
+      minutes: 15,
+      notes: "Putzen",
     }),
   );
   const activityReport = (await report.json()) as {
     items: { taskType: string; count: number; minutes: number }[];
   };
   expect(activityReport.items).toContainEqual({
-    taskType: "PaddockDuty",
+    taskType: "Grooming",
     count: 1,
-    minutes: 0,
+    minutes: 15,
   });
 });
 

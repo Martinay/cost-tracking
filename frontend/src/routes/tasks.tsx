@@ -169,6 +169,8 @@ export function TasksRoute() {
       )}
       {account.data && horses.data && (
         <TaskForm
+          key={subject}
+          subject={subject!}
           horses={horses.data.items.filter(
             (item) => item.status === "Active" || item.status === "Leased",
           )}
