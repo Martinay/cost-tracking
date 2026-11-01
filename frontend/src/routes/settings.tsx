@@ -211,6 +211,13 @@ export function SettingsRoute() {
       </section>
     );
   const locked = account.data.settingsLocked;
+  const timeZones = Array.from(
+    new Set([
+      ...Intl.supportedValuesOf("timeZone"),
+      "UTC",
+      ...(timeZone ? [timeZone] : []),
+    ]),
+  ).sort();
 
   return (
     <section aria-labelledby="settings-heading">
@@ -260,16 +267,24 @@ export function SettingsRoute() {
                 </div>
                 <div className="field">
                   <label htmlFor="account-time-zone">Time zone</label>
-                  <input
+                  <select
                     id="account-time-zone"
-                    autoComplete="off"
+                    aria-describedby="account-time-zone-hint"
                     required
                     disabled={locked || saveSettings.isPending}
                     onChange={(event) => setTimeZone(event.currentTarget.value)}
                     value={timeZone}
-                    placeholder="Europe/Berlin"
-                  />
-                  <p className="field-hint">
+                  >
+                    <option value="" disabled>
+                      Select a time zone
+                    </option>
+                    {timeZones.map((zone) => (
+                      <option key={zone} value={zone}>
+                        {zone}
+                      </option>
+                    ))}
+                  </select>
+                  <p id="account-time-zone-hint" className="field-hint">
                     Dates and recurring schedules follow this time zone.
                   </p>
                 </div>

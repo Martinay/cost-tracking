@@ -136,7 +136,7 @@ test("a first-time owner can configure an account and add a horse by keyboard", 
   await configureLink.focus();
   await page.keyboard.press("Enter");
   await page.getByLabel("Currency").selectOption("EUR");
-  await page.getByLabel("Time zone").fill("Europe/Berlin");
+  await page.getByLabel("Time zone").selectOption("Europe/Berlin");
   await page.getByRole("button", { name: "Save settings" }).focus();
   await page.keyboard.press("Enter");
   await expect(page.getByText("Account settings saved.")).toBeVisible();
