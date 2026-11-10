@@ -83,6 +83,9 @@ jobs:
       - name: Run local operational tooling tests
         run: node --test scripts/backup-restore.test.mjs scripts/measure-http.test.mjs scripts/measure-journeys.test.mjs scripts/verify-restore-replay.test.mjs scripts/run-e2e.test.mjs scripts/create-deployment-parameters.test.mjs
 
+      - name: Test Codex summary merge gate
+        run: node --test scripts/codex-review-gate.test.mjs
+
       - name: Verify local archive restore by replaying projections
         run: node scripts/verify-restore-replay.mjs --testhost-dll backend/tests/CostTracking.TestHost/bin/Debug/net10.0/CostTracking.TestHost.dll --output "$RUNNER_TEMP/ops-restore-replay.json"
 
