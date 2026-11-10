@@ -6,6 +6,8 @@ export const german: Record<string, string> = {
     "Zeitstempel werden in UTC gespeichert und in der lokalen Zeit deines Browsers angezeigt.",
   "Calendar dates on financial records stay unchanged.":
     "Kalenderdaten deiner Finanzbuchungen bleiben unverändert.",
+  "Record driving costs separately using mileage.":
+    "Fahrtkosten separat anhand der gefahrenen Kilometer erfassen.",
   "Select a time zone": "Zeitzone auswählen",
   "Sign out": "Abmelden",
   "Your horse ledger": "Dein Pferdebuch",

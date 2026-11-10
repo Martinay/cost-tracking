@@ -25,3 +25,9 @@ Browser timezone contexts Europe/Berlin and America/New_York both display the sa
 NuGet online vulnerability lookup was unavailable; restore used the existing local package cache with NuGetAudit=false. Local runner sockets and browser servers required sandbox escalation and then ran successfully. No dependency changes were made.
 
 These are local implementation checks, not release readiness. Hosted WorkOS signup/staging, Azure SMB durability/restore, required-scale performance, usability study and regional billing gates from feature 001 remain outside this change. No deployment was performed.
+
+## Merge with main — 2026-11-10
+
+Merged origin/main at 93c46f2 into the feature branch. The only content conflict was in frontend/src/i18n/messages.ts; retained both the automatic ledger default translations and the expense-category driving hint. Main's category selector, horse identity assets, dependency update, and clickable horse-card behavior are retained.
+
+Revalidated with pinned Node 24.19.0: npm ci, 83/83 frontend tests across 19 files, build/typecheck, ESLint, and Prettier pass. The 11 settings, language and horse-card browser journeys pass at desktop/mobile widths, in both interface languages and Berlin/New York timezone contexts. git diff --check passes. Backend implementation was unchanged by the merge; prior backend validation above remains the evidence for that slice.

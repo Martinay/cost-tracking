@@ -9,8 +9,7 @@ export type IconName =
   | "arrow"
   | "logout";
 
-const paths: Record<IconName, string> = {
-  horses: "M5 20v-7l3-4V4l4 2 4-2 3 6-3 3h-4l-2 7M8 9l4 3M15 8h.01",
+const paths: Record<Exclude<IconName, "horses">, string> = {
   expenses: "M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4",
   income: "M12 16V4m-4 4 4-4 4 4M5 16v4h14v-4",
   approvals: "M9 4H5v17h14V4h-4M9 3h6v4H9zM8 14l3 3 5-6",
@@ -35,7 +34,11 @@ export function Icon({ name }: { name: IconName }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d={paths[name]} />
+      {name === "horses" ? (
+        <use href="/horse-head.svg#horse-head" />
+      ) : (
+        <path d={paths[name]} />
+      )}
     </svg>
   );
 }

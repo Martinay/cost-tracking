@@ -1,3 +1,4 @@
+import { ExpenseCategorySelect } from "./ExpenseCategorySelect";
 import { formatDate, formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useEffect, useRef } from "react";
@@ -49,28 +50,11 @@ export function ExpenseForm() {
         {form.errorFor("amountMinor") && (
           <p role="alert">{t(form.errorFor("amountMinor"))}</p>
         )}
-        <label htmlFor="expense-category">{t("Category")}</label>
-        <select
+        <ExpenseCategorySelect
           id="expense-category"
-          required
           value={form.detail}
-          onChange={(event) => form.setDetail(event.currentTarget.value)}
-        >
-          <option value="">{t("Choose a category")}</option>
-          {[
-            "Stabling",
-            "Veterinary",
-            "Farrier",
-            "Feed",
-            "Equipment",
-            "Training",
-            "Other",
-          ].map((value) => (
-            <option key={value} value={value}>
-              {t(value)}
-            </option>
-          ))}
-        </select>
+          onChange={form.setDetail}
+        />
         {form.errorFor("category") && (
           <p role="alert">{t(form.errorFor("category"))}</p>
         )}

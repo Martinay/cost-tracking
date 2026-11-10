@@ -262,11 +262,43 @@ test("an owner creates and revises a recurring expense, changes one date, skips 
   await page.goto("/expenses");
   await page.getByRole("button", { name: "Create recurring rule" }).focus();
   await page.keyboard.press("Enter");
+  const category = page.getByRole("combobox", { name: "Category" });
+  for (const width of [1280, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(category).toHaveValue("");
+    await expect(category.locator("option")).toHaveText([
+      "Choose a category",
+      "Stabling",
+      "Veterinary",
+      "Farrier",
+      "Feed",
+      "Equipment",
+      "Training",
+      "Other",
+    ]);
+    await expect(category).toHaveAccessibleDescription(/driving.*mileage/i);
+    await category.focus();
+    await page.keyboard.press("s");
+    await page.keyboard.press("Tab");
+    await expect(category).toHaveValue("Stabling");
+    const bounds = await category.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    if (process.env.CATEGORY_SCREENSHOT_DIR) {
+      await category.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: `${process.env.CATEGORY_SCREENSHOT_DIR}/category-${width}.png`,
+      });
+    }
+    await category.selectOption("");
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByLabel("Start date").fill("2026-10-12");
   await page.getByLabel("End date (inclusive)").fill("2026-12-31");
   await page.getByLabel("Cadence").selectOption("Weekly");
   await page.getByLabel("Amount").fill("48.00");
-  await page.getByLabel("Category").fill("Feed");
+  await page.getByLabel("Category").selectOption("Feed");
   await page.getByLabel("Description").fill("Weekly delivery");
   await page.getByLabel("Misty").check();
   await page.getByLabel("Comet").check();
@@ -291,7 +323,7 @@ test("an owner creates and revises a recurring expense, changes one date, skips 
 
   await page.getByRole("button", { name: /Change.*10\/12\/2026/ }).click();
   await page.getByLabel("Amount").fill("63.00");
-  await page.getByLabel("Category").fill("Veterinary");
+  await page.getByLabel("Category").selectOption("Veterinary");
   await page.getByLabel("Description").fill("Urgent visit");
   await page.getByRole("button", { name: "Preview change" }).click();
   await expect(
@@ -374,7 +406,7 @@ test("a real backend expense rule projects occurrences and persists change, skip
   await page.getByLabel("Start date").fill("2026-09-20");
   await page.getByLabel("Cadence").selectOption("Daily");
   await page.getByLabel("Amount").fill("48.00");
-  await page.getByLabel("Category").fill("Feed");
+  await page.getByLabel("Category").selectOption("Feed");
   await page.getByLabel("Description").fill("Backend hay delivery");
   await page.getByLabel(horseName).check();
   await page
@@ -392,7 +424,7 @@ test("a real backend expense rule projects occurrences and persists change, skip
     .getByRole("button", { name: "Change occurrence 9/20/2026" })
     .click();
   await page.getByLabel("Amount").fill("63.00");
-  await page.getByLabel("Category").fill("Veterinary");
+  await page.getByLabel("Category").selectOption("Veterinary");
   await page.getByLabel("Description").fill("Backend urgent visit");
   await page.getByRole("button", { name: "Preview change" }).click();
   await expect(

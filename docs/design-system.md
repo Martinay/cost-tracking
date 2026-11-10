@@ -45,6 +45,12 @@ Below 700px, navigation becomes a horizontally scrollable row above content; kee
 
 ## Components and patterns
 
+### Horse-head identity
+
+The brand and Horses navigation use the same right-facing horse-head outline, with upright ears, a long muzzle, and a curved neck. `frontend/public/horse-head.svg` is the canonical geometry; the shared `Icon` references its `horse-head` group and inherits the surrounding text color. Keep the mark decorative alongside accessible text labels.
+
+Browser and shortcut icons use the same white outline on the `--brand` forest green. The SVG favicon has rounded corners; raster icons have a solid square background so devices can apply their own masks. Keep generous padding and check legibility at 16px. After editing the canonical SVG, run `node scripts/generate-icons.mjs` with the pinned Node runtime and installed Playwright Chromium to regenerate the SVG/ICO favicon and 180/192/512px PNG assets. The document head and `site.webmanifest` declare these local files; the manifest does not add an offline or standalone app flow.
+
 ### Page headings
 
 Use `PageHeading` with an existing heading ID, a concise title, and one sentence describing the page. Optional children provide page actions. Preserve one meaningful h1 per page. Loading and error screens retain their page heading.
@@ -55,11 +61,15 @@ Use sections with accessible headings for coherent groups. Settings cards pair a
 
 Horse collections use responsive cards. Activity, recurring rules, and ledger entries use divided lists with clear descriptions, dates, and actions. Supporting allocations sit beneath their parent entry. Status badges always include visible text.
 
+Horse cards extend their single native View link across the whole card with a positioned pseudo-element. Keep one translated accessible link name and one tab stop per card, with a brand border on hover and the standard focus outline around the card. Preserve native link actions and encoded destinations. Do not place additional interactive controls beneath the stretched link; revisit the pattern if cards gain other actions.
+
 ### Forms and actions
 
 Every input needs a persistent, associated label. Fields are at least 43px tall and normally bounded to 440px, with full available width on mobile. Keep helper text adjacent to its field. Checkboxes and radios retain their native semantics and use the brand accent.
 
 Primary actions are forest green with white text; secondary actions are white with a subtle border. Use explicit button types, descriptive verbs, visible disabled states, and pending text during submission. Settings actions sit in a right-aligned footer separated by a rule. Preserve controlled drafts, confirmation previews, and existing financial safety checks when changing presentation.
+
+Expense categories use the shared `ExpenseCategorySelect` in one-off expenses, recurring rules and revisions, and occurrence edits. Use a required native dropdown with an explicit “Choose a category” prompt and the seven supported non-driving choices. Preserve the existing selection and preview invalidation callback. Associate adjacent help explaining the separate mileage flow for driving costs. Fixed category choices must not use free-text inputs or datalists.
 
 ### Data and feedback
 

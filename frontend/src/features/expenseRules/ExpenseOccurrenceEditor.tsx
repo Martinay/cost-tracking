@@ -1,3 +1,4 @@
+import { ExpenseCategorySelect } from "../expenses/ExpenseCategorySelect";
 import { formatDate, formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useState } from "react";
@@ -220,15 +221,13 @@ export function ExpenseOccurrenceEditor({
             }}
             required
           />
-          <label htmlFor="occurrence-category">{t("Category")}</label>
-          <input
+          <ExpenseCategorySelect
             id="occurrence-category"
             value={category}
-            onChange={(event) => {
+            onChange={(value) => {
               edited();
-              setCategory(event.currentTarget.value);
+              setCategory(value);
             }}
-            required
           />
           <label htmlFor="occurrence-description">{t("Description")}</label>
           <input
