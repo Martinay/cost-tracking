@@ -30,6 +30,10 @@ Follow `specs/001-horse-finance-effort-tracking/quickstart.md` for local setup a
 
 Real WorkOS staging, Azure SMB durability/restore, the 20-person usability study, required-scale browser performance, and measured regional billing remain unverified gates. No paid resources were provisioned as part of local implementation.
 
+## Codex review merge gate
+
+The [Codex review merge gate](docs/codex-review-gate.md) reuses the existing GitHub integration's review summary without a second AI review or API key. Its guide covers the required one-time `main` ruleset activation, live verification, fork behavior, and merge-queue limitations.
+
 ## Azure deployment
 
 `.github/workflows/ci.yml` runs the full validation suite for pull requests and `main`. Every push to `main` automatically reaches the serialized Azure deployment job after validation succeeds. Manual runs on `main` also deploy; pull requests run validation only. Azure authentication uses GitHub OIDC. Configure the protected `azure-production` GitHub environment, Azure role assignments, and required variables/secrets before deploying. The workflow reuses the API image and frontend build produced by validation, pushes the API by immutable digest to GHCR, and provisions Container Apps and Azure Files in Central India inside the existing `cost-tracking` resource group. Static Web Apps defaults to West Europe as the supported-region exception.
