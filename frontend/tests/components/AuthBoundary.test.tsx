@@ -470,7 +470,7 @@ describe("first-use settings", () => {
       </QueryClientProvider>,
     );
     expect(
-      await screen.findByText("All income and expenses use euros (EUR)."),
+      await screen.findByRole("heading", { name: "Driving rate" }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Currency")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Time zone")).not.toBeInTheDocument();

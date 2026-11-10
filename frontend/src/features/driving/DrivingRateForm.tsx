@@ -60,7 +60,7 @@ export function DrivingRateForm({
   return (
     <section className="settings-card" aria-labelledby="driving-rate-heading">
       <div className="card-heading">
-        <span className="section-number">02</span>
+        <span className="section-number">01</span>
         <div>
           <h2 id="driving-rate-heading">{t("Driving rate")}</h2>
           <p>{t("Your default rate for journeys to and from the stable.")}</p>
