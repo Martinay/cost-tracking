@@ -14,6 +14,8 @@ Use WorkOS hosted AuthKit with a small .NET session broker. This replaces the pr
 
 All auth responses use Cache-Control no-store. API CORS allows only configured frontend origin; auth requests include credentials. Use app-owned sibling HTTPS domains (`app.example.com`, `api.example.com`) so cookies are same-site; the ordinary domain cost belongs in the budget. Do not depend on third-party cookies across unrelated default Azure domains or purchase a WorkOS custom domain for this flow.
 
+On a domain API 401, the browser resolves the cookie session and renews an expired access token, sharing one renewal attempt across concurrent requests. It retries the original request at most once, retaining the exact body, idempotency key and expected stream version. A late 401 reuses a token already renewed for the same subject. Subject changes and logout prevent replay; transient renewal failures preserve drafts and expose session retry, while terminal failures clear private state and offer sign-in.
+
 ## Session state and refresh concurrency
 
 Use an opaque cryptographically random session handle in `__Host-cost-session` cookie: Secure, HttpOnly, SameSite=Lax, Path=/, no Domain. Store a hash of that handle as the filename under a separate `/data/auth/sessions/` directory. Encrypt session payload `{sub,sid,accessToken,refreshToken,expiresAt,absoluteExpiry}` using ASP.NET Data Protection. Session state is mutable authentication infrastructure, never a financial event or report input.

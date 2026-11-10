@@ -75,7 +75,7 @@ Expense categories use the shared `ExpenseCategorySelect` in one-off expenses, r
 
 Tables have captions, scoped column/row headers, subtle horizontal rules, aligned numeric values, and restrained row hover. Keep financial units in headings or values. Preserve the existing accessible `ReportTableRegion` wrapper.
 
-Empty states explain what is absent and what will appear later. Use the `empty-state` pattern for larger empty regions. Loading messages use `role="status"`; success updates remain polite; actionable errors use `role="alert"` with adjacent retry actions where available. Never erase a form on failed submission.
+Empty states explain what is absent and what will appear later. Use the `empty-state` pattern for larger empty regions. Loading messages use `role="status"`; success updates remain polite; actionable errors use `role="alert"` with adjacent retry actions where available. Never erase a form on failed submission. During a transient session check failure, keep the subject's form mounted and hidden while showing the session recovery controls outside that hidden content. A successful retry restores the draft; terminal sign-out clears private content.
 
 Use the shared `Modal` for new dialogs (initial focus, focus containment, Escape, scroll lock, and focus restoration). Dialogs use an accessible name, modal semantics, a bounded width, a scrollable interior, and a dimmed background. They must move focus inside, keep keyboard focus contained, support appropriate dismissal, and restore focus to the trigger. Do not turn inline editors into visual modals without implementing these behaviors.
 
