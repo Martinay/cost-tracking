@@ -231,8 +231,9 @@ export function IncomeRoute() {
           {t("Record income")}
         </button>
       )}
-      {canLoadProtectedData && recording && <IncomeForm />}
-      {canLoadProtectedData && (
+      {/* Retain editor state while AppShell hides this subject during auth recovery. */}
+      {subject !== null && recording && <IncomeForm />}
+      {subject !== null && (
         <section aria-labelledby="income-rules-heading">
           <h2 id="income-rules-heading">{t("Recurring income")}</h2>
           <button

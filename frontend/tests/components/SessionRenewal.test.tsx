@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import { ExpensesRoute } from "../../src/routes/expenses";
+import { IncomeRoute } from "../../src/routes/income";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -161,9 +164,20 @@ test("deduplicates simultaneous renewal and ignores its result after sign-out", 
   expect(broker).toHaveBeenCalledTimes(2);
 });
 
-async function mountBoundary() {
+async function mountBoundary(
+  children: ReactNode = (
+    <label>
+      Draft
+      <input aria-label="Draft" defaultValue="" />
+    </label>
+  ),
+  prepareTransport?: (
+    transport: ReturnType<typeof vi.fn<typeof fetch>>,
+  ) => void,
+) {
   const { broker, session, transport, client } = await setup();
   broker.mockResolvedValueOnce(json(sessionBody("old")));
+  prepareTransport?.(transport);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -176,14 +190,11 @@ async function mountBoundary() {
         session={session}
         subjectLifecycle={lifecycle}
       >
-        <label>
-          Draft
-          <input aria-label="Draft" defaultValue="" />
-        </label>
+        {children}
       </AuthBoundary>
     </QueryClientProvider>,
   );
-  await screen.findByRole("textbox", { name: "Draft" });
+  await screen.findByRole("button", { name: "Sign out" });
   return { broker, session, transport, client, queryClient, screen };
 }
 
@@ -245,3 +256,143 @@ test("a late 401 cannot reuse another account's already loaded token", async () 
   await expect(request).rejects.toBeInstanceOf(SubjectChangedError);
   expect(transport).toHaveBeenCalledTimes(1);
 });
+
+for (const kind of ["Expense", "Income", "Driving"] as const) {
+  test(`${kind} route retains its financial draft and server preview after transient renewal failure`, async () => {
+    const user = userEvent.setup();
+    let rejectAccount = false;
+    const amountMinor = kind === "Driving" ? 300 : 1001;
+    const { broker, client, transport, queryClient } = await mountBoundary(
+      kind === "Income" ? <IncomeRoute /> : <ExpensesRoute />,
+      (transport) =>
+        transport.mockImplementation(async (input, init) => {
+          const url = String(input);
+          if (url === "/api/v1/account") {
+            if (rejectAccount) {
+              rejectAccount = false;
+              return unauthorized();
+            }
+            return json({
+              currency: "EUR",
+              timeZone: "UTC",
+              ownerToday: "2026-09-21",
+              streamVersion: 7,
+              drivingRateMinorPerKm: 30,
+              settingsLocked: false,
+            });
+          }
+          if (url === "/api/v1/horses")
+            return json({
+              items: [{ horseId: "horse-a", name: "Misty", status: "Active" }],
+              nextCursor: null,
+              streamVersion: 7,
+            });
+          if (url === "/api/v1/previews/financial")
+            return json({
+              currency: "EUR",
+              date: "2026-09-21",
+              amountMinor,
+              splitMode: "Equal",
+              allocations: [
+                { horseId: "horse-a", weight: 1000000, amountMinor },
+              ],
+              monthlyEffect: [],
+              streamVersion: 7,
+              ...(kind === "Driving"
+                ? {
+                    driving: {
+                      kilometers: 10,
+                      rateMinorPerKm: 30,
+                      amountMinor,
+                    },
+                  }
+                : {}),
+            });
+          if (init?.method && init.method !== "GET")
+            throw new Error(`Unexpected mutation: ${url}`);
+          return json({
+            items: [],
+            nextCursor: null,
+            streamVersion: 7,
+            complete: true,
+            currency: "EUR",
+          });
+        }),
+    );
+    const label = kind === "Driving" ? "driving expense" : kind.toLowerCase();
+    await user.click(screen.getByRole("button", { name: `Record ${label}` }));
+    const amountLabel = kind === "Driving" ? "Distance (km)" : "Amount";
+    await user.type(
+      await screen.findByLabelText(amountLabel),
+      kind === "Driving" ? "10" : "10.01",
+    );
+    if (kind === "Expense") {
+      await user.selectOptions(screen.getByLabelText("Category"), "Feed");
+      await user.type(screen.getByLabelText("Description"), "Unsaved feed");
+    } else if (kind === "Income") {
+      await user.type(screen.getByLabelText("Source"), "Unsaved payment");
+    } else {
+      await user.type(screen.getByLabelText("Description"), "Unsaved trip");
+    }
+    await user.click(screen.getByLabelText("Misty"));
+    await user.click(screen.getByRole("button", { name: `Preview ${label}` }));
+    const previewName =
+      kind === "Driving" ? "Driving expense preview" : `${kind} preview`;
+    const preview = await screen.findByRole("region", { name: previewName });
+    const previewText = preview.textContent;
+    rejectAccount = true;
+    broker
+      .mockResolvedValueOnce(json(sessionBody()))
+      .mockResolvedValueOnce(json({}, 503));
+    await act(async () => {
+      await expect(client.get(get)).rejects.toMatchObject({ status: 503 });
+    });
+    expect(
+      screen.getByRole("button", { name: "Retry session check" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("region", { name: previewName }),
+    ).not.toBeInTheDocument();
+    const pausedCalls = transport.mock.calls.length;
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(transport).toHaveBeenCalledTimes(pausedCalls);
+    broker
+      .mockResolvedValueOnce(json(sessionBody()))
+      .mockResolvedValueOnce(json(sessionBody("new")));
+    await user.click(
+      screen.getByRole("button", { name: "Retry session check" }),
+    );
+    expect(await screen.findByLabelText(amountLabel)).toHaveValue(
+      kind === "Driving" ? 10 : 10.01,
+    );
+    expect(screen.getByLabelText("Misty")).toBeChecked();
+    if (kind === "Expense") {
+      expect(screen.getByLabelText("Category")).toHaveValue("Feed");
+      expect(screen.getByLabelText("Description")).toHaveValue("Unsaved feed");
+    } else if (kind === "Income")
+      expect(screen.getByLabelText("Source")).toHaveValue("Unsaved payment");
+    else
+      expect(screen.getByLabelText("Description")).toHaveValue("Unsaved trip");
+    expect(
+      (await screen.findByRole("region", { name: previewName })).textContent,
+    ).toBe(previewText);
+    expect(screen.getByRole("button", { name: `Save ${label}` })).toBeEnabled();
+    expect(
+      transport.mock.calls.filter(
+        ([url]) => url === "/api/v1/previews/financial",
+      ),
+    ).toHaveLength(1);
+    rejectAccount = true;
+    broker
+      .mockResolvedValueOnce(json(sessionBody()))
+      .mockResolvedValueOnce(unauthorized());
+    await act(async () => {
+      await expect(client.get(get)).rejects.toBeInstanceOf(SubjectChangedError);
+    });
+    expect(await screen.findByRole("link", { name: "Sign in" })).toBeVisible();
+    expect(screen.queryByLabelText(amountLabel)).not.toBeInTheDocument();
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+  });
+}
