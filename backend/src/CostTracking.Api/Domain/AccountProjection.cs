@@ -6,8 +6,8 @@ namespace CostTracking.Api.Domain;
 public sealed record AccountProjection(IReadOnlyList<EventEnvelope> Events)
 {
     public long StreamVersion => Events.Count;
-    public string? Currency => Events.LastOrDefault(value => value.Type == "AccountConfigured")?.Payload.GetProperty("currency").GetString();
-    public string? TimeZone => Events.LastOrDefault(value => value.Type == "AccountConfigured")?.Payload.GetProperty("timeZone").GetString();
+    public string? Currency => Events.LastOrDefault(value => value.Type == "AccountConfigured")?.Payload.GetProperty("currency").GetString() ?? "EUR";
+    public string? TimeZone => Events.LastOrDefault(value => value.Type == "AccountConfigured")?.Payload.GetProperty("timeZone").GetString() ?? "UTC";
     public decimal? DrivingRateMinorPerKm
     {
         get

@@ -45,6 +45,8 @@ public static class AccountEndpoints
             }
             var current = AccountProjection.Replay(owner, events);
             if (current.SettingsLocked) throw new ApiException(StatusCodes.Status409Conflict, "settings_locked", "Account settings are locked after financial activity.");
+            if (request.Currency != "EUR")
+                throw new ApiException(StatusCodes.Status422UnprocessableEntity, "invalid_account_settings", "All income and expenses use euros (EUR).", "currency");
             return Event("AccountConfigured", new { currency = request.Currency, timeZone = request.TimeZone });
         }, (accepted, prefix) =>
         {

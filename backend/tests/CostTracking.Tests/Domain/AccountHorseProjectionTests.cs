@@ -12,8 +12,8 @@ public sealed class AccountHorseProjectionTests
     public void Account_settings_replay_starts_empty_and_clears_rate_only_when_currency_changes()
     {
         var empty = AccountProjection.Replay(Subject, []);
-        Assert.Null(empty.Currency);
-        Assert.Null(empty.TimeZone);
+        Assert.Equal("EUR", empty.Currency);
+        Assert.Equal("UTC", empty.TimeZone);
         Assert.Null(empty.DrivingRateMinorPerKm);
         Assert.False(empty.SettingsLocked);
         Assert.Equal(0, empty.StreamVersion);

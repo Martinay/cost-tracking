@@ -1,5 +1,7 @@
 # Feature Specification: Settings time zone dropdown
 
+> Superseded for current UI behavior by [004 automatic ledger defaults](../004-automatic-ledger-defaults/spec.md). The timezone dropdown is removed; this specification remains historical.
+
 **Feature Branch**: `main` (existing checkout)
 **Created**: 2026-11-01
 **Status**: Specified

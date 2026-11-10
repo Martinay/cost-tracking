@@ -70,7 +70,7 @@ public sealed class DrivingTests
     }
 
     [Fact]
-    public async Task Changing_currency_before_financial_activity_clears_the_saved_rate()
+    public async Task Rejecting_non_euro_currency_preserves_the_saved_rate()
     {
         using var app = new TestApplication();
         using var client = Client(app);
@@ -80,14 +80,13 @@ public sealed class DrivingTests
         Assert.Equal(HttpStatusCode.OK, rate.StatusCode);
         using var changedCurrency = await Send(client, HttpMethod.Put, "/api/v1/account", 3,
             "{\"currency\":\"USD\",\"timeZone\":\"Europe/Berlin\"}");
-        Assert.Equal(HttpStatusCode.OK, changedCurrency.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, changedCurrency.StatusCode);
         using var account = await client.GetAsync("/api/v1/account");
         using var accountJson = JsonDocument.Parse(await account.Content.ReadAsStringAsync());
-        Assert.True(accountJson.RootElement.GetProperty("drivingRateMinorPerKm").ValueKind == JsonValueKind.Null);
+        Assert.Equal(12.5m, accountJson.RootElement.GetProperty("drivingRateMinorPerKm").GetDecimal());
         var body = $"{{\"expenseDate\":\"2026-09-21\",\"kilometers\":1,\"description\":\"Trip\",\"split\":{{\"mode\":\"Equal\",\"horseIds\":[\"{horseId:D}\"]}}}}";
-        using var noStaleRate = await Send(client, HttpMethod.Post, "/api/v1/driving", 4, body);
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, noStaleRate.StatusCode);
-        Assert.Equal("driving_rate_required", await ErrorCode(noStaleRate));
+        using var preservedRate = await Send(client, HttpMethod.Post, "/api/v1/driving", 3, body);
+        Assert.Equal(HttpStatusCode.Created, preservedRate.StatusCode);
     }
 
     [Fact]

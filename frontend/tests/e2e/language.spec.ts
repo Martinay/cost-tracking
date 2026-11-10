@@ -142,7 +142,12 @@ for (const width of [1440, 375]) {
         ),
       ).toBe(true);
       if (path === "/settings") {
-        await expect(page.getByLabel("Währung")).toBeDisabled();
+        await expect(page.getByLabel("Währung")).toHaveCount(0);
+        await expect(
+          page.getByText(
+            "Alle Einnahmen und Ausgaben werden in Euro (EUR) erfasst.",
+          ),
+        ).toBeVisible();
         await expect(page.getByLabel("Sprache")).toBeEnabled();
       }
       if (path === "/reports")

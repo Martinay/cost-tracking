@@ -10,15 +10,42 @@ namespace CostTracking.Tests.Integration;
 public sealed class OneTimeLedgerTests
 {
     [Fact]
-    public async Task Financial_commands_require_setup_and_reject_dates_after_owner_today()
+    public async Task Fresh_account_records_euro_income_and_expenses_without_configuration()
+    {
+        using var app = new TestApplication();
+        using var client = Client(app, TestIdentityIssuer.Alice);
+        using var horse = await Send(client, HttpMethod.Post, "/api/v1/horses", 0,
+            "{\"name\":\"Misty\",\"breed\":\"Arabian\",\"dateOfBirth\":null,\"status\":\"Active\"}");
+        Assert.Equal(HttpStatusCode.Created, horse.StatusCode);
+        using var horseBody = JsonDocument.Parse(await horse.Content.ReadAsStringAsync());
+        var horseId = horseBody.RootElement.GetProperty("horseId").GetGuid();
+        var split = new { mode = "Equal", horseIds = new[] { horseId } };
+        using var expense = await Send(client, HttpMethod.Post, "/api/v1/expenses", 1,
+            JsonSerializer.Serialize(new { expenseDate = "2026-09-21", amountMinor = 100, category = "Feed", description = "Hay", split }));
+        Assert.Equal(HttpStatusCode.Created, expense.StatusCode);
+        using var income = await Send(client, HttpMethod.Post, "/api/v1/income", 2,
+            JsonSerializer.Serialize(new { receivedDate = "2026-09-21", amountMinor = 500, source = "Lesson", split }));
+        Assert.Equal(HttpStatusCode.Created, income.StatusCode);
+        using var report = await client.GetAsync("/api/v1/reports/monthly-pnl?month=2026-09");
+        Assert.Equal(HttpStatusCode.OK, report.StatusCode);
+        using var body = JsonDocument.Parse(await report.Content.ReadAsStringAsync());
+        Assert.Equal("EUR", body.RootElement.GetProperty("currency").GetString());
+        using var account = await client.GetAsync("/api/v1/account");
+        using var accountBody = JsonDocument.Parse(await account.Content.ReadAsStringAsync());
+        Assert.Equal(3, accountBody.RootElement.GetProperty("streamVersion").GetInt64());
+        Assert.Equal("UTC", accountBody.RootElement.GetProperty("timeZone").GetString());
+    }
+
+    [Fact]
+    public async Task Financial_commands_need_no_setup_and_reject_dates_after_owner_today()
     {
         using var app = new TestApplication();
         using var client = Client(app, TestIdentityIssuer.Alice);
         const string expense = "{\"expenseDate\":\"2026-09-22\",\"amountMinor\":1001,\"category\":\"Farrier\",\"description\":\"Trim\",\"split\":{\"mode\":\"Equal\",\"horseIds\":[\"00000001-0000-4000-8000-000000000001\"]}}";
 
         using var beforeSetup = await Send(client, HttpMethod.Post, "/api/v1/expenses", 0, expense);
-        Assert.Equal(HttpStatusCode.Conflict, beforeSetup.StatusCode);
-        Assert.Equal("account_setup_required", await ErrorCode(beforeSetup));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, beforeSetup.StatusCode);
+        Assert.Equal("future_financial_date", await ErrorCode(beforeSetup));
 
         using var configured = await Send(client, HttpMethod.Put, "/api/v1/account", 0,
             "{\"currency\":\"EUR\",\"timeZone\":\"Europe/Berlin\"}");
