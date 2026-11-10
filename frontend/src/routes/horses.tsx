@@ -103,8 +103,6 @@ export function HorsesRoute() {
         </button>
       </section>
     );
-  const needsSetup =
-    account.data.currency === null || account.data.timeZone === null;
 
   return (
     <section aria-labelledby="horses-heading">
@@ -114,16 +112,9 @@ export function HorsesRoute() {
         description={t("A little more clarity for every horse in your care.")}
       />
       {notice && <p role="status">{t(notice)}</p>}
-      {needsSetup ? (
-        <p>
-          {t("Set your account currency and time zone before adding horses.")}{" "}
-          <a href="/settings">{t("Configure settings")}</a>
-        </p>
-      ) : (
-        <button type="button" onClick={() => setAdding(true)}>
-          {t("Add horse")}
-        </button>
-      )}
+      <button type="button" onClick={() => setAdding(true)}>
+        {t("Add horse")}
+      </button>
       {horses.data.items.length === 0 ? (
         <p>{t("No horses yet.")}</p>
       ) : (

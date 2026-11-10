@@ -45,7 +45,7 @@ test("a signed-out owner can reach the hosted sign-in handoff by keyboard", asyn
   ).toBeVisible();
 });
 
-test("a first-time owner can configure an account and add a horse by keyboard", async ({
+test("a first-time owner can add a horse by keyboard without configuring an account", async ({
   page,
 }) => {
   await page.route("**/auth/session", (route) =>
@@ -61,41 +61,17 @@ test("a first-time owner can configure an account and add a horse by keyboard", 
       }),
     }),
   );
-  let configured = false;
   let streamVersion = 0;
   await page.route("**/api/v1/account", async (route) => {
-    if (route.request().method() === "PUT") {
-      const command = route.request().postDataJSON() as {
-        currency: string;
-        timeZone: string;
-      };
-      expect(command).toEqual({ currency: "EUR", timeZone: "Europe/Berlin" });
-      configured = true;
-      streamVersion += 1;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        headers: { ETag: `"${streamVersion}"` },
-        body: JSON.stringify({
-          ...command,
-          streamVersion,
-          drivingRateMinorPerKm: null,
-          settingsLocked: false,
-        }),
-      });
-      return;
-    }
+    expect(route.request().method()).toBe("GET");
     await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      headers: { ETag: `"${streamVersion}"` },
-      body: JSON.stringify({
-        currency: configured ? "EUR" : null,
-        timeZone: configured ? "Europe/Berlin" : null,
+      json: {
+        currency: "EUR",
+        timeZone: "UTC",
         streamVersion,
         drivingRateMinorPerKm: null,
         settingsLocked: false,
-      }),
+      },
     });
   });
   await page.route("**/api/v1/horses", async (route) => {
@@ -131,18 +107,9 @@ test("a first-time owner can configure an account and add a horse by keyboard", 
   await expect(
     page.getByRole("navigation", { name: "Primary navigation" }),
   ).toBeVisible();
-  const configureLink = page.getByRole("link", { name: "Configure settings" });
-  await expect(configureLink).toBeVisible();
-  await configureLink.focus();
-  await page.keyboard.press("Enter");
-  await page.getByLabel("Currency").selectOption("EUR");
-  await page.getByLabel("Time zone").selectOption("Europe/Berlin");
-  await page.getByRole("button", { name: "Save settings" }).focus();
-  await page.keyboard.press("Enter");
-  await expect(page.getByText("Account settings saved.")).toBeVisible();
-  const horsesLink = page.getByRole("link", { name: "Horses", exact: true });
-  await horsesLink.focus();
-  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("link", { name: "Configure settings" }),
+  ).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add horse" })).toBeVisible();
   await page.getByRole("button", { name: "Add horse" }).focus();
   await page.keyboard.press("Enter");

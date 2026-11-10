@@ -158,7 +158,7 @@ public sealed class TaskTests
         using var accountBody = JsonDocument.Parse(await account.Content.ReadAsStringAsync());
         Assert.False(accountBody.RootElement.GetProperty("settingsLocked").GetBoolean());
         using var settingsChange = await SendCommand(client, HttpMethod.Put, "/api/v1/account", 3,
-            "{\"currency\":\"USD\",\"timeZone\":\"America/New_York\"}");
+            "{\"currency\":\"EUR\",\"timeZone\":\"America/New_York\"}");
         Assert.Equal(HttpStatusCode.OK, settingsChange.StatusCode);
 
         using var expense = await SendCommand(client, HttpMethod.Post, "/api/v1/expenses", 4,

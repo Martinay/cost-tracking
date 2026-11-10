@@ -57,7 +57,7 @@ Use `PageHeading` with an existing heading ID, a concise title, and one sentence
 
 ### Cards and lists
 
-Use sections with accessible headings for coherent groups. Settings cards pair a numbered marker with a title and a short description; numbering is specific to this ordered setup page. Use `card-heading`, `settings-card`, `field-grid`, `field`, `field-hint`, and `form-footer` for the settings pattern. Avoid nesting cards without a meaningful grouping.
+Use sections with accessible headings for coherent groups. Settings cards pair a numbered marker with a title and a short description; numbering is specific to the settings page. Use `card-heading`, `settings-card`, `field-grid`, `field`, `field-hint`, and `form-footer` for the settings pattern. Avoid nesting cards without a meaningful grouping.
 
 Horse collections use responsive cards. Activity, recurring rules, and ledger entries use divided lists with clear descriptions, dates, and actions. Supporting allocations sit beneath their parent entry. Status badges always include visible text.
 
@@ -102,3 +102,7 @@ English and German share the same components and tokens. Style components with s
 `LanguageSelector` uses the persistent label Language / Sprache with English and Deutsch options. Keep it available in the sidebar before and after sign-in, regardless of financial settings locks, and inside shared dialogs so drafts and server previews survive a language change. On mobile, sidebar account controls occupy a wrapping row below navigation; long German text must not overlap the brand or cause page overflow. Dialog language controls follow the form and participate in focus containment.
 
 Use the selected locale for currency and date presentation through `frontend/src/i18n/format.ts`; preserve canonical minor amounts, ISO inputs, account currency/time zone and owner dates. Preserve user-entered names, descriptions, categories, sources, notes and units, plus stored server history summaries. Translate known API recovery messages while retaining unknown diagnostics. Language changes update the document language and title without remounting content, resetting forms or invalidating subject-scoped caches.
+
+## Automatic ledger defaults
+
+Fresh accounts use EUR and UTC automatically. Show explanatory text in the existing ledger preferences card, with no editable currency/timezone selectors or save action. Keep driving-rate editing and history accessible, and offer Add horse without a setup gate. Display history instants using the browser timezone and selected interface locale; preserve date-only ledger days. Explicit historic financial settings retain their original meaning.

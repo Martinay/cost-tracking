@@ -4,12 +4,12 @@ import {
   ensureLocalAccountAndHorse,
 } from "./localBackend";
 
-test("saved rate can clear on currency change, driving retries the exact preview, and receipt provenance remains fixed", async ({
+test("euro driving retries the exact preview and receipt provenance remains fixed", async ({
   page,
 }) => {
-  let currency = "EUR";
+  const currency = "EUR";
   let rate: number | null = 30;
-  let streamVersion = 6;
+  let streamVersion = 7;
   let settingsLocked = false;
   let drivingAttempts = 0;
   let recorded = false;
@@ -32,28 +32,7 @@ test("saved rate can clear on currency change, driving retries the exact preview
     }),
   );
   await page.route("**/api/v1/account", async (route) => {
-    if (route.request().method() === "PUT") {
-      const body = route.request().postDataJSON() as {
-        currency: string;
-        timeZone: string;
-      };
-      currency = body.currency;
-      rate = null;
-      streamVersion += 1;
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        headers: { ETag: `"${streamVersion}"` },
-        body: JSON.stringify({
-          currency,
-          timeZone: body.timeZone,
-          ownerToday: "2026-10-09",
-          drivingRateMinorPerKm: rate,
-          settingsLocked,
-          streamVersion,
-        }),
-      });
-    }
+    expect(route.request().method()).toBe("GET");
     return route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -202,9 +181,6 @@ test("saved rate can clear on currency change, driving retries the exact preview
   );
 
   await page.goto("/settings");
-  await page.getByLabel("Currency").selectOption("USD");
-  await page.getByRole("button", { name: "Save settings" }).click();
-  await expect(page.getByText("No saved driving rate.")).toBeVisible();
   await page.getByLabel("Driving rate (minor units per km)").fill("31");
   await page.getByRole("button", { name: "Save driving rate" }).click();
   await expect(
@@ -220,9 +196,9 @@ test("saved rate can clear on currency change, driving retries the exact preview
   await page.getByRole("button", { name: "Preview driving expense" }).click();
   const preview = page.getByRole("region", { name: "Driving expense preview" });
   await expect(preview).toContainText("31.0000 minor units/km");
-  await expect(preview).toContainText("$3.14");
-  await expect(preview).toContainText("Misty: $1.57");
-  await expect(preview).toContainText("Comet: $1.57");
+  await expect(preview).toContainText("€3.14");
+  await expect(preview).toContainText("Misty: €1.57");
+  await expect(preview).toContainText("Comet: €1.57");
   await page.getByRole("button", { name: "Save driving expense" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Connection interrupted.",

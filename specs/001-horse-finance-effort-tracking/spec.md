@@ -1,5 +1,7 @@
 # Feature Specification: Horse Finance and Effort Tracking
 
+> Account setup requirements (FR-023 and currency/calendar assumptions) are superseded for new accounts by [004 automatic ledger defaults](../004-automatic-ledger-defaults/spec.md): EUR and UTC apply without a setup step. Explicit historical settings retain their original financial meaning.
+
 **Feature Branch**: `main` (no branch hook configured)
 
 **Created**: 2026-09-21

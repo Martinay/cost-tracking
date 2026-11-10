@@ -10,7 +10,7 @@ namespace CostTracking.Tests.Integration;
 public sealed class AccountHorseTests
 {
     [Fact]
-    public async Task New_account_reports_null_settings_and_version_zero()
+    public async Task New_account_reports_euro_utc_defaults_and_version_zero()
     {
         using var app = new TestApplication();
         using var client = AuthenticatedClient(app, TestIdentityIssuer.Alice);
@@ -20,11 +20,29 @@ public sealed class AccountHorseTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("\"0\"", response.Headers.ETag?.Tag);
         using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Null(body.RootElement.GetProperty("currency").GetStringOrNull());
-        Assert.Null(body.RootElement.GetProperty("timeZone").GetStringOrNull());
+        Assert.Equal("EUR", body.RootElement.GetProperty("currency").GetString());
+        Assert.Equal("UTC", body.RootElement.GetProperty("timeZone").GetString());
         Assert.Null(body.RootElement.GetProperty("drivingRateMinorPerKm").GetStringOrNull());
         Assert.Equal(0, body.RootElement.GetProperty("streamVersion").GetInt64());
         Assert.False(body.RootElement.GetProperty("settingsLocked").GetBoolean());
+    }
+
+    [Theory]
+    [InlineData("USD", "UTC")]
+    [InlineData("JPY", "UTC")]
+    [InlineData("GBP", "Europe/Berlin")]
+    public async Task New_configuration_only_accepts_euro(string currency, string zone)
+    {
+        using var app = new TestApplication();
+        using var client = AuthenticatedClient(app, TestIdentityIssuer.Alice);
+        using var response = await SendCommandAsync(client, HttpMethod.Put, "/api/v1/account", 0,
+            JsonSerializer.Serialize(new { currency, timeZone = zone }));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal("invalid_account_settings", await ErrorCode(response));
+        using var account = await client.GetAsync("/api/v1/account");
+        using var body = JsonDocument.Parse(await account.Content.ReadAsStringAsync());
+        Assert.Equal(0, body.RootElement.GetProperty("streamVersion").GetInt64());
+        Assert.Equal("EUR", body.RootElement.GetProperty("currency").GetString());
     }
 
     [Fact]
@@ -44,14 +62,14 @@ public sealed class AccountHorseTests
         Assert.Equal(HttpStatusCode.Created, horse.StatusCode);
 
         using var changed = await SendCommandAsync(client, HttpMethod.Put, "/api/v1/account", 3,
-            "{\"currency\":\"USD\",\"timeZone\":\"America/New_York\"}");
+            "{\"currency\":\"EUR\",\"timeZone\":\"America/New_York\"}");
 
         Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
         using var body = JsonDocument.Parse(await changed.Content.ReadAsStringAsync());
-        Assert.Equal("USD", body.RootElement.GetProperty("currency").GetString());
+        Assert.Equal("EUR", body.RootElement.GetProperty("currency").GetString());
         Assert.Equal("America/New_York", body.RootElement.GetProperty("timeZone").GetString());
         Assert.Equal(4, body.RootElement.GetProperty("streamVersion").GetInt64());
-        Assert.Null(body.RootElement.GetProperty("drivingRateMinorPerKm").GetStringOrNull());
+        Assert.Equal(0.31m, body.RootElement.GetProperty("drivingRateMinorPerKm").GetDecimal());
         Assert.False(body.RootElement.GetProperty("settingsLocked").GetBoolean());
 
         using var exactRetry = await SendCommandAsync(client, HttpMethod.Put, "/api/v1/account", 0,

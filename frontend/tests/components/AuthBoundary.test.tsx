@@ -406,7 +406,7 @@ describe("auth boundary sign-out", () => {
 });
 
 describe("first-use settings", () => {
-  test("configures currency and time zone with command headers and announces acknowledgment", async () => {
+  test("first sign-in needs no preferences or configuration write", async () => {
     let configured = false;
     const fetchImpl = vi
       .fn<typeof fetch>()
@@ -438,8 +438,8 @@ describe("first-use settings", () => {
           });
         }
         return jsonResponse({
-          currency: null,
-          timeZone: null,
+          currency: "EUR",
+          timeZone: "UTC",
           streamVersion: 0,
           drivingRateMinorPerKm: null,
           settingsLocked: false,
@@ -469,90 +469,17 @@ describe("first-use settings", () => {
         </AuthBoundary>
       </QueryClientProvider>,
     );
-    await screen.findByLabelText("Currency");
-    await userEvent.selectOptions(screen.getByLabelText("Currency"), "EUR");
-    await userEvent.selectOptions(
-      screen.getByLabelText("Time zone"),
-      "Europe/Berlin",
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Save settings" }),
-    );
-
-    const commandCall = fetchImpl.mock.calls.find(
-      ([url, init]) =>
-        String(url) === "/api/v1/account" && init?.method === "PUT",
-    );
-    const [url, init] = commandCall ?? [];
-    expect(url).toBe("/api/v1/account");
-    expect(init?.method).toBe("PUT");
-    expect(init?.body).toBe(
-      JSON.stringify({ currency: "EUR", timeZone: "Europe/Berlin" }),
-    );
-    const headers = new Headers(init?.headers);
-    expect(headers.get("If-Match")).toBe('"0"');
-    expect(headers.get("Idempotency-Key")).toMatch(/^[0-9a-f-]{36}$/i);
     expect(
-      await screen.findByText("Account settings saved."),
+      await screen.findByText("All income and expenses use euros (EUR)."),
     ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Currency")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Time zone")).not.toBeInTheDocument();
+    expect(
+      fetchImpl.mock.calls.filter(([, init]) => init?.method === "PUT"),
+    ).toHaveLength(0);
   });
 
-  test("shows locked settings as read-only after financial activity", async () => {
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        jsonResponse({
-          user: { id: "owner-a" },
-          accessToken: "token-a",
-          csrfToken: "csrf-a",
-          expiresAt: "2026-10-08T18:00:00Z",
-        }),
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          currency: "EUR",
-          timeZone: "Europe/Berlin",
-          streamVersion: 4,
-          drivingRateMinorPerKm: null,
-          settingsLocked: true,
-        }),
-      );
-    const session = createAuthSessionBootstrap({ fetchImpl });
-    const client = createApiClient({
-      fetchImpl,
-      getAccessToken: () => session.getAccessToken(),
-    });
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    const lifecycle = createSubjectQueryLifecycle(
-      queryClient,
-      client.setSubject,
-    );
-    render(
-      <QueryClientProvider client={queryClient}>
-        <AuthBoundary
-          apiBaseUrl=""
-          apiClient={client}
-          session={session}
-          subjectLifecycle={lifecycle}
-        >
-          <SettingsRoute />
-        </AuthBoundary>
-      </QueryClientProvider>,
-    );
-
-    expect(
-      await screen.findByText(/settings are locked after financial activity/i),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Currency")).toBeDisabled();
-    expect(screen.getByLabelText("Time zone")).toBeDisabled();
-    expect(
-      screen.queryByRole("button", { name: "Save settings" }),
-    ).not.toBeInTheDocument();
-  });
-
-  test("retries an ambiguous settings command with its captured body, version, and idempotency key", async () => {
+  test("retries an ambiguous driving-rate command with its captured body, version, and idempotency key", async () => {
     let commandAttempts = 0;
     const fetchImpl = vi
       .fn<typeof fetch>()
@@ -571,7 +498,7 @@ describe("first-use settings", () => {
             nextCursor: null,
             streamVersion: 6,
           });
-        if (url !== "/api/v1/account")
+        if (url !== "/api/v1/account" && url !== "/api/v1/driving-rate")
           throw new Error(`Unexpected request: ${url}`);
         if (init?.method === "PUT") {
           commandAttempts += 1;
@@ -585,8 +512,7 @@ describe("first-use settings", () => {
               503,
             );
           return jsonResponse({
-            currency: "EUR",
-            timeZone: "Europe/Berlin",
+            rateMinorPerKm: 30,
             streamVersion: 7,
             settingsLocked: false,
           });
@@ -622,25 +548,25 @@ describe("first-use settings", () => {
         </AuthBoundary>
       </QueryClientProvider>,
     );
-    await screen.findByLabelText("Currency");
-    await userEvent.selectOptions(
-      screen.getByLabelText("Time zone"),
-      "Europe/Berlin",
+    const rate = await screen.findByLabelText(
+      "Driving rate (minor units per km)",
     );
+    await userEvent.clear(rate);
+    await userEvent.type(rate, "30");
     await userEvent.click(
-      screen.getByRole("button", { name: "Save settings" }),
+      screen.getByRole("button", { name: "Save driving rate" }),
     );
     await screen.findByRole("alert");
-    expect(screen.getByLabelText("Time zone")).toHaveValue("Europe/Berlin");
+    expect(rate).toHaveValue(30);
     await userEvent.click(
-      screen.getByRole("button", { name: "Save settings" }),
+      screen.getByRole("button", { name: "Save driving rate" }),
     );
-    await screen.findByText("Account settings saved.");
+    await screen.findByText("Driving rate saved.");
 
     const commands = fetchImpl.mock.calls
       .filter(
         ([url, init]) =>
-          String(url) === "/api/v1/account" && init?.method === "PUT",
+          String(url) === "/api/v1/driving-rate" && init?.method === "PUT",
       )
       .map(([, init]) => init!);
     expect(commands).toHaveLength(2);

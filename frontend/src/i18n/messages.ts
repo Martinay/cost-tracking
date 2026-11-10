@@ -1,4 +1,11 @@
 export const german: Record<string, string> = {
+  "Your ledger is ready to use.": "Dein Pferdebuch ist einsatzbereit.",
+  "All income and expenses use euros (EUR).":
+    "Alle Einnahmen und Ausgaben werden in Euro (EUR) erfasst.",
+  "Timestamps are stored in UTC and shown in your browser’s local time.":
+    "Zeitstempel werden in UTC gespeichert und in der lokalen Zeit deines Browsers angezeigt.",
+  "Calendar dates on financial records stay unchanged.":
+    "Kalenderdaten deiner Finanzbuchungen bleiben unverändert.",
   "Record driving costs separately using mileage.":
     "Fahrtkosten separat anhand der gefahrenen Kilometer erfassen.",
   "Select a time zone": "Zeitzone auswählen",

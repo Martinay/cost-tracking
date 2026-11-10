@@ -10,6 +10,10 @@ The [Horse ledger design system](docs/design-system.md) defines the visual langu
 
 Use the **Language / Sprache** selector to choose English or Deutsch. English is the default; the explicit choice is remembered in this browser. The selector is also available in dialogs. Changing language preserves drafts and financial previews, and does not change account currency or time zone. User-entered content and stored history summaries stay in their original language. Implementation and validation notes are in [specs/003-german-language/](specs/003-german-language/).
 
+## Automatic account defaults
+
+First sign-in requires no currency or timezone setup. New accounts use euros (EUR) and a UTC financial calendar. Event timestamps are stored in UTC and displayed in the browser’s local timezone; date-only ledger days stay unchanged. Settings retains driving-rate editing and account history. Historical explicit currency/calendar settings are preserved without converting existing amounts. See [specs/004-automatic-ledger-defaults/](specs/004-automatic-ledger-defaults/).
+
 ## Pinned toolchain
 
 - .NET SDK 10.0.103 / C# 14 (`global.json`), verified with `dotnet --info`.
