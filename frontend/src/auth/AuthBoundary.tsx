@@ -92,11 +92,21 @@ export function AuthBoundary({
     void Promise.resolve().then(checkSession);
   }, [checkSession]);
 
+  useEffect(
+    () =>
+      session.subscribe(async (next) => {
+        const attempt = ++authAttempt.current;
+        await subjectLifecycle.setSubject(next.subject);
+        if (attempt === authAttempt.current) setState(next);
+      }),
+    [session, subjectLifecycle],
+  );
+
   const signOut = useCallback(async () => {
     authAttempt.current += 1;
     const logout = session.logout().catch(() => undefined);
-    await subjectLifecycle.setSubject(null);
     session.clear();
+    await subjectLifecycle.setSubject(null);
     setState({ authReady: true, subject: null, signInRequired: true });
     const result = await logout;
     if (result?.logoutUrl)

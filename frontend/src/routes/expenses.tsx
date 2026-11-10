@@ -500,32 +500,30 @@ export function ExpensesRoute() {
         </button>
       )}
       {drivingSaved && <p role="status">{t("Driving expense saved.")}</p>}
-      {canLoadProtectedData && recording && <ExpenseForm />}
-      {canLoadProtectedData &&
-        recordingDriving &&
-        account.data &&
-        horses.data && (
-          <section aria-labelledby="driving-expense-heading">
-            <h2 id="driving-expense-heading">{t("Record driving expense")}</h2>
-            <DrivingForm
-              horses={horses.data.items}
-              today={account.data.ownerToday}
-              currency={currency}
-              savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
-              onPreview={async (request) =>
-                (await apiClient.preview({
-                  subject: subject!,
-                  path: "/api/v1/previews/financial",
-                  body: request,
-                })) as DrivingPreview
-              }
-              onCommit={async (body, streamVersion) => {
-                await drivingMutation.mutateAsync({ body, streamVersion });
-              }}
-            />
-          </section>
-        )}
-      {canLoadProtectedData && (
+      {/* Retain editor state while AppShell hides this subject during auth recovery. */}
+      {subject !== null && recording && <ExpenseForm />}
+      {subject !== null && recordingDriving && account.data && horses.data && (
+        <section aria-labelledby="driving-expense-heading">
+          <h2 id="driving-expense-heading">{t("Record driving expense")}</h2>
+          <DrivingForm
+            horses={horses.data.items}
+            today={account.data.ownerToday}
+            currency={currency}
+            savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
+            onPreview={async (request) =>
+              (await apiClient.preview({
+                subject: subject!,
+                path: "/api/v1/previews/financial",
+                body: request,
+              })) as DrivingPreview
+            }
+            onCommit={async (body, streamVersion) => {
+              await drivingMutation.mutateAsync({ body, streamVersion });
+            }}
+          />
+        </section>
+      )}
+      {subject !== null && (
         <section aria-labelledby="expense-rules-heading">
           <h2 id="expense-rules-heading">{t("Recurring expenses")}</h2>
           <button

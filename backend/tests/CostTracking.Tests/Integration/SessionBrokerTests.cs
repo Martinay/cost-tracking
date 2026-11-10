@@ -60,6 +60,42 @@ public sealed class SessionBrokerTests
     }
 
     [Fact]
+    public async Task Expired_access_token_keeps_session_bootstrap_available_for_refresh()
+    {
+        using var app = new TestApplication();
+        using var client = app.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+        var handle = await CreateExpiringSessionAsync(app);
+        app.Clock.Advance(TimeSpan.FromSeconds(11));
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/auth/session");
+        request.Headers.TryAddWithoutValidation("Cookie", SessionEndpoints.SessionCookie + "=" + handle);
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(TestIdentityIssuer.Alice, body.RootElement.GetProperty("user").GetProperty("id").GetString());
+        Assert.Equal("csrf_test", body.RootElement.GetProperty("csrfToken").GetString());
+        Assert.False(body.RootElement.TryGetProperty("accessToken", out _));
+        Assert.Contains("no-store", response.Headers.CacheControl?.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, app.WorkOs.RefreshCount);
+        using var refreshed = await client.SendAsync(RefreshRequest(handle));
+        Assert.Equal(HttpStatusCode.OK, refreshed.StatusCode);
+        Assert.Equal(1, app.WorkOs.RefreshCount);
+    }
+
+    [Fact]
+    public async Task Absolute_session_expiry_still_requires_sign_in()
+    {
+        using var app = new TestApplication();
+        using var client = app.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+        var handle = await CreateExpiringSessionAsync(app);
+        app.Clock.Advance(TimeSpan.FromDays(11));
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/auth/session");
+        request.Headers.TryAddWithoutValidation("Cookie", SessionEndpoints.SessionCookie + "=" + handle);
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(0, app.WorkOs.RefreshCount);
+    }
+
+    [Fact]
     public async Task Session_cookie_alone_never_authorizes_domain_api_requests()
     {
         using var app = new TestApplication();

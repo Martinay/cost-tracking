@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -100,13 +101,11 @@ public static class SessionEndpoints
     {
         NoStore(context);
         var session = await FindSessionAsync(context, store, cancellationToken);
-        if (session is null || session.AbsoluteExpiry <= clock.GetUtcNow() || session.ExpiresAt <= clock.GetUtcNow())
+        if (session is null || session.AbsoluteExpiry <= clock.GetUtcNow())
             return Results.Unauthorized();
-        return Results.Json(new
-        {
-            user = new { id = session.Subject }, accessToken = session.AccessToken,
-            expiresAt = session.ExpiresAt, csrfToken = session.CsrfToken
-        });
+        return Results.Json(new SessionResponse(new SessionUser(session.Subject),
+            session.ExpiresAt > clock.GetUtcNow() ? session.AccessToken : null,
+            session.ExpiresAt, session.CsrfToken));
     }
 
     private static async Task<IResult> RefreshAsync(HttpContext context, IConfiguration configuration, SessionStore store,
@@ -231,6 +230,11 @@ public static class SessionEndpoints
     private static string RequiredHttps(string? value, string name) =>
         Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps && uri.UserInfo.Length == 0
             ? value! : throw new InvalidOperationException($"{name} must be an absolute HTTPS URL.");
+
+    private sealed record SessionUser(string Id);
+    private sealed record SessionResponse(SessionUser User,
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? AccessToken,
+        DateTimeOffset ExpiresAt, string CsrfToken);
 
     private sealed record LoginCorrelation(string State, string Verifier, string ReturnTo, DateTimeOffset ExpiresAt);
 }

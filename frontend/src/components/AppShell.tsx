@@ -144,6 +144,7 @@ export function AppShell({
         </p>
       )}
       <main id="main-content" tabIndex={-1} aria-busy={!authReady}>
+        {subject !== null && !authReady && authFallback}
         {subject !== null ? (
           <AuthBoundaryContext.Provider
             value={{

@@ -156,7 +156,11 @@ export class SubjectChangedError extends Error {
 }
 
 export interface ApiClientOptions {
-  getAccessToken: () => Promise<string | null>;
+  getAccessToken: (subject: string) => Promise<string | null>;
+  refreshAccessToken?: (
+    rejectedToken: string,
+    subject: string,
+  ) => Promise<string | null>;
   fetchImpl?: typeof fetch;
   baseUrl?: string;
 }
@@ -182,9 +186,12 @@ export function createAuthSessionBootstrap({
   let csrfToken: string | null = null;
   let subject: string | null = null;
   let generation = 0;
+  let renewal: Promise<string | null> | null = null;
+  const listeners = new Set<(state: AuthBootstrapState) => Promise<void>>();
 
   function clear(): void {
     generation += 1;
+    renewal = null;
     accessToken = null;
     csrfToken = null;
     subject = null;
@@ -258,8 +265,53 @@ export function createAuthSessionBootstrap({
     }
   }
 
+  // A late 401 for an older token reuses the token another request renewed.
+  function refreshAccessToken(
+    rejectedToken: string,
+    expectedSubject = subject,
+  ): Promise<string | null> {
+    if (subject !== expectedSubject)
+      return Promise.reject(new SubjectChangedError());
+    if (accessToken !== rejectedToken) return Promise.resolve(accessToken);
+    if (renewal) return renewal;
+    const previousSubject = subject;
+    const loading = load();
+    const renewalGeneration = generation;
+    const pending = (async () => {
+      const next = await loading;
+      if (generation !== renewalGeneration) throw new SubjectChangedError();
+      await Promise.all([...listeners].map((listener) => listener(next)));
+      if (generation !== renewalGeneration) throw new SubjectChangedError();
+      if (next.subject !== null && next.subject !== previousSubject)
+        throw new SubjectChangedError();
+      if (!next.authReady)
+        throw new ApiError(503, {
+          code: "session_refresh_unavailable",
+          message:
+            "Could not check your sign-in. Check your connection and retry.",
+          correlationId: "unavailable",
+        });
+      return accessToken;
+    })();
+    renewal = pending;
+    // Clear only this attempt, including after logout supersedes it.
+    void pending
+      .finally(() => {
+        if (renewal === pending) renewal = null;
+      })
+      .catch(() => undefined);
+    return pending;
+  }
+
   return {
     load,
+    refreshAccessToken,
+    subscribe(listener: (state: AuthBootstrapState) => Promise<void>) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
     async logout(): Promise<{ logoutUrl: string }> {
       if (!csrfToken) throw new Error("The session is not ready to sign out.");
       const response = await fetchImpl(`${baseUrl}/auth/logout`, {
@@ -285,7 +337,13 @@ export function createAuthSessionBootstrap({
       }
       return { logoutUrl: destination.toString() };
     },
-    getAccessToken: async (): Promise<string | null> => accessToken,
+    getAccessToken: async (
+      expectedSubject?: string,
+    ): Promise<string | null> => {
+      if (expectedSubject !== undefined && expectedSubject !== subject)
+        throw new SubjectChangedError();
+      return accessToken;
+    },
     getCsrfToken: (): string | null => csrfToken,
     clear,
   };
@@ -370,6 +428,7 @@ export interface ApiClient {
 
 export function createApiClient({
   getAccessToken,
+  refreshAccessToken,
   fetchImpl = fetch,
   baseUrl = "",
 }: ApiClientOptions): ApiClient {
@@ -397,7 +456,7 @@ export function createApiClient({
   ): Promise<T> {
     if (!subject || subject !== activeSubject) throw new SubjectChangedError();
     const requestEpoch = epoch;
-    const token = await getAccessToken();
+    let token = await getAccessToken(subject);
     if (requestEpoch !== epoch || subject !== activeSubject)
       throw new SubjectChangedError();
     if (!token)
@@ -416,12 +475,25 @@ export function createApiClient({
     headers.set("Authorization", `Bearer ${token}`);
     if (body !== undefined) headers.set("Content-Type", "application/json");
     try {
-      const response = await fetchImpl(`${baseUrl}${path}`, {
-        method,
-        headers,
-        body,
-        signal: controller.signal,
-      });
+      const send = () =>
+        fetchImpl(`${baseUrl}${path}`, {
+          method,
+          headers: new Headers(headers),
+          body,
+          signal: controller.signal,
+        });
+      let response = await send();
+      if (requestEpoch !== epoch || subject !== activeSubject)
+        throw new SubjectChangedError();
+      if (response.status === 401 && refreshAccessToken) {
+        token = await refreshAccessToken(token, subject);
+        if (requestEpoch !== epoch || subject !== activeSubject)
+          throw new SubjectChangedError();
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`);
+          response = await send();
+        }
+      }
       if (requestEpoch !== epoch || subject !== activeSubject)
         throw new SubjectChangedError();
       if (!response.ok) {

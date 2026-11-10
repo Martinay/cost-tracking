@@ -19,7 +19,9 @@ const queryClient = new QueryClient();
 const authSession = createAuthSessionBootstrap({ baseUrl: apiBaseUrl });
 const apiClient = createApiClient({
   baseUrl: apiBaseUrl,
-  getAccessToken: () => authSession.getAccessToken(),
+  getAccessToken: (subject) => authSession.getAccessToken(subject),
+  refreshAccessToken: (token, subject) =>
+    authSession.refreshAccessToken(token, subject),
 });
 const subjectQueryLifecycle = createSubjectQueryLifecycle(
   queryClient,
