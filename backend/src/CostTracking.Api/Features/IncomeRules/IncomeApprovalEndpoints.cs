@@ -77,9 +77,12 @@ public static class IncomeApprovalEndpoints
                 var defaults = replay.Rules[id].RevisionFor(date)!.Defaults;
                 var received = Received(events.Where(x => x.StreamVersion <= e.StreamVersion).ToArray(), id, date);
                 var actual = e.Type == "RecurringIncomeApproved" ? e.Payload.GetProperty("amountMinor").GetInt64() : 0;
+                var allocations = e.Type == "RecurringIncomeRejected"
+                    ? defaults.Allocations
+                    : ExpenseProjection.ReadAllocations(e.Payload.GetProperty("allocations"));
                 return new DecisionHistoryItem(id, date, defaults.Source, defaults.AmountMinor, checked(received + actual),
                     e.Type == "RecurringIncomeReceiptRecorded" ? (received >= defaults.AmountMinor ? "Paid" : "Partial") : e.Type == "RecurringIncomeApproved" ? "Approved (final settlement)" : "Rejected (final)",
-                    e.Payload.TryGetProperty("receivedDate", out var rd) ? rd.GetString() : null, defaults.Allocations, e.StreamVersion);
+                    e.Payload.TryGetProperty("receivedDate", out var rd) ? rd.GetString() : null, allocations, e.StreamVersion);
             }).Reverse().ToArray();
         var response = new IncomeApprovalListResponse(items, nextCursor, from, through, today, account.StreamVersion, history);
         return await AccountEndpoints.WriteAsync(context, StatusCodes.Status200OK, response, account.StreamVersion);

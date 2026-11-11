@@ -378,6 +378,44 @@ public sealed class RecurringIncomeTests
         using var inbox=await client.GetAsync("/api/v1/income-approvals?from=2026-09-21");using var pending=JsonDocument.Parse(await inbox.Content.ReadAsStringAsync());Assert.Equal(1000,pending.RootElement.GetProperty("items")[0].GetProperty("amountMinor").GetInt64());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Decision_history_uses_actual_payment_allocations_and_rule_defaults_for_rejections(bool partial)
+    {
+        using var app = new TestApplication();
+        using var client = Client(app, TestIdentityIssuer.Alice);
+        var originalHorse = await CreateHorse(client, 0, "Luna");
+        var creditedHorse = await CreateHorse(client, 1, "Misty");
+        using var created = await Send(client, HttpMethod.Post, "/api/v1/income-rules", 2,
+            RuleBody(Schedule("2026-09-19"), 15000, "Share", originalHorse));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        using var rule = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var id = rule.RootElement.GetProperty("ruleId").GetGuid();
+        var body = ApproveBody("2026-09-21", 4000, creditedHorse);
+        if (partial) body = body.Insert(1, "\"partial\":true,");
+        using var payment = await Send(client, HttpMethod.Post,
+            $"/api/v1/income-rules/{id}/occurrences/2026-09-19/approve", 3, body);
+        Assert.Equal(HttpStatusCode.OK, payment.StatusCode);
+        using var rejection = await Send(client, HttpMethod.Post,
+            $"/api/v1/income-rules/{id}/occurrences/2026-09-20/reject", 4, "{}");
+        Assert.Equal(HttpStatusCode.OK, rejection.StatusCode);
+
+        using var inbox = await client.GetAsync("/api/v1/income-approvals?from=2026-09-19");
+        Assert.Equal(HttpStatusCode.OK, inbox.StatusCode);
+        using var json = JsonDocument.Parse(await inbox.Content.ReadAsStringAsync());
+        var history = json.RootElement.GetProperty("history").EnumerateArray().ToArray();
+        Assert.Equal(2, history.Length);
+        var actual = Assert.Single(history.Single(item => item.GetProperty("scheduledDate").GetString() == "2026-09-19")
+            .GetProperty("allocations").EnumerateArray());
+        Assert.Equal(creditedHorse, actual.GetProperty("horseId").GetGuid());
+        Assert.Equal(4000, actual.GetProperty("amountMinor").GetInt64());
+        var rejected = Assert.Single(history.Single(item => item.GetProperty("scheduledDate").GetString() == "2026-09-20")
+            .GetProperty("allocations").EnumerateArray());
+        Assert.Equal(originalHorse, rejected.GetProperty("horseId").GetGuid());
+        Assert.Equal(15000, rejected.GetProperty("amountMinor").GetInt64());
+    }
+
     private static HttpClient Client(TestApplication app, string subject)
     {
         var client = app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });

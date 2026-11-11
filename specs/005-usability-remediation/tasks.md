@@ -72,3 +72,5 @@ Final convergence: all initial 34 tasks completed for repository scope. U05/U07 
 
 - [x] T035 Keep the task's original sold horse alongside eligible replacements in frontend/src/routes/tasks.tsx and cover correction without reassignment in frontend/tests/components/TaskCorrection.test.tsx (U13/U16; PR review finding 4535134857).
 - [x] T036 Clear cached correction commands after definitive version conflicts in frontend/src/features/tasks/TaskCorrection.tsx; verify fresh unchanged-draft retries and original-key ambiguous-save retries in frontend/tests/components/TaskCorrection.test.tsx (U03/U16; PR review finding 4535134864).
+
+- [x] T037 Replay actual event allocations for approved payments and partial receipts in backend/src/CostTracking.Api/Features/IncomeRules/IncomeApprovalEndpoints.cs; retain rule defaults for rejections and cover both payment kinds in backend/tests/CostTracking.Tests/Integration/RecurringIncomeTests.cs (U11/U12/U20; PR review finding 4542464189).
