@@ -40,7 +40,7 @@ public static class SessionEndpoints
         var authorizeUrl = QueryHelpers.AddQueryString("https://api.workos.com/user_management/authorize", new Dictionary<string, string?>
         {
             ["response_type"] = "code", ["client_id"] = clientId, ["redirect_uri"] = callbackUrl,
-            ["provider"] = "authkit", ["state"] = state, ["code_challenge_method"] = "S256", ["code_challenge"] = challenge
+            ["provider"] = "authkit", ["screen_hint"] = "sign-in", ["state"] = state, ["code_challenge_method"] = "S256", ["code_challenge"] = challenge
         });
         return Results.Redirect(authorizeUrl);
     }
