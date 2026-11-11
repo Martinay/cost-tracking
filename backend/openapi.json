@@ -327,6 +327,123 @@
         }
       }
     },
+    "/api/v1/expenses/{recordId}/corrections": {
+      "post": {
+        "tags": [
+          "CorrectionEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/income/{recordId}/corrections": {
+      "post": {
+        "tags": [
+          "CorrectionEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{recordId}/corrections": {
+      "post": {
+        "tags": [
+          "CorrectionEndpoints"
+        ],
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/income": {
       "post": {
         "tags": [
@@ -1069,7 +1186,9 @@
         "required": [
           "taskType",
           "count",
-          "minutes"
+          "minutes",
+          "missingDurationCount",
+          "quantities"
         ],
         "type": "object",
         "properties": {
@@ -1091,6 +1210,20 @@
               "string"
             ],
             "format": "int64"
+          },
+          "missingDurationCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "quantities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuantitySummary"
+            }
           }
         }
       },
@@ -1210,6 +1343,10 @@
           },
           "split": {
             "$ref": "#/components/schemas/SplitRequest"
+          },
+          "partial": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -1322,6 +1459,42 @@
           },
           "timeZone": {
             "type": "string"
+          }
+        }
+      },
+      "CorrectionRequest": {
+        "required": [
+          "values",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "values": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CorrectionResponse": {
+        "required": [
+          "recordId",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -1717,6 +1890,72 @@
           }
         }
       },
+      "DecisionHistoryItem": {
+        "required": [
+          "ruleId",
+          "scheduledDate",
+          "source",
+          "expectedMinor",
+          "receivedMinor",
+          "outcome",
+          "receivedDate",
+          "allocations",
+          "streamVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "source": {
+            "type": "string"
+          },
+          "expectedMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "receivedMinor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "receivedDate": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            }
+          },
+          "streamVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
       "DrivingDetails": {
         "required": [
           "kilometers",
@@ -2017,7 +2256,8 @@
           "schedule",
           "defaults",
           "revisions",
-          "lastDate"
+          "lastDate",
+          "nextScheduledDate"
         ],
         "type": "object",
         "properties": {
@@ -2046,6 +2286,13 @@
             }
           },
           "lastDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "nextScheduledDate": {
             "type": [
               "null",
               "string"
@@ -2107,8 +2354,32 @@
             ],
             "format": "date"
           },
+          "recordId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
           "exampleOccurrence": {
             "type": "boolean"
+          },
+          "exampleSchedule": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Schedule"
+              }
+            ]
+          },
+          "effectiveFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -2178,6 +2449,22 @@
           }
         }
       },
+      "HistoryHorse": {
+        "required": [
+          "horseId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "horseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "HistoryItem": {
         "required": [
           "eventId",
@@ -2213,7 +2500,17 @@
           },
           "changes": {
             "$ref": "#/components/schemas/JsonElement"
-          }
+          },
+          "horses": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/HistoryHorse"
+            }
+          },
+          "previous": {}
         }
       },
       "HistoryResponse": {
@@ -2397,7 +2694,8 @@
           "from",
           "through",
           "asOfDate",
-          "streamVersion"
+          "streamVersion",
+          "history"
         ],
         "type": "object",
         "properties": {
@@ -2432,6 +2730,12 @@
               "string"
             ],
             "format": "int64"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DecisionHistoryItem"
+            }
           }
         }
       },
@@ -2669,7 +2973,8 @@
           "schedule",
           "defaults",
           "revisions",
-          "lastDate"
+          "lastDate",
+          "nextScheduledDate"
         ],
         "type": "object",
         "properties": {
@@ -2698,6 +3003,13 @@
             }
           },
           "lastDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "nextScheduledDate": {
             "type": [
               "null",
               "string"
@@ -2889,6 +3201,26 @@
                 "$ref": "#/components/schemas/ChangedOccurrenceRequest"
               }
             ]
+          }
+        }
+      },
+      "QuantitySummary": {
+        "required": [
+          "unit",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -3345,6 +3677,9 @@
     },
     {
       "name": "ExpenseEndpoints"
+    },
+    {
+      "name": "CorrectionEndpoints"
     },
     {
       "name": "IncomeEndpoints"

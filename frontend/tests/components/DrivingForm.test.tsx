@@ -66,12 +66,10 @@ describe("driving trip form", () => {
       name: "Driving expense preview",
     });
     expect(within(previewRegion).getByText(/€3.04/)).toBeInTheDocument();
-    expect(
-      within(previewRegion).getByText(/30.0000 minor units\/km/),
-    ).toBeInTheDocument();
+    expect(within(previewRegion).getByText(/€0.30 per km/)).toBeInTheDocument();
     expect(within(previewRegion).getByText(/Misty: €1.52/)).toBeInTheDocument();
     expect(within(previewRegion).getByText(/Comet: €1.52/)).toBeInTheDocument();
-    expect(screen.queryByLabelText("Retired horse")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Retired horse")).toBeEnabled();
     const request = {
       expenseDate: "2026-10-09",
       kilometers: 10.125,
@@ -120,8 +118,8 @@ describe("driving trip form", () => {
     );
     await fillTrip();
     await userEvent.type(
-      screen.getByLabelText("Rate per km (optional)"),
-      "30.0001",
+      screen.getByLabelText("Rate per km (€/km, optional)"),
+      "0.300001",
     );
     await userEvent.click(
       screen.getByRole("button", { name: "Preview driving expense" }),
@@ -190,10 +188,7 @@ test("driving rate settings save a positive server value and announce acknowledg
     .mockResolvedValue();
   render(<DrivingRateForm savedRateMinorPerKm={null} onSave={onSave} />);
   expect(screen.getByText("No saved driving rate.")).toBeInTheDocument();
-  await userEvent.type(
-    screen.getByLabelText("Driving rate (minor units per km)"),
-    "30.125",
-  );
+  await userEvent.type(screen.getByLabelText("Driving rate (€/km)"), "0.30125");
   await userEvent.click(
     screen.getByRole("button", { name: "Save driving rate" }),
   );

@@ -82,6 +82,7 @@ public sealed class RecurringIncomeTests
         Assert.Equal(2, rule.GetProperty("revisions").GetArrayLength());
         Assert.Equal("Lesson", rule.GetProperty("defaults").GetProperty("source").GetString());
         Assert.Equal("Training", rule.GetProperty("revisions")[1].GetProperty("defaults").GetProperty("source").GetString());
+        Assert.Equal("2026-09-22", rule.GetProperty("nextScheduledDate").GetString());
 
         using var badAnchor = await Send(client, HttpMethod.Patch, $"/api/v1/income-rules/{ruleId:D}", 4,
             ReviseRuleBody("2026-09-23", "2026-09-22", 150, "Lesson", horseId));
@@ -93,6 +94,11 @@ public sealed class RecurringIncomeTests
             ReviseRuleBody("2026-09-25", "2026-09-19", 150, "Lesson", horseId));
         Assert.Equal(HttpStatusCode.Conflict, reviseStopped.StatusCode);
         Assert.Equal("rule_stopped", await ErrorCode(reviseStopped));
+        app.Clock.Advance(TimeSpan.FromDays(4));
+        client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",app.Identity.Issue(TestIdentityIssuer.Alice,app.Clock.GetUtcNow()));
+        using var ended=await client.GetAsync("/api/v1/income-rules");using var endedJson=JsonDocument.Parse(await ended.Content.ReadAsStringAsync());
+        Assert.Equal("Training",endedJson.RootElement.GetProperty("items")[0].GetProperty("defaults").GetProperty("source").GetString());
+        Assert.Equal(JsonValueKind.Null,endedJson.RootElement.GetProperty("items")[0].GetProperty("nextScheduledDate").ValueKind);
     }
 
     [Fact]
@@ -327,6 +333,49 @@ public sealed class RecurringIncomeTests
             $"/api/v1/income-rules/{ownRuleId:D}/occurrences/2026-09-20/approve", 3,
             ApproveBody("2026-09-21", 100, aliceHorse));
         Assert.Equal(HttpStatusCode.NotFound, foreignSplit.StatusCode);
+    }
+
+    [Fact]
+    public async Task Explicit_partial_receipts_keep_balance_and_realize_only_actual_money()
+    {
+        using var app = new TestApplication();
+        using var client = Client(app, TestIdentityIssuer.Alice);
+        var horse = await CreateHorse(client, 0, "Luna");
+        using var created = await Send(client, HttpMethod.Post, "/api/v1/income-rules", 1, RuleBody(Schedule("2026-09-21"), 15000, "Share", horse));
+        using var rule = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var id = rule.RootElement.GetProperty("ruleId").GetGuid();
+        var route = $"/api/v1/income-rules/{id}/occurrences/2026-09-21/approve";
+        var body = ApproveBody("2026-09-21", 14000, horse).Insert(1, "\"partial\":true,");
+        var key = Guid.NewGuid();
+        using var receipt = await Send(client, HttpMethod.Post, route, 2, body, key);
+        Assert.Equal(HttpStatusCode.OK, receipt.StatusCode);
+        using var retry = await Send(client, HttpMethod.Post, route, 2, body, key);
+        Assert.Equal(await receipt.Content.ReadAsStringAsync(), await retry.Content.ReadAsStringAsync());
+        using var inbox = await client.GetAsync("/api/v1/income-approvals?from=2026-09-21");
+        using var pending = JsonDocument.Parse(await inbox.Content.ReadAsStringAsync());
+        Assert.Equal(1000, pending.RootElement.GetProperty("items")[0].GetProperty("amountMinor").GetInt64());
+        using var excess = await Send(client, HttpMethod.Post, route, 3, ApproveBody("2026-09-21", 1001, horse).Insert(1, "\"partial\":true,"));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, excess.StatusCode);
+        using var rest = await Send(client, HttpMethod.Post, route, 3, ApproveBody("2026-09-21", 1000, horse).Insert(1, "\"partial\":true,"));
+        Assert.Equal(HttpStatusCode.OK, rest.StatusCode);
+        using var closed = await client.GetAsync("/api/v1/income-approvals?from=2026-09-21");
+        using var closedJson = JsonDocument.Parse(await closed.Content.ReadAsStringAsync());
+        Assert.Empty(closedJson.RootElement.GetProperty("items").EnumerateArray());
+        using var ledger = await client.GetAsync("/api/v1/income?from=2026-09-21&to=2026-09-21");
+        using var actual = JsonDocument.Parse(await ledger.Content.ReadAsStringAsync());
+        Assert.Equal(15000, actual.RootElement.GetProperty("items").EnumerateArray().Sum(x=>x.GetProperty("amountMinor").GetInt64()));
+    }
+
+    [Fact]
+    public async Task Racing_partial_receipts_append_one_payment_at_the_expected_version()
+    {
+        using var app=new TestApplication();using var client=Client(app,TestIdentityIssuer.Alice);
+        var horse=await CreateHorse(client,0,"Luna");using var created=await Send(client,HttpMethod.Post,"/api/v1/income-rules",1,RuleBody(Schedule("2026-09-21"),15000,"Share",horse));
+        using var json=JsonDocument.Parse(await created.Content.ReadAsStringAsync());var id=json.RootElement.GetProperty("ruleId").GetGuid();
+        var route=$"/api/v1/income-rules/{id}/occurrences/2026-09-21/approve";var body=ApproveBody("2026-09-21",14000,horse).Insert(1,"\"partial\":true,");
+        var results=await Task.WhenAll(Send(client,HttpMethod.Post,route,2,body),Send(client,HttpMethod.Post,route,2,body));
+        try{Assert.Single(results,r=>r.StatusCode==HttpStatusCode.OK);Assert.Single(results,r=>r.StatusCode==HttpStatusCode.Conflict);}finally{foreach(var result in results)result.Dispose();}
+        using var inbox=await client.GetAsync("/api/v1/income-approvals?from=2026-09-21");using var pending=JsonDocument.Parse(await inbox.Content.ReadAsStringAsync());Assert.Equal(1000,pending.RootElement.GetProperty("items")[0].GetProperty("amountMinor").GetInt64());
     }
 
     private static HttpClient Client(TestApplication app, string subject)

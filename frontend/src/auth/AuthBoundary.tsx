@@ -127,6 +127,10 @@ export function AuthBoundary({
   const authFallback = (
     <section aria-labelledby="welcome-heading">
       <h1 id="welcome-heading">{t("Your horse ledger")}</h1>
+      {state.authReady &&
+        !state.subject &&
+        new URLSearchParams(window.location.search).get("signedOut") ===
+          "1" && <p role="status">{t("You are signed out.")}</p>}
       {state.authReady && state.signInRequired && (
         <a href={`${apiBaseUrl}/auth/login?returnTo=%2Fhorses`}>
           {t("Sign in")}

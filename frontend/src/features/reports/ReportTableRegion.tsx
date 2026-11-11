@@ -18,6 +18,11 @@ export function ReportTableRegion({
       })}
       tabIndex={0}
     >
+      <p className="table-scroll-hint">
+        {t(
+          "Scroll horizontally to see all columns. Use arrow keys when this table is focused.",
+        )}
+      </p>
       {children}
     </div>
   );

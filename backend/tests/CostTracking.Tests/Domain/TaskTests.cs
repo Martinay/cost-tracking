@@ -27,7 +27,7 @@ public sealed class TaskTests
         var horse = Horse(HorseStatus.Active);
         Assert.ThrowsAny<ArgumentException>(() => HorseTask.Create(Guid.Empty, horse, D(2026, 10, 1), TaskType.Riding, 1, null, null, "", 1));
         Assert.ThrowsAny<ArgumentException>(() => HorseTask.Create(Guid.NewGuid(), null!, D(2026, 10, 1), TaskType.Riding, 1, null, null, "", 1));
-        Assert.ThrowsAny<ArgumentException>(() => HorseTask.Create(Guid.NewGuid(), Horse(HorseStatus.Retired), D(2026, 10, 1), TaskType.Riding, 1, null, null, "", 1));
+        Assert.NotNull(HorseTask.Create(Guid.NewGuid(), Horse(HorseStatus.Retired), D(2026, 10, 1), TaskType.MedicalCare, 1, null, null, "", 1));
         Assert.ThrowsAny<ArgumentException>(() => HorseTask.Create(Guid.NewGuid(), Horse(HorseStatus.Sold), D(2026, 10, 1), TaskType.Riding, 1, null, null, "", 1));
         Assert.ThrowsAny<ArgumentException>(() => HorseTask.Create(Guid.NewGuid(), horse with { HorseId = Guid.Empty }, D(2026, 10, 1), TaskType.Riding, 1, null, null, "", 1));
         Assert.ThrowsAny<ArgumentException>(() => HorseTask.Create(Guid.NewGuid(), horse, D(2026, 10, 1), TaskType.Riding, 1, null, null, "", 0));

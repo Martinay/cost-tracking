@@ -74,13 +74,13 @@ test("shows queued income revisions and offers stop only for an active rule", as
   );
   expect(
     screen.getByRole("list", { name: "Revisions for Boarding" }),
-  ).toHaveTextContent("10/1/2026");
+  ).toHaveTextContent("Oct 1, 2026");
   expect(
     screen.getByRole("list", { name: "Revisions for Boarding" }),
   ).toHaveTextContent("€100.00");
   expect(
     screen.getByRole("list", { name: "Revisions for Boarding" }),
-  ).toHaveTextContent("11/1/2026");
+  ).toHaveTextContent("Nov 1, 2026");
   await userEvent.click(
     screen.getByRole("button", { name: "Revise income rule" }),
   );
@@ -89,4 +89,21 @@ test("shows queued income revisions and offers stop only for an active rule", as
   );
   expect(onRevise).toHaveBeenCalledWith(rule.ruleId);
   expect(onStop).toHaveBeenCalledWith(rule.ruleId);
+});
+
+test("U08 bounded rules show the saved end rather than no end date", () => {
+  render(
+    <IncomeRuleList
+      rules={[
+        { ...rule, schedule: { ...rule.schedule, endDate: "2026-11-10" } },
+      ]}
+      currency="EUR"
+      onRevise={vi.fn()}
+      onStop={vi.fn()}
+    />,
+  );
+  expect(screen.queryByText(/no end date/)).not.toBeInTheDocument();
+  expect(screen.getByText(/inclusive through/)).toHaveTextContent(
+    /Nov|November/,
+  );
 });

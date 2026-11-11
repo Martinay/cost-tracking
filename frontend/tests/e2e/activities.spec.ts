@@ -108,7 +108,7 @@ test("an owner logs quantity-only effort and sees the activity summary update", 
   await expect(
     page.getByRole("list", { name: "Activity summary" }),
   ).toContainText("Paddock Duty");
-  await expect(page.getByText("Retired horse")).toHaveCount(0);
+  await expect(page.getByText("Retired horse")).toHaveCount(1);
 });
 
 test("a real backend quantity-only task updates activity without financial balance changes", async ({
@@ -130,7 +130,7 @@ test("a real backend quantity-only task updates activity without financial balan
   );
   const activity = page.getByRole("list", { name: "Activity summary" });
   await expect(activity).toContainText("Paddock Duty");
-  await expect(activity).toContainText("1 tasks, 0 minutes");
+  await expect(activity).toContainText("1 tasks, Duration not recorded");
 
   const headers = { Authorization: `Bearer ${session.accessToken}` };
   const [tasks, report] = await Promise.all([
@@ -168,6 +168,8 @@ test("a real backend quantity-only task updates activity without financial balan
     taskType: "PaddockDuty",
     count: 1,
     minutes: 0,
+    missingDurationCount: 1,
+    quantities: [{ unit: "hours", quantity: 2.5 }],
   });
 });
 

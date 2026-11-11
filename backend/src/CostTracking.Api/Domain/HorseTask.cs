@@ -32,12 +32,12 @@ public sealed record HorseTask
     }
 
     public static HorseTask Create(Guid taskId, Horse horse, DateOnly taskDate, TaskType taskType, long minutes,
-        decimal? quantity, string? quantityUnit, string notes, long streamVersion)
+        decimal? quantity, string? quantityUnit, string notes, long streamVersion, Guid? originalHorseId = null)
     {
         ArgumentNullException.ThrowIfNull(horse);
         if (horse.HorseId == Guid.Empty) throw new ArgumentException("Horse ID cannot be empty.", nameof(horse));
-        if (horse.Status is not (HorseStatus.Active or HorseStatus.Leased))
-            throw new ArgumentException("Tasks can only be logged for Active or Leased horses.", nameof(horse));
+        if (horse.Status is not (HorseStatus.Active or HorseStatus.Leased or HorseStatus.Retired) && horse.HorseId != originalHorseId)
+            throw new ArgumentException("Tasks can only be logged for Active, Leased or Retired horses.", nameof(horse));
         return CreateValidated(taskId, horse.HorseId, taskDate, taskType, minutes, quantity, quantityUnit, notes, streamVersion);
     }
 
@@ -80,12 +80,13 @@ public static class HorseTaskProjection
         var streamVersions = new HashSet<long>();
         foreach (var value in events)
         {
-            if (value.Type != "TaskLogged") continue;
+            if (value.Type is not ("TaskLogged" or "TaskCorrected")) continue;
             try
             {
                 var names = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var property in value.Payload.EnumerateObject())
                     if (!names.Add(property.Name)) throw new InvalidDataException("Task payload contains duplicate fields.");
+                if (value.Type == "TaskCorrected") names.Remove("reason");
                 if (!names.SetEquals(ExpectedPayloadFields)) throw new InvalidDataException("Task payload fields do not match the canonical schema.");
 
                 var payload = value.Payload;
@@ -103,7 +104,12 @@ public static class HorseTaskProjection
                 var unit = unitElement.ValueKind == System.Text.Json.JsonValueKind.Null ? null : unitElement.GetString();
                 var notes = payload.GetProperty("notes").GetString()!;
                 var task = HorseTask.FromEvent(taskId, horseId, taskDate, taskType, minutes, quantity, unit, notes, value.StreamVersion);
-                if (!taskIds.Add(task.TaskId)) throw new InvalidDataException("Task ID is duplicated in the event stream.");
+                if (value.Type == "TaskCorrected")
+                {
+                    if (!taskIds.Contains(task.TaskId)) throw new InvalidDataException("Correction references missing task.");
+                    tasks.RemoveAll(item => item.TaskId == task.TaskId);
+                }
+                else if (!taskIds.Add(task.TaskId)) throw new InvalidDataException("Task ID is duplicated in the event stream.");
                 if (!streamVersions.Add(task.StreamVersion)) throw new InvalidDataException("Task stream version is duplicated.");
                 tasks.Add(task);
             }

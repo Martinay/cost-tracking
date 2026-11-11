@@ -60,6 +60,7 @@ app.MapAccountEndpoints();
 app.MapHorseEndpoints();
 app.MapHistoryEndpoints();
 app.MapExpenseEndpoints();
+app.MapCorrectionEndpoints();
 app.MapIncomeEndpoints();
 app.MapFinancialPreviewEndpoints();
 app.MapFinancialReportEndpoints();

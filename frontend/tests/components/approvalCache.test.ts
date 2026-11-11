@@ -15,6 +15,7 @@ describe("removeDecidedApprovalFromCache", () => {
       { from: "2026-09-01" },
     ];
     const page = (scheduledDate: string): ApprovalPage => ({
+      history: [],
       items: [
         {
           ruleId: "rule-a",

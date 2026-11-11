@@ -1,3 +1,5 @@
+import { ActivityEffort } from "../features/reports/ActivityEffort";
+import { TaskCorrection } from "../features/tasks/TaskCorrection";
 import { formatDate } from "../i18n/format";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
@@ -145,7 +147,13 @@ export function TasksRoute() {
     },
     onSuccess: async (result) => {
       pendingCommand.current = null;
-      if (subject) apiClient.rememberVersion(subject, result.streamVersion);
+      if (subject) {
+        apiClient.rememberVersion(subject, result.streamVersion);
+        queryClient.setQueryData(keys!.account, (prior: typeof account.data) =>
+          prior ? { ...prior, streamVersion: result.streamVersion } : prior,
+        );
+        await queryClient.invalidateQueries({ queryKey: keys!.account });
+      }
       if (subject) await invalidateSubjectLists(queryClient, subject, "tasks");
       if (subject)
         await queryClient.invalidateQueries({ queryKey: activityKey });
@@ -172,9 +180,8 @@ export function TasksRoute() {
       )}
       {account.data && horses.data && (
         <TaskForm
-          horses={horses.data.items.filter(
-            (item) => item.status === "Active" || item.status === "Leased",
-          )}
+          draftScope={subject}
+          horses={horses.data.items.filter((item) => item.status !== "Sold")}
           today={today}
           pending={createTask.isPending}
           errorMessage={
@@ -184,6 +191,18 @@ export function TasksRoute() {
             createTask.mutateAsync(body).then(() => undefined)
           }
         />
+      )}
+      {createTask.isError && (
+        <button
+          type="button"
+          onClick={() => {
+            pendingCommand.current = null;
+            void account.refetch();
+            createTask.reset();
+          }}
+        >
+          {t("Refresh account and review draft")}
+        </button>
       )}
       <section aria-labelledby="task-list-heading">
         <h2 id="task-list-heading">{t("Recent tasks")}</h2>
@@ -220,7 +239,7 @@ export function TasksRoute() {
                     {item.minutes > 0 && (
                       <span>
                         {" "}
-                        · {item.minutes} {t("minutes")}
+                        · <ActivityEffort item={item} />
                       </span>
                     )}
                     {item.quantity !== undefined && (
@@ -230,6 +249,18 @@ export function TasksRoute() {
                       </span>
                     )}
                     {item.notes && <p>{item.notes}</p>}
+                    <TaskCorrection
+                      item={{
+                        ...item,
+                        quantity: item.quantity ?? undefined,
+                        quantityUnit: item.quantityUnit ?? undefined,
+                      }}
+                      horses={
+                        horses.data?.items.filter((h) => h.status !== "Sold") ??
+                        []
+                      }
+                      today={today}
+                    />
                   </li>
                 ))}
             </ul>
@@ -260,7 +291,7 @@ export function TasksRoute() {
             {activity.data.items.map((row) => (
               <li key={row.taskType}>
                 {t(row.taskType)}: {row.count} {t("tasks, ")}
-                {row.minutes} {t("minutes")}
+                <ActivityEffort item={row} />
               </li>
             ))}
           </ul>

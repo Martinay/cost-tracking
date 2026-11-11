@@ -72,6 +72,8 @@ describe("recurring expense rule form", () => {
     );
     expect(onPreview).toHaveBeenLastCalledWith(
       expect.objectContaining({ category: "Veterinary" }),
+      expect.objectContaining({ cadence: "Weekly" }),
+      undefined,
     );
   });
   test("previews server example allocation and creates only after review", async () => {
@@ -92,7 +94,7 @@ describe("recurring expense rule form", () => {
       screen.getByLabelText("End date (inclusive)"),
       "2026-12-31",
     );
-    await userEvent.selectOptions(screen.getByLabelText("Cadence"), "Weekly");
+    await userEvent.selectOptions(screen.getByLabelText("Repeats"), "Weekly");
     await userEvent.type(screen.getByLabelText("Amount"), "48.00");
     await userEvent.selectOptions(screen.getByLabelText("Category"), "Feed");
     await userEvent.type(screen.getByLabelText("Description"), "Hay delivery");
@@ -116,6 +118,8 @@ describe("recurring expense rule form", () => {
         expenseDate: "2026-10-12",
         split: { mode: "Equal", horseIds: ["horse-a", "horse-b"] },
       }),
+      expect.objectContaining({ cadence: "Weekly" }),
+      undefined,
     );
     expect(onCreate).not.toHaveBeenCalled();
 
@@ -235,9 +239,9 @@ describe("recurring expense rule form", () => {
       "Weekday delivery",
     );
     await userEvent.click(screen.getByLabelText("Misty"));
-    await userEvent.clear(screen.getByLabelText("Interval"));
-    await userEvent.type(screen.getByLabelText("Interval"), "3");
-    await userEvent.selectOptions(screen.getByLabelText("Cadence"), "Weekdays");
+    await userEvent.clear(screen.getByLabelText("Every"));
+    await userEvent.type(screen.getByLabelText("Every"), "3");
+    await userEvent.selectOptions(screen.getByLabelText("Repeats"), "Weekdays");
     await userEvent.click(screen.getByLabelText("Monday"));
     await userEvent.click(screen.getByLabelText("Thursday"));
     await userEvent.click(

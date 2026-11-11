@@ -115,7 +115,7 @@ test("a first-time owner can add a horse by keyboard without configuring an acco
   await page.keyboard.press("Enter");
   await expect(page.getByRole("dialog", { name: /add horse/i })).toBeVisible();
   await page.getByLabel("Name").fill("Misty");
-  await page.getByLabel("Breed").fill("Arabian");
+  await page.getByLabel("Breed", { exact: false }).fill("Arabian");
   await page.getByRole("button", { name: "Save horse" }).focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toContainText(/horse saved/i);
@@ -265,7 +265,7 @@ test("a horse owner previews and records an exact split expense by keyboard", as
   await page.keyboard.press("Enter");
   await expect(page.getByText("Misty: €5.01")).toBeVisible();
   await expect(page.getByText("Comet: €5.00")).toBeVisible();
-  await expect(page.getByLabel("Retired horse")).toBeDisabled();
+  await expect(page.getByLabel("Retired horse")).toBeEnabled();
   await page.getByRole("button", { name: "Save expense" }).focus();
   await page.keyboard.press("Enter");
   await expect(page.getByText("Expense saved.")).toBeVisible();
@@ -523,7 +523,7 @@ test("an owner can review complete monthly and lifetime reports", async ({
     .click();
   const totals = page.getByRole("table", { name: "Lifetime totals" });
   await expect(totals).toBeVisible();
-  await expect(totals).toContainText("Through 9/21/2026");
+  await expect(totals).toContainText("Through Sep 21, 2026");
   await expect(totals).toContainText("€300.00");
   await expect(totals).toContainText("€120.00");
   await expect(totals).toContainText("€180.00");

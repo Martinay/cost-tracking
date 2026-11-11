@@ -45,7 +45,7 @@ public static class ExpenseOccurrenceEndpoints
                     request.Changed.Category, request.Changed.Description, request.Changed.Split, revision.Defaults);
             }
 
-            var eligible = HorseProjection.Replay(events).Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased)
+            var eligible = HorseProjection.Replay(events).Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased or HorseStatus.Retired)
                 .Select(horse => horse.HorseId).ToHashSet();
             try
             {

@@ -1,3 +1,4 @@
+import { HistoryDetails } from "../components/HistoryDetails";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef } from "react";
@@ -165,6 +166,7 @@ export function SettingsRoute() {
       <div className="settings-layout">
         <div className="settings-main">
           <DrivingRateForm
+            currency={account.data?.currency ?? "EUR"}
             savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
             pending={saveDrivingRate.isPending}
             errorMessage={
@@ -236,6 +238,10 @@ export function SettingsRoute() {
                 .map((item) => (
                   <li key={item.eventId}>
                     <p>{item.summary}</p>
+                    <HistoryDetails
+                      item={item}
+                      currency={account.data?.currency ?? "EUR"}
+                    />
                     <time dateTime={item.occurredAt}>
                       {new Date(item.occurredAt).toLocaleString(locale)}
                     </time>

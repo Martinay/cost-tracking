@@ -55,12 +55,15 @@ public sealed class EventSerializer
                 case "DrivingRateChanged":
                     _ = result.Payload.GetProperty("rateMinorPerKm").GetDecimal();
                     break;
+                case "ExpenseCorrected":
                 case "ExpenseRecorded":
                     ValidateExpense(result.Payload);
                     break;
+                case "IncomeCorrected":
                 case "IncomeRecorded":
                     ValidateIncome(result.Payload);
                     break;
+                case "TaskCorrected":
                 case "TaskLogged":
                     ValidateTask(result.Payload);
                     break;
@@ -85,6 +88,7 @@ public sealed class EventSerializer
                         throw new InvalidDataException("Rule identifier is invalid.");
                     _ = ReadDate(result.Payload.GetProperty("lastDate"));
                     break;
+                case "RecurringIncomeReceiptRecorded":
                 case "RecurringIncomeApproved":
                     ValidateIncomeDecision(result.Payload, approved: true);
                     break;
@@ -94,6 +98,8 @@ public sealed class EventSerializer
                 default:
                     throw new InvalidDataException("Event type is not implemented by this runtime.");
             }
+            if (result.Type.EndsWith("Corrected", StringComparison.Ordinal) && string.IsNullOrWhiteSpace(result.Payload.GetProperty("reason").GetString()))
+                throw new InvalidDataException("Correction reason is required.");
             return result;
         }
         catch (JsonException exception)

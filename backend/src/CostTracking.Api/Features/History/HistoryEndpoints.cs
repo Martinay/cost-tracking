@@ -41,7 +41,15 @@ public static class HistoryEndpoints
             .Where(value => ruleId is null || ReferencesId(value.Payload, "ruleId", ruleId.Value)).ToArray();
         var page = matching.Take(limit + 1).ToArray();
         var hasMore = page.Length > limit;
-        var items = page.Take(limit).Select(Summary).ToArray();
+        var historyHorses=HorseProjection.Replay(events);
+        var items = page.Take(limit).Select(value =>
+        {
+            var item = Summary(value);
+            var horseNames = historyHorses.Where(h => ReferencesId(value.Payload, "horseId", h.HorseId)).Select(h => new HistoryHorse(h.HorseId, h.Name)).ToArray();
+            var identity = new[] { "expenseId", "incomeId", "taskId", "horseId" }.FirstOrDefault(key => value.Payload.TryGetProperty(key, out _));
+            var previous = identity is null ? null : events.Where(e => e.StreamVersion < value.StreamVersion && (identity != "horseId" || e.Type.StartsWith("Horse", StringComparison.Ordinal)) && ReferencesId(e.Payload, identity, value.Payload.GetProperty(identity).GetGuid())).LastOrDefault();
+            return item with { Horses = horseNames, Previous = previous?.Payload };
+        }).ToArray();
         var nextCursor = hasMore
             ? cursorCodec.Encode(owner, filterKey, account.StreamVersion, today, items[^1].StreamVersion.ToString(CultureInfo.InvariantCulture))
             : null;
@@ -68,6 +76,10 @@ public static class HistoryEndpoints
             {
                 horseId = payload.GetProperty("horseId").GetGuid(), status = payload.GetProperty("status").GetString()
             }),
+            "RecurringIncomeReceiptRecorded" => Item(value, "Partial income receipt recorded", payload),
+            "ExpenseCorrected" => Item(value, "Expense corrected", payload),
+            "IncomeCorrected" => Item(value, "Income corrected", payload),
+            "TaskCorrected" => Item(value, "Task corrected", payload),
             "ExpenseRecorded" => Item(value, "Expense recorded", new
             {
                 expenseId = payload.GetProperty("expenseId").GetGuid(), expenseDate = payload.GetProperty("expenseDate").GetString(),
@@ -182,6 +194,7 @@ public static class HistoryEndpoints
     }
 
     public sealed record HistoryItem(Guid EventId, long StreamVersion, string Type, DateTimeOffset OccurredAt,
-        string Summary, JsonElement Changes);
+        string Summary, JsonElement Changes, IReadOnlyList<HistoryHorse>? Horses = null, JsonElement? Previous = null);
+    public sealed record HistoryHorse(Guid HorseId, string Name);
     public sealed record HistoryResponse(IReadOnlyList<HistoryItem> Items, string? NextCursor, long StreamVersion);
 }

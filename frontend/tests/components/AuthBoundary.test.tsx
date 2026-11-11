@@ -243,7 +243,7 @@ describe("horse form", () => {
     render(<HorseForm mode="create" onSubmit={onSubmit} />);
 
     await userEvent.type(screen.getByLabelText("Name"), "Misty");
-    await userEvent.type(screen.getByLabelText("Breed"), "Arabian");
+    await userEvent.type(screen.getByLabelText(/Breed/), "Arabian");
     await userEvent.click(screen.getByRole("button", { name: "Save horse" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -270,8 +270,8 @@ describe("horse form", () => {
     unmount();
     render(<HorseForm mode="edit" initialValue={horse} onSubmit={onSubmit} />);
     expect(screen.getByLabelText("Name")).toHaveValue("Misty");
-    expect(screen.getByLabelText("Breed")).toHaveValue("Arabian");
-    expect(screen.getByLabelText("Date of birth")).toHaveValue("2020-04-10");
+    expect(screen.getByLabelText(/Breed/)).toHaveValue("Arabian");
+    expect(screen.getByLabelText(/Date of birth/)).toHaveValue("2020-04-10");
     expect(screen.queryByLabelText("Status")).not.toBeInTheDocument();
   });
 });
@@ -548,16 +548,14 @@ describe("first-use settings", () => {
         </AuthBoundary>
       </QueryClientProvider>,
     );
-    const rate = await screen.findByLabelText(
-      "Driving rate (minor units per km)",
-    );
+    const rate = await screen.findByLabelText("Driving rate (€/km)");
     await userEvent.clear(rate);
-    await userEvent.type(rate, "30");
+    await userEvent.type(rate, "0.30");
     await userEvent.click(
       screen.getByRole("button", { name: "Save driving rate" }),
     );
     await screen.findByRole("alert");
-    expect(rate).toHaveValue(30);
+    expect(rate).toHaveValue(0.3);
     await userEvent.click(
       screen.getByRole("button", { name: "Save driving rate" }),
     );
@@ -822,8 +820,8 @@ describe("horse management", () => {
     expect(
       await screen.findByRole("heading", { name: "Misty" }),
     ).toBeInTheDocument();
-    await userEvent.clear(screen.getByLabelText("Breed"));
-    await userEvent.type(screen.getByLabelText("Breed"), "Arabian mix");
+    await userEvent.clear(screen.getByLabelText(/Breed/));
+    await userEvent.type(screen.getByLabelText(/Breed/), "Arabian mix");
     await userEvent.click(screen.getByRole("button", { name: "Save horse" }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       /horse details saved/i,
@@ -937,7 +935,7 @@ describe("horse management", () => {
     await screen.findByRole("button", { name: "Add horse" });
     await userEvent.click(screen.getByRole("button", { name: "Add horse" }));
     await userEvent.type(screen.getByLabelText("Name"), "Misty");
-    await userEvent.type(screen.getByLabelText("Breed"), "Arabian");
+    await userEvent.type(screen.getByLabelText(/Breed/), "Arabian");
     await userEvent.click(screen.getByRole("button", { name: "Save horse" }));
     await screen.findByRole("alert");
     expect(screen.getByLabelText("Name")).toHaveValue("Misty");

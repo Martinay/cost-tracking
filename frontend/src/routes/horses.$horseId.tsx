@@ -1,4 +1,6 @@
-import { formatDate, formatMoney as money } from "../i18n/format";
+import { HistoryDetails } from "../components/HistoryDetails";
+import { ActivityEffort } from "../features/reports/ActivityEffort";
+import { formatDate, formatMonth, formatMoney as money } from "../i18n/format";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
@@ -404,6 +406,11 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
           updateStatus.mutate(field.value as HorseStatus);
         }}
       >
+        <p>
+          {t(
+            "Retired horses can still receive care, expenses and tasks. Sold horses are unavailable for new entries. Existing recurring rules continue until you stop them.",
+          )}
+        </p>
         <label htmlFor="horse-status">{t("Horse status")}</label>
         <select
           id="horse-status"
@@ -497,7 +504,7 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
         <h2>{t("Financial summary")}</h2>
         <h3>
           {t("Monthly profit and loss for ")}
-          {month}
+          {formatMonth(month, locale)}
         </h3>
         {monthly.isPending && (
           <p role="status">{t("Loading monthly report…")}</p>
@@ -675,6 +682,10 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
                 .map((item) => (
                   <li key={item.eventId}>
                     <p>{item.summary}</p>
+                    <HistoryDetails
+                      item={item}
+                      currency={account.data?.currency ?? "EUR"}
+                    />
                     <time dateTime={item.occurredAt}>
                       {new Date(item.occurredAt).toLocaleString(locale)}
                     </time>
@@ -718,7 +729,7 @@ export function HorseDetailRoute({ horseId }: HorseDetailRouteProps) {
             {activity.data.items.map((row) => (
               <li key={row.taskType}>
                 {t(row.taskType)}: {row.count} {t("tasks, ")}
-                {row.minutes} {t("minutes")}
+                <ActivityEffort item={row} />
               </li>
             ))}
           </ul>

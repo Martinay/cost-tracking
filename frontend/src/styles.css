@@ -806,7 +806,8 @@ tfoot {
   }
   .sidebar nav {
     flex-direction: row;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow-x: visible;
     gap: 4px;
     margin-top: 20px;
     padding-bottom: 10px;
@@ -996,4 +997,27 @@ button[role="tab"][aria-selected="true"] {
 }
 .modal-language select {
   width: auto;
+}
+
+.table-scroll-hint {
+  margin: 8px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.monthly-overall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.monthly-overall > div {
+  min-width: 90px;
+  flex: 1;
+}
+.monthly-overall dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }

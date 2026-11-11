@@ -31,8 +31,20 @@ test("summarizes task counts and duration without combining quantity units", () 
       from="2026-10-01"
       to="2026-10-09"
       items={[
-        { taskType: "Riding", count: 2, minutes: 75 },
-        { taskType: "PaddockDuty", count: 1, minutes: 0 },
+        {
+          taskType: "Riding",
+          count: 2,
+          minutes: 75,
+          missingDurationCount: 0,
+          quantities: [],
+        },
+        {
+          taskType: "PaddockDuty",
+          count: 1,
+          minutes: 0,
+          missingDurationCount: 1,
+          quantities: [{ unit: "paddocks", quantity: 3 }],
+        },
       ]}
     />,
   );
@@ -40,7 +52,7 @@ test("summarizes task counts and duration without combining quantity units", () 
   expect(table).toHaveTextContent("Riding");
   expect(table).toHaveTextContent("75 minutes");
   expect(table).toHaveTextContent("Paddock Duty");
-  expect(table).toHaveTextContent("0 minutes");
+  expect(table).toHaveTextContent("Duration not recorded");
   expect(table).not.toHaveTextContent("quantity total");
 });
 

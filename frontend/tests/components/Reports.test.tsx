@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
@@ -290,7 +290,7 @@ describe("financial report tables", () => {
       screen.getByText(
         (_text, element) =>
           element?.tagName === "P" &&
-          element.textContent?.includes("Through 9/21/2026") === true,
+          element.textContent?.includes("Through Sep 21, 2026") === true,
       ),
     ).toBeInTheDocument();
     expect(
@@ -303,10 +303,18 @@ describe("financial report tables", () => {
     expect(
       await screen.findByRole("table", { name: "Lifetime totals" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Total income")).toBeInTheDocument();
-    expect(screen.getByText("€300.00")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table", { name: "Lifetime totals" })).getByText(
+        "Total",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table", { name: "Lifetime totals" })).getByText(
+        "€300.00",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("€120.00").length).toBeGreaterThan(0);
-    expect(screen.getByText("€180.00")).toBeInTheDocument();
+    expect(screen.getAllByText("€180.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Misty (Retired)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Comet (Sold)").length).toBeGreaterThan(0);
   });
@@ -493,7 +501,7 @@ test("horse detail includes monthly and complete lifetime financial summary, inc
       (_text, element) =>
         element?.tagName === "P" &&
         element.textContent?.replaceAll("\n", "").trim() ===
-          "Through 9/21/2026",
+          "Through Sep 21, 2026",
     ),
   ).toBeInTheDocument();
   expect(await screen.findByText("€500.00")).toBeInTheDocument();

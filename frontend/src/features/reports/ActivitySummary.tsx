@@ -1,3 +1,4 @@
+import { ActivityEffort } from "./ActivityEffort";
 import { formatDate } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { ApiResponse } from "../../api/client";
@@ -42,7 +43,7 @@ export function ActivitySummary({
               <th scope="row">{t(item.taskType)}</th>
               <td>{item.count}</td>
               <td>
-                {item.minutes} {t("minutes")}
+                <ActivityEffort item={item} />
               </td>
             </tr>
           ))}

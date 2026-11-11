@@ -34,6 +34,33 @@ public static class ScheduleExpansion
         return dates.AsReadOnly();
     }
 
+    /// <summary>Returns the first date strictly after the owner day, respecting revision boundaries and inclusive stops.</summary>
+    public static DateOnly? NextScheduled(IEnumerable<(DateOnly EffectiveFrom, Schedule Schedule)> revisions, DateOnly? lastDate, DateOnly after)
+    {
+        if (after == DateOnly.MaxValue) return null;
+        var ordered = revisions.OrderBy(r => r.EffectiveFrom).ToArray();
+        for (var index = 0; index < ordered.Length; index++)
+        {
+            var revision = ordered[index];
+            var start = after.AddDays(1);
+            if (revision.EffectiveFrom > start) start = revision.EffectiveFrom;
+            if (revision.Schedule.StartDate > start) start = revision.Schedule.StartDate;
+            var end = lastDate ?? DateOnly.MaxValue;
+            if (revision.Schedule.EndDate is { } stop && stop < end) end = stop;
+            if (index + 1 < ordered.Length && ordered[index + 1].EffectiveFrom.AddDays(-1) < end) end = ordered[index + 1].EffectiveFrom.AddDays(-1);
+            while (start <= end)
+            {
+                var through = MaximumThrough(start);
+                if (through > end) through = end;
+                var dates = Expand(revision.Schedule, start, through);
+                if (dates.Count > 0) return dates[0];
+                if (through == DateOnly.MaxValue) break;
+                start = through.AddDays(1);
+            }
+        }
+        return null;
+    }
+
     private static DateOnly MaximumThrough(DateOnly from)
     {
         try { return from.AddYears(5).AddDays(-1); }

@@ -1,8 +1,15 @@
+import {
+  parseRateMajor,
+  formatRate,
+  ratePrecision,
+  currencySymbol,
+} from "./rate";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useState, type FormEvent } from "react";
 
 export interface DrivingRateFormProps {
   savedRateMinorPerKm: number | null;
+  currency?: string;
   pending?: boolean;
   errorMessage?: string;
   onSave(rateMinorPerKm: number): Promise<void>;
@@ -10,11 +17,12 @@ export interface DrivingRateFormProps {
 
 export function DrivingRateForm({
   savedRateMinorPerKm,
+  currency = "EUR",
   pending = false,
   errorMessage,
   onSave,
 }: DrivingRateFormProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [editedValue, setEditedValue] = useState<{
     savedRate: number | null;
     value: string;
@@ -22,7 +30,11 @@ export function DrivingRateForm({
   const value =
     editedValue?.savedRate === savedRateMinorPerKm
       ? editedValue.value
-      : (savedRateMinorPerKm?.toString() ?? "");
+      : ((savedRateMinorPerKm === null
+          ? undefined
+          : (savedRateMinorPerKm / 10 ** ratePrecision(currency)).toFixed(
+              ratePrecision(currency) + 4,
+            )) ?? "");
   const [validationError, setValidationError] = useState("");
   const [submissionError, setSubmissionError] = useState<string | Error>("");
   const [saved, setSaved] = useState(false);
@@ -31,17 +43,15 @@ export function DrivingRateForm({
     event.preventDefault();
     setSaved(false);
     setSubmissionError("");
-    const rate = Number(value);
+    const rate = parseRateMajor(value, currency);
     if (
       !value.trim() ||
       !Number.isFinite(rate) ||
       rate <= 0 ||
       rate > 1_000_000 ||
-      (value.split(".")[1]?.length ?? 0) > 4
+      (value.split(".")[1]?.length ?? 0) > ratePrecision(currency) + 4
     ) {
-      setValidationError(
-        "Enter a positive rate with no more than four decimal places.",
-      );
+      setValidationError("Enter a positive rate within supported precision.");
       return;
     }
     setValidationError("");
@@ -71,19 +81,21 @@ export function DrivingRateForm({
       ) : (
         <p>
           {t("Current saved rate: ")}
-          {savedRateMinorPerKm.toFixed(4)} {t("minor units/km")}
+          {formatRate(savedRateMinorPerKm, currency, locale)} {t("per km")}
         </p>
       )}
       <form onSubmit={(event) => void submit(event)}>
         <label htmlFor="saved-driving-rate">
-          {t("Driving rate (minor units per km)")}
+          {t("Driving rate ({currency}/km)", {
+            currency: currencySymbol(currency, locale),
+          })}
         </label>
         <input
           id="saved-driving-rate"
           type="number"
-          min="0.0001"
-          max="1000000"
-          step="0.0001"
+          min={10 ** -(ratePrecision(currency) + 4)}
+          max={1_000_000 / 10 ** ratePrecision(currency)}
+          step={10 ** -(ratePrecision(currency) + 4)}
           value={value}
           onChange={(event) => {
             setEditedValue({
@@ -103,7 +115,10 @@ export function DrivingRateForm({
         )}
         {saved && <p role="status">{t("Driving rate saved.")}</p>}
         <p className="field-hint">
-          {t("Enter minor currency units per km. For EUR, 30 means €0.30/km.")}
+          {t("Enter a rate in {currency} per km, for example {example}/km.", {
+            currency,
+            example: formatRate(30, currency, locale),
+          })}
         </p>
         <div className="form-footer">
           <button type="submit" disabled={pending}>

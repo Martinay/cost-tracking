@@ -37,12 +37,13 @@ public static class ActivityReportEndpoints
             .Where(item => horseId is null || item.HorseId == horseId.Value)
             .GroupBy(item => item.TaskType)
             .OrderBy(group => group.Key)
-            .Select(group => new { taskType = group.Key.ToString(), count = group.Count(), minutes = group.Aggregate(0L, (sum, item) => checked(sum + item.Minutes)) })
+             .Select(group => new ActivitySummary(group.Key.ToString(), group.Count(), group.Aggregate(0L, (sum, item) => checked(sum + item.Minutes)), group.Count(item => item.Minutes == 0), group.Where(item => item.Quantity.HasValue).GroupBy(item => item.QuantityUnit!, StringComparer.Ordinal).Select(units => new QuantitySummary(units.Key, units.Sum(item => item.Quantity!.Value))).ToArray()))
             .ToArray();
         return await AccountEndpoints.WriteAsync(context, 200,
             new { items, streamVersion = account.StreamVersion }, account.StreamVersion);
     }
 
-    public sealed record ActivitySummary(string TaskType, int Count, long Minutes);
+    public sealed record QuantitySummary(string Unit, decimal Quantity);
+    public sealed record ActivitySummary(string TaskType, int Count, long Minutes, int MissingDurationCount, IReadOnlyList<QuantitySummary> Quantities);
     public sealed record ActivityReportResponse(IReadOnlyList<ActivitySummary> Items, long StreamVersion);
 }

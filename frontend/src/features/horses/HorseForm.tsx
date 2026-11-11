@@ -63,7 +63,9 @@ export function HorseForm({
         required
         value={name}
       />
-      <label htmlFor="horse-breed">{t("Breed")}</label>
+      <label htmlFor="horse-breed">
+        {t("Breed")} · {t("optional")}
+      </label>
       <input
         autoComplete="off"
         id="horse-breed"
@@ -72,7 +74,9 @@ export function HorseForm({
         onChange={(event) => setBreed(event.currentTarget.value)}
         value={breed}
       />
-      <label htmlFor="horse-date-of-birth">{t("Date of birth")}</label>
+      <label htmlFor="horse-date-of-birth">
+        {t("Date of birth")} · {t("optional")}
+      </label>
       <input
         id="horse-date-of-birth"
         name="dateOfBirth"

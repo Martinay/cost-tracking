@@ -116,7 +116,14 @@ export function HorsesRoute() {
         {t("Add horse")}
       </button>
       {horses.data.items.length === 0 ? (
-        <p>{t("No horses yet.")}</p>
+        <div className="empty-state">
+          <p>{t("No horses yet.")}</p>
+          <p>
+            {t(
+              "Add the horses in your care, then record your first bill and split it across them. Horses also keep your income and care tasks organised.",
+            )}
+          </p>
+        </div>
       ) : (
         <ul className="horse-grid" aria-label={t("Horses")}>
           {horses.data.items.map((horse) => (

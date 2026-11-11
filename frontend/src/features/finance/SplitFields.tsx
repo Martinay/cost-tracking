@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { FinancialHorse, SplitValue } from "./useFinancialForm";
 
@@ -12,6 +13,7 @@ export function SplitFields({
 }) {
   const { t } = useI18n();
   const mode = value.mode;
+  const splitId = useId();
   const selected =
     value.mode === "Equal"
       ? value.horseIds
@@ -54,19 +56,26 @@ export function SplitFields({
   return (
     <fieldset>
       <legend>{t("Split across horses")}</legend>
-      <label htmlFor="split-mode">{t("Allocation")}</label>
+      <label htmlFor={splitId}>{t("Allocation")}</label>
       <select
-        id="split-mode"
+        id={splitId}
         value={mode}
         onChange={(event) =>
           selectMode(event.currentTarget.value as "Equal" | "Custom")
         }
       >
         <option value="Equal">{t("Equal split")}</option>
-        <option value="Custom">{t("Custom weights")}</option>
+        <option value="Custom">{t("Split differently")}</option>
       </select>
+      {mode === "Custom" && (
+        <p>
+          {t(
+            "Use ratios such as 2 and 1, or percentage shares such as 60 and 40. Saved shares are shown as percentages. Preview shows exact amounts.",
+          )}
+        </p>
+      )}
       {horses.map((horse) => {
-        const active = horse.status === "Active" || horse.status === "Leased";
+        const active = horse.status !== "Sold";
         const share =
           value.mode === "Custom"
             ? value.shares.find((item) => item.horseId === horse.horseId)
@@ -76,7 +85,7 @@ export function SplitFields({
             <label>
               <input
                 aria-label={
-                  horse.status === "Retired" || horse.status === "Sold"
+                  horse.status === "Sold"
                     ? t("{value0} ({value1})", {
                         value0: horse.name,
                         value1: t(horse.status),
@@ -84,7 +93,7 @@ export function SplitFields({
                     : horse.name
                 }
                 checked={selected.includes(horse.horseId)}
-                disabled={!active}
+                disabled={!active && !selected.includes(horse.horseId)}
                 onChange={(event) =>
                   toggle(horse.horseId, event.currentTarget.checked)
                 }
@@ -97,14 +106,14 @@ export function SplitFields({
               active &&
               selected.includes(horse.horseId) && (
                 <label>
-                  {t("Weight for ")}
+                  {t("Share for ")}
                   {horse.name}
                   <input
-                    aria-label={t("Weight for {value0}", {
+                    aria-label={t("Share for {value0}", {
                       value0: horse.name,
                     })}
-                    min="1"
-                    step="1"
+                    min="0.000001"
+                    step="0.000001"
                     type="number"
                     value={share?.weight ?? 1}
                     onChange={(event) =>

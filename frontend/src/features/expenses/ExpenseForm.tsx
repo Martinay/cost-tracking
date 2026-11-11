@@ -1,5 +1,9 @@
 import { ExpenseCategorySelect } from "./ExpenseCategorySelect";
-import { formatDate, formatMoney as money } from "../../i18n/format";
+import {
+  formatDate,
+  formatMonth,
+  formatMoney as money,
+} from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useEffect, useRef } from "react";
 import { SplitFields } from "../finance/SplitFields";
@@ -18,6 +22,11 @@ export function ExpenseForm() {
   return (
     <section aria-labelledby="expense-form-heading">
       <h2 id="expense-form-heading">{t("Record expense")}</h2>
+      <p>
+        {t(
+          "Choose a date, positive amount and at least one horse. Category or source is required; description is optional.",
+        )}
+      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -77,7 +86,9 @@ export function ExpenseForm() {
           {form.previewing ? t("Previewing…") : t("Preview expense")}
         </button>
       </form>
-      {form.errorMessage && <p role="alert">{t(form.errorMessage)}</p>}
+      {form.errorMessage && !form.errorFor("split") && (
+        <p role="alert">{t(form.errorMessage)}</p>
+      )}
       {form.preview && (
         <section aria-label={t("Expense preview")}>
           <h3>{t("Preview")}</h3>
@@ -110,8 +121,10 @@ export function ExpenseForm() {
           <h4>{t("Monthly effect")}</h4>
           <ul aria-label={t("Monthly effect")}>
             {form.preview.monthlyEffect.map((effect) => (
-              <li key={`${effect.month}-${effect.horseId}`}>
-                {effect.month}:{" "}
+              <li
+                key={`${formatMonth(effect.month, locale)}-${effect.horseId}`}
+              >
+                {formatMonth(effect.month, locale)}:{" "}
                 {form.allHorses.find(
                   (horse) => horse.horseId === effect.horseId,
                 )?.name ?? t("Horse")}{" "}

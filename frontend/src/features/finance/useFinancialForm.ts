@@ -1,3 +1,4 @@
+import { useDraftState } from "./useDraftState";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,14 +61,22 @@ export function useFinancialForm(kind: FinanceKind) {
         path: "/api/v1/horses",
       }),
   });
-  const [date, setDate] = useState("");
-  const [amount, setAmount] = useState("");
-  const [detail, setDetail] = useState("");
-  const [description, setDescription] = useState("");
-  const [split, setSplit] = useState<SplitValue>({
-    mode: "Equal",
-    horseIds: [],
-  });
+  const [date, setDate] = useDraftState(subject, kind + "-date", "");
+  const [amount, setAmount] = useDraftState(subject, kind + "-amount", "");
+  const [detail, setDetail] = useDraftState(subject, kind + "-detail", "");
+  const [description, setDescription] = useDraftState(
+    subject,
+    kind + "-description",
+    "",
+  );
+  const [split, setSplit] = useDraftState<SplitValue>(
+    subject,
+    kind + "-split",
+    {
+      mode: "Equal",
+      horseIds: [],
+    },
+  );
   const horseIds =
     split.mode === "Equal"
       ? split.horseIds
@@ -97,7 +106,7 @@ export function useFinancialForm(kind: FinanceKind) {
             split,
           }
         : null;
-  const fingerprint = values ? JSON.stringify(values) : "";
+  const fingerprint = values ? JSON.stringify({ subject, values }) : "";
   const currentPreview =
     preview && fingerprint === previewFingerprint ? preview : null;
   const previewMutation = useMutation({
@@ -239,9 +248,11 @@ export function useFinancialForm(kind: FinanceKind) {
   };
 }
 
-function parseAmount(input: string): number | null {
+export function parseAmount(input: string): number | null {
   if (!/^\d+(?:[.,]\d{0,2})?$/.test(input.trim())) return null;
   const [whole, fraction = ""] = input.trim().replace(",", ".").split(".");
   const amount = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
   return Number.isSafeInteger(amount) ? amount : null;
 }
+
+export { normalizeSplit } from "./normalizeSplit";

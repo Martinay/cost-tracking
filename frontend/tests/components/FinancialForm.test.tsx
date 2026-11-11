@@ -303,7 +303,7 @@ describe("one-time expense form", () => {
     expect(await screen.findByText("Misty: €5.01")).toBeInTheDocument();
     expect(screen.getByText("Comet: €5.00")).toBeInTheDocument();
     expect(
-      screen.getByText("2026-09: Misty expenses €5.01"),
+      screen.getByText("September 2026: Misty expenses €5.01"),
     ).toBeInTheDocument();
     const previewCall = fetchImpl.mock.calls.find(
       ([url]) => String(url) === "/api/v1/previews/financial",

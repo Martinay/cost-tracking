@@ -141,7 +141,7 @@ describe("recurring expense occurrence editor", () => {
     expect(
       await screen.findByRole("region", { name: "Occurrence preview" }),
     ).toHaveTextContent("€48.00");
-    expect(screen.getByText(/Contribution: €0\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/Amount counted: €0\.00/)).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Save occurrence change" }),
     );
@@ -213,8 +213,8 @@ describe("recurring expense occurrence editor", () => {
     );
 
     expect(screen.getByLabelText("Allocation")).toHaveValue("Custom");
-    expect(screen.getByLabelText("Weight for Misty")).toHaveValue(700000);
-    expect(screen.getByLabelText("Weight for Comet")).toHaveValue(300000);
+    expect(screen.getByLabelText("Share for Misty")).toHaveValue(700000);
+    expect(screen.getByLabelText("Share for Comet")).toHaveValue(300000);
     await userEvent.click(
       screen.getByRole("button", { name: "Preview change" }),
     );
