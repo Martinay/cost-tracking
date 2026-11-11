@@ -4,14 +4,27 @@ export function firstOccurrence(
   schedule: ScheduleValue,
   from: string,
 ): string | null {
-  if (!schedule.startDate || !from || schedule.interval < 1) return null;
+  if (
+    !schedule.startDate ||
+    !from ||
+    !Number.isInteger(schedule.interval) ||
+    schedule.interval < 1 ||
+    schedule.interval > 366 ||
+    (schedule.cadence === "Weekdays" && schedule.weekdays.length === 0)
+  )
+    return null;
   const anchor = new Date(schedule.startDate + "T00:00:00Z");
   const first = new Date(
     (from > schedule.startDate ? from : schedule.startDate) + "T00:00:00Z",
   );
   if (!Number.isFinite(anchor.getTime()) || !Number.isFinite(first.getTime()))
     return null;
-  for (let offset = 0; offset <= 366 * 5; offset++) {
+  const end = new Date((schedule.endDate ?? "9999-12-31") + "T00:00:00Z");
+  for (
+    let offset = 0;
+    first.getTime() + offset * 86400000 <= end.getTime();
+    offset++
+  ) {
     const day = new Date(first.getTime() + offset * 86400000);
     const iso = day.toISOString().slice(0, 10);
     if (schedule.endDate && iso > schedule.endDate) return null;

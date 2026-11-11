@@ -113,6 +113,32 @@ test("U09 scheduled monthly preview respects the payment day and end", async () 
   ).toBe("2026-02-28");
 });
 
+test("recurring examples search beyond five years and respect the inclusive end", async () => {
+  const { firstOccurrence } =
+    await import("../../src/features/recurrence/schedule");
+  const schedule = {
+    cadence: "Monthly" as const,
+    interval: 61,
+    weekdays: [],
+    dayOfMonth: 1,
+    startDate: "2026-11-11",
+    endDate: null,
+  };
+  expect(firstOccurrence(schedule, schedule.startDate)).toBe("2031-12-01");
+  expect(
+    firstOccurrence({ ...schedule, endDate: "2031-12-01" }, schedule.startDate),
+  ).toBe("2031-12-01");
+  expect(
+    firstOccurrence({ ...schedule, endDate: "2031-11-30" }, schedule.startDate),
+  ).toBeNull();
+  expect(
+    firstOccurrence({ ...schedule, interval: 366 }, schedule.startDate),
+  ).toBe("2057-05-01");
+  expect(
+    firstOccurrence({ ...schedule, startDate: "9999-12-02" }, "9999-12-02"),
+  ).toBeNull();
+});
+
 test("U23 monthly totals and U19 visible scroll guidance", async () => {
   const { PnlTable } = await import("../../src/features/reports/PnlTable");
   render(

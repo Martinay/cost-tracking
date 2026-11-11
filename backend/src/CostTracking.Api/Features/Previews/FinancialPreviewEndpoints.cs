@@ -55,8 +55,15 @@ public static class FinancialPreviewEndpoints
         if (request.ExampleOccurrence && request.ExampleSchedule is { } schedule)
         {
             var from = request.EffectiveFrom is { } effective && effective > schedule.StartDate ? effective : schedule.StartDate;
-            var through = from.Year > 9994 ? DateOnly.MaxValue : from.AddYears(5).AddDays(-1);
-            exampleDate = ScheduleExpansion.Expand(schedule, from, through).Cast<DateOnly?>().FirstOrDefault();
+            var end = schedule.EndDate ?? DateOnly.MaxValue;
+            while (from <= end)
+            {
+                var through = from.Year > 9994 ? DateOnly.MaxValue : from.AddYears(5).AddDays(-1);
+                if (through > end) through = end;
+                exampleDate = ScheduleExpansion.Expand(schedule, from, through).Cast<DateOnly?>().FirstOrDefault();
+                if (exampleDate.HasValue || through == DateOnly.MaxValue) break;
+                from = through.AddDays(1);
+            }
             if (exampleDate is null) throw FinancialEndpointSupport.Error(422,"invalid_schedule","This schedule has no occurrence on or after the selected date.");
         }
         DateOnly date;

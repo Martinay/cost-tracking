@@ -45,6 +45,37 @@ public sealed class FinancialPreviewTests
         }
     }
 
+    [Theory]
+    [InlineData("Expense", null, 200)]
+    [InlineData("Income", "2031-12-01", 200)]
+    [InlineData("Income", "2031-11-30", 422)]
+    public async Task Long_interval_examples_search_successive_windows_until_the_inclusive_end(string kind, string? endDate, int status)
+    {
+        using var app = new TestApplication();
+        using var client = Client(app);
+        using var account = await Send(client, HttpMethod.Put, "/api/v1/account", 0,
+            "{\"currency\":\"EUR\",\"timeZone\":\"Europe/Berlin\"}");
+        var horse = await CreateHorse(client);
+        var values = new Dictionary<string, object> {
+            [kind == "Expense" ? "expenseDate" : "receivedDate"] = "2026-11-11",
+            ["amountMinor"] = 125,
+            ["split"] = new { mode = "Equal", horseIds = new[] { horse } }
+        };
+        if (kind == "Expense") { values["category"] = "Feed"; values["description"] = "Hay"; }
+        else values["source"] = "Lessons";
+        var body = JsonSerializer.Serialize(new {
+            kind, exampleOccurrence = true,
+            exampleSchedule = new { cadence = "Monthly", interval = 61, weekdays = Array.Empty<int>(), dayOfMonth = 1, startDate = "2026-11-11", endDate },
+            values
+        });
+        using var preview = await Preview(client, body);
+        Assert.Equal(status, (int)preview.StatusCode);
+        if (status == 200) {
+            using var json = JsonDocument.Parse(await preview.Content.ReadAsStringAsync());
+            Assert.Equal("2031-12-01", json.RootElement.GetProperty("date").GetString());
+        }
+    }
+
     private static HttpClient Client(TestApplication app)
     {
         var client = app.CreateClient();
