@@ -165,6 +165,7 @@ public sealed class SessionBrokerTests
         var authorization = QueryHelpers.ParseQuery(login.Headers.Location.Query);
         Assert.Equal("S256", authorization["code_challenge_method"]);
         Assert.Equal("authkit", authorization["provider"]);
+        Assert.Equal("sign-in", authorization["screen_hint"]);
         var correlation = Assert.Single(login.Headers.GetValues("Set-Cookie"));
         Assert.Contains("__Host-cost-login=", correlation, StringComparison.Ordinal);
         Assert.Contains("secure", correlation, StringComparison.OrdinalIgnoreCase);

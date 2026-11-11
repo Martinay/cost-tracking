@@ -26,7 +26,7 @@ ASP.NET JwtBearer validates signed access tokens; built-in OpenAPI generates typ
 
 ## Usability remediation
 
-The [remediation specification](specs/005-usability-remediation/spec.md) and [U01–U26 validation crosswalk](specs/005-usability-remediation/validation.md) cover reliable ratio/mileage/task entry, auditable corrections, explicit partial receipts, retired care, draft recovery, historical ledgers and accessible reports/navigation. U05 (stable/ownership grouping) and U07 (sign-in routing) were explicitly excluded. WorkOS U06 requires the documented hosted Sign-out URI setting and verification. Original live evidence is retained locally under `docs/usability/` and is excluded from the public PR.
+The [remediation specification](specs/005-usability-remediation/spec.md) and [U01–U26 validation crosswalk](specs/005-usability-remediation/validation.md) cover reliable ratio/mileage/task entry, auditable corrections, explicit partial receipts, retired care, draft recovery, historical ledgers and accessible reports/navigation. U05 (stable/ownership grouping) and U07 (sign-in routing) were explicitly excluded from that change. The separately authorized [U07 follow-up](specs/006-direct-sign-in/spec.md) requests the hosted sign-in screen directly. WorkOS U06 requires the documented hosted Sign-out URI setting and verification. Original live evidence is retained locally under `docs/usability/` and is excluded from the public PR.
 
 ## Validation
 
