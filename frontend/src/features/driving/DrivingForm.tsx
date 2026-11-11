@@ -1,3 +1,10 @@
+import {
+  parseRateMajor,
+  formatRate,
+  ratePrecision,
+  currencySymbol,
+} from "./rate";
+import { useDraftState } from "../finance/useDraftState";
 import { formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useRef, useState, type FormEvent } from "react";
@@ -28,6 +35,7 @@ export interface DrivingPreview {
   allocations: { horseId: string; amountMinor: number }[];
 }
 export interface DrivingFormProps {
+  draftScope?: string | null;
   horses: DrivingHorse[];
   today: string;
   currency: string;
@@ -41,6 +49,7 @@ export interface DrivingFormProps {
 
 export function DrivingForm({
   horses,
+  draftScope,
   today,
   currency,
   savedRateMinorPerKm,
@@ -48,14 +57,34 @@ export function DrivingForm({
   onCommit,
 }: DrivingFormProps) {
   const { t, locale } = useI18n();
-  const [expenseDate, setExpenseDate] = useState(today);
-  const [kilometers, setKilometers] = useState("");
-  const [rateMinorPerKm, setRateMinorPerKm] = useState("");
-  const [description, setDescription] = useState("");
-  const [split, setSplit] = useState<SplitValue>({
-    mode: "Equal",
-    horseIds: [],
-  });
+  const [expenseDate, setExpenseDate] = useDraftState(
+    draftScope,
+    "driving-expenseDate",
+    today,
+  );
+  const [kilometers, setKilometers] = useDraftState(
+    draftScope,
+    "driving-kilometers",
+    "",
+  );
+  const [rateMinorPerKm, setRateMinorPerKm] = useDraftState(
+    draftScope,
+    "driving-rateMinorPerKm",
+    "",
+  );
+  const [description, setDescription] = useDraftState(
+    draftScope,
+    "driving-description",
+    "",
+  );
+  const [split, setSplit] = useDraftState<SplitValue>(
+    draftScope,
+    "driving-split",
+    {
+      mode: "Equal",
+      horseIds: [],
+    },
+  );
   const [preview, setPreview] = useState<DrivingPreview | null>(null);
   const [previewKey, setPreviewKey] = useState("");
   const [error, setError] = useState<string | Error>("");
@@ -64,7 +93,9 @@ export function DrivingForm({
   const requestGeneration = useRef(0);
   const distance = Number(kilometers);
   const rate =
-    rateMinorPerKm.trim() === "" ? undefined : Number(rateMinorPerKm);
+    rateMinorPerKm.trim() === ""
+      ? undefined
+      : parseRateMajor(rateMinorPerKm, currency);
   const draft: DrivingDraftBody = {
     expenseDate,
     kilometers: distance,
@@ -72,7 +103,7 @@ export function DrivingForm({
     description,
     split,
   };
-  const key = JSON.stringify(draft);
+  const key = JSON.stringify({ draftScope, draft });
   const isCurrentPreview = preview !== null && key === previewKey;
   const selectedIds =
     split.mode === "Equal"
@@ -109,9 +140,10 @@ export function DrivingForm({
       (!Number.isFinite(rate) ||
         rate <= 0 ||
         rate > 1_000_000 ||
-        (rateMinorPerKm.split(".")[1]?.length ?? 0) > 4)
+        (rateMinorPerKm.split(".")[1]?.length ?? 0) >
+          ratePrecision(currency) + 4)
     ) {
-      setError("Enter a positive rate with no more than four decimal places.");
+      setError("Enter a positive rate within supported precision.");
       return;
     }
     if (!description.trim()) {
@@ -124,7 +156,7 @@ export function DrivingForm({
     }
     const request = { kind: "Driving" as const, values: draft };
     const generation = ++requestGeneration.current;
-    const capturedKey = JSON.stringify(draft);
+    const capturedKey = key;
     try {
       const result = await onPreview(request);
       if (generation !== requestGeneration.current) return;
@@ -153,6 +185,10 @@ export function DrivingForm({
       await onCommit(command, preview.streamVersion);
       setSaved(true);
       setCommitted(true);
+      setKilometers("");
+      setRateMinorPerKm("");
+      setDescription("");
+      setSplit({ mode: "Equal", horseIds: [] });
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -188,13 +224,17 @@ export function DrivingForm({
         onChange={(event) => update(setKilometers, event.currentTarget.value)}
         required
       />
-      <label htmlFor="driving-rate">{t("Rate per km (optional)")}</label>
+      <label htmlFor="driving-rate">
+        {t("Rate per km ({currency}/km, optional)", {
+          currency: currencySymbol(currency, locale),
+        })}
+      </label>
       <input
         id="driving-rate"
         type="number"
-        min="0.0001"
-        max="1000000"
-        step="0.0001"
+        min={10 ** -(ratePrecision(currency) + 4)}
+        max={1_000_000 / 10 ** ratePrecision(currency)}
+        step={10 ** -(ratePrecision(currency) + 4)}
         value={rateMinorPerKm}
         onChange={(event) =>
           update(setRateMinorPerKm, event.currentTarget.value)
@@ -205,10 +245,9 @@ export function DrivingForm({
           ? t(
               "No saved driving rate; enter one for this trip or save one in settings.",
             )
-          : t(
-              "Saved rate: {value0} minor units/km. Leave the rate blank to use it.",
-              { value0: savedRateMinorPerKm.toFixed(4) },
-            )}
+          : t("Saved rate: {value0}/km. Leave the rate blank to use it.", {
+              value0: formatRate(savedRateMinorPerKm, currency, locale),
+            })}
       </p>
       <label htmlFor="driving-description">{t("Description")}</label>
       <input
@@ -229,7 +268,12 @@ export function DrivingForm({
           <h3>{t("Driving expense preview")}</h3>
           <p>
             {preview.driving!.kilometers} {t("km ·")}{" "}
-            {preview.driving!.rateMinorPerKm.toFixed(4)} {t("minor units/km")}
+            {formatRate(
+              preview.driving!.rateMinorPerKm,
+              displayCurrency,
+              locale,
+            )}{" "}
+            {t("per km")}
           </p>
           <p>
             {t("Total: ")}

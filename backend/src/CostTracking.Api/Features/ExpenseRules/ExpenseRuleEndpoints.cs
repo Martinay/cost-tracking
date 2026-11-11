@@ -163,9 +163,9 @@ public static class ExpenseRuleEndpoints
         var horses = HorseProjection.Replay(events).ToDictionary(horse => horse.HorseId);
         if (allocations.Any(item => !horses.ContainsKey(item.HorseId))) throw FinancialEndpointSupport.NotFound();
         var sameTargets = previous is not null && previous.SplitMode == mode && SplitTargets(previous.Allocations).SequenceEqual(SplitTargets(allocations));
-        var eligible = horses.Values.Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased).Select(horse => horse.HorseId).ToHashSet();
+        var eligible = horses.Values.Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased or HorseStatus.Retired).Select(horse => horse.HorseId).ToHashSet();
         if (!sameTargets && allocations.Any(item => !eligible.Contains(item.HorseId)))
-            throw FinancialEndpointSupport.Error(422, "inactive_horse", "New recurring allocation targets require active or leased horses.", "split");
+            throw FinancialEndpointSupport.Error(422, "inactive_horse", "New recurring allocation targets require active, leased or retired horses.", "split");
         try { return new ExpenseRuleDefaults(amount, category, description, mode, allocations); }
         catch (ArgumentException exception) { throw FinancialEndpointSupport.Error(422, "invalid_rule_defaults", exception.Message); }
     }
@@ -178,11 +178,11 @@ public static class ExpenseRuleEndpoints
 
     private static ExpenseRuleResponse ToResponse(RecurringExpenseRule rule, DateOnly asOfDate)
     {
-        var selected = rule.RevisionFor(asOfDate) ?? rule.Revisions.First(revision => revision.EffectiveFrom >= asOfDate || revision == rule.Revisions[0]);
+        var selected = rule.Revisions.LastOrDefault(revision => revision.EffectiveFrom <= asOfDate) ?? rule.Revisions[0];
         var revisions = rule.Revisions.Select(revision => new RuleRevisionResponse(revision.EffectiveFrom, revision.Schedule,
             revision.Defaults)).ToArray();
         return new ExpenseRuleResponse(rule.RuleId, rule.StartDate, selected.EffectiveFrom, selected.Schedule, selected.Defaults,
-            revisions, rule.LastDate);
+            revisions, rule.LastDate, ScheduleExpansion.NextScheduled(rule.Revisions.Select(r=>(r.EffectiveFrom,r.Schedule)),rule.LastDate,asOfDate));
     }
 
     private static string RulePosition(Guid id) => id.ToString("D").ToLowerInvariant();
@@ -201,7 +201,7 @@ public static class ExpenseRuleEndpoints
     public sealed record StopExpenseRuleRequest(DateOnly LastDate);
     public sealed record RuleRevisionResponse(DateOnly EffectiveFrom, Schedule Schedule, ExpenseRuleDefaults Defaults);
     public sealed record ExpenseRuleResponse(Guid RuleId, DateOnly StartDate, DateOnly EffectiveFrom, Schedule Schedule,
-        ExpenseRuleDefaults Defaults, IReadOnlyList<RuleRevisionResponse> Revisions, DateOnly? LastDate);
+        ExpenseRuleDefaults Defaults, IReadOnlyList<RuleRevisionResponse> Revisions, DateOnly? LastDate, DateOnly? NextScheduledDate);
     public sealed record ExpenseRuleCommandResponse(Guid RuleId, long StreamVersion);
     public sealed record ExpenseRuleStopResponse(Guid RuleId, DateOnly LastDate, long StreamVersion);
     public sealed record ExpenseRuleListResponse(IReadOnlyList<ExpenseRuleResponse> Items, string? NextCursor, long StreamVersion);

@@ -66,6 +66,9 @@ public sealed class TaskTests
         Assert.Equal(1, summaries["PaddockDuty"].GetProperty("count").GetInt32());
         Assert.Equal(0, summaries["PaddockDuty"].GetProperty("minutes").GetInt64());
 
+        Assert.Equal(2.5m, summaries["PaddockDuty"].GetProperty("quantities")[0].GetProperty("quantity").GetDecimal());
+        Assert.Equal("hours", summaries["PaddockDuty"].GetProperty("quantities")[0].GetProperty("unit").GetString());
+
         using var third = await SendCommand(client, HttpMethod.Post, "/api/v1/tasks", 3, TaskBody(horseId, "2026-09-21"));
         Assert.Equal(HttpStatusCode.Created, third.StatusCode);
         using var staleCursor = await client.GetAsync($"/api/v1/tasks?from=2026-09-19&to=2026-09-21&horseId={horseId:D}&limit=1&cursor={Uri.EscapeDataString(cursor!)}");
@@ -129,7 +132,7 @@ public sealed class TaskTests
         Assert.Equal(await ErrorCode(foreign), await ErrorCode(absent));
 
         using var retired = await SendCommand(alice, HttpMethod.Put, $"/api/v1/horses/{horseId:D}/status", 1,
-            "{\"status\":\"Retired\"}");
+            "{\"status\":\"Sold\"}");
         Assert.Equal(HttpStatusCode.OK, retired.StatusCode);
         using var inactiveTask = await SendCommand(alice, HttpMethod.Post, "/api/v1/tasks", 2, foreignBody);
         Assert.Equal(HttpStatusCode.UnprocessableEntity, inactiveTask.StatusCode);

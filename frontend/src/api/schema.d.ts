@@ -481,6 +481,129 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/expenses/{recordId}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    recordId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CorrectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CorrectionResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/income/{recordId}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    recordId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CorrectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CorrectionResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{recordId}/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    recordId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CorrectionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CorrectionResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/income": {
         parameters: {
             query?: never;
@@ -1321,6 +1444,9 @@ export interface components {
             count: number | string;
             /** Format: int64 */
             minutes: number | string;
+            /** Format: int32 */
+            missingDurationCount: number | string;
+            quantities: components["schemas"]["QuantitySummary"][];
         };
         Allocation: {
             /** Format: uuid */
@@ -1351,6 +1477,8 @@ export interface components {
             /** Format: int64 */
             amountMinor: number | string;
             split: components["schemas"]["SplitRequest"];
+            /** @default false */
+            partial: boolean;
         };
         BreakdownItem: {
             label: string;
@@ -1379,6 +1507,16 @@ export interface components {
         ConfigureAccountRequest: {
             currency: string;
             timeZone: string;
+        };
+        CorrectionRequest: {
+            values: components["schemas"]["JsonElement"];
+            reason: string;
+        };
+        CorrectionResponse: {
+            /** Format: uuid */
+            recordId: string;
+            /** Format: int64 */
+            streamVersion: number | string;
         };
         CreatedDrivingResponse: {
             /** Format: uuid */
@@ -1487,6 +1625,22 @@ export interface components {
             /** Format: int32 */
             weight: number | string;
         };
+        DecisionHistoryItem: {
+            /** Format: uuid */
+            ruleId: string;
+            /** Format: date */
+            scheduledDate: string;
+            source: string;
+            /** Format: int64 */
+            expectedMinor: number | string;
+            /** Format: int64 */
+            receivedMinor: number | string;
+            outcome: string;
+            receivedDate: null | string;
+            allocations: components["schemas"]["Allocation"][];
+            /** Format: int64 */
+            streamVersion: number | string;
+        };
         DrivingDetails: {
             /** Format: double */
             kilometers: number | string;
@@ -1567,6 +1721,8 @@ export interface components {
             revisions: components["schemas"]["RuleRevisionResponse"][];
             /** Format: date */
             lastDate: null | string;
+            /** Format: date */
+            nextScheduledDate: null | string;
         };
         ExpenseRuleStopResponse: {
             /** Format: uuid */
@@ -1583,7 +1739,12 @@ export interface components {
             ruleId?: null | string;
             /** Format: date */
             scheduledDate?: null | string;
+            /** Format: uuid */
+            recordId?: null | string;
             exampleOccurrence?: boolean;
+            exampleSchedule?: null | components["schemas"]["Schedule"];
+            /** Format: date */
+            effectiveFrom?: null | string;
         };
         FinancialPreviewResponse: {
             currency: null | string;
@@ -1598,6 +1759,11 @@ export interface components {
             streamVersion: number | string;
             driving: null | components["schemas"]["DrivingDetails"];
         };
+        HistoryHorse: {
+            /** Format: uuid */
+            horseId: string;
+            name: string;
+        };
         HistoryItem: {
             /** Format: uuid */
             eventId: string;
@@ -1608,6 +1774,8 @@ export interface components {
             occurredAt: string;
             summary: string;
             changes: components["schemas"]["JsonElement"];
+            horses?: null | components["schemas"]["HistoryHorse"][];
+            previous?: unknown;
         };
         HistoryResponse: {
             items: components["schemas"]["HistoryItem"][];
@@ -1662,6 +1830,7 @@ export interface components {
             asOfDate: string;
             /** Format: int64 */
             streamVersion: number | string;
+            history: components["schemas"]["DecisionHistoryItem"][];
         };
         IncomeApprovalResponse: {
             /** Format: uuid */
@@ -1729,6 +1898,8 @@ export interface components {
             revisions: components["schemas"]["IncomeRuleRevisionResponse"][];
             /** Format: date */
             lastDate: null | string;
+            /** Format: date */
+            nextScheduledDate: null | string;
         };
         IncomeRuleRevisionResponse: {
             /** Format: date */
@@ -1776,6 +1947,11 @@ export interface components {
         OverrideExpenseOccurrenceRequest: {
             action: string;
             changed: null | components["schemas"]["ChangedOccurrenceRequest"];
+        };
+        QuantitySummary: {
+            unit: string;
+            /** Format: double */
+            quantity: number | string;
         };
         RejectIncomeRequest: Record<string, never>;
         ReportBalance: {

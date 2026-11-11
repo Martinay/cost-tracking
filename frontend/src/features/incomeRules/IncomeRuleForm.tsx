@@ -1,3 +1,6 @@
+import { editorShares } from "../finance/normalizeSplit";
+import { useDraftState, clearDraftScope } from "../finance/useDraftState";
+import { firstOccurrence } from "../recurrence/schedule";
 import { formatDate, formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useState } from "react";
@@ -29,6 +32,8 @@ export interface IncomeExampleValues {
 export interface IncomeExampleRequest {
   kind: "Income";
   exampleOccurrence: true;
+  exampleSchedule?: ScheduleValue;
+  effectiveFrom?: string;
   values: IncomeExampleValues;
 }
 
@@ -49,6 +54,7 @@ export interface IncomeRuleInitialValue {
     defaults: IncomeRuleInitialValue["defaults"];
   }[];
   lastDate: string | null;
+  nextScheduledDate?: string | null;
 }
 
 export interface IncomeRuleRevisionValues extends IncomeRuleValues {
@@ -57,6 +63,7 @@ export interface IncomeRuleRevisionValues extends IncomeRuleValues {
 
 export function IncomeRuleForm({
   currency,
+  draftScope,
   today,
   horses,
   initialRule,
@@ -64,6 +71,7 @@ export function IncomeRuleForm({
   onCreate,
   onRevise,
 }: {
+  draftScope?: string | null;
   currency: string;
   today: string;
   horses: FinancialHorse[];
@@ -73,7 +81,10 @@ export function IncomeRuleForm({
   onRevise?(values: IncomeRuleRevisionValues): Promise<void>;
 }) {
   const { t, locale } = useI18n();
-  const [schedule, setSchedule] = useState<ScheduleValue>(
+  const draftKey = "income-rule-" + (initialRule?.ruleId ?? "new");
+  const [schedule, setSchedule] = useDraftState<ScheduleValue>(
+    draftScope,
+    draftKey + "-schedule",
     initialRule?.schedule ?? {
       cadence: "Weekly",
       interval: 1,
@@ -83,12 +94,24 @@ export function IncomeRuleForm({
       endDate: null,
     },
   );
-  const [effectiveFrom, setEffectiveFrom] = useState("");
-  const [amount, setAmount] = useState(
+  const [effectiveFrom, setEffectiveFrom] = useDraftState(
+    draftScope,
+    draftKey + "-effectiveFrom",
+    "",
+  );
+  const [amount, setAmount] = useDraftState(
+    draftScope,
+    draftKey + "-amount",
     initialRule ? (initialRule.defaults.amountMinor / 100).toFixed(2) : "",
   );
-  const [source, setSource] = useState(initialRule?.defaults.source ?? "");
-  const [split, setSplit] = useState<SplitValue>(
+  const [source, setSource] = useDraftState(
+    draftScope,
+    draftKey + "-source",
+    initialRule?.defaults.source ?? "",
+  );
+  const [split, setSplit] = useDraftState<SplitValue>(
+    draftScope,
+    draftKey + "-split",
     initialRule
       ? incomeSplit(initialRule.defaults)
       : { mode: "Equal", horseIds: [] },
@@ -105,10 +128,12 @@ export function IncomeRuleForm({
     source: source.trim(),
     split,
   };
-  const exampleDate = initialRule
-    ? effectiveFrom || schedule.startDate
-    : schedule.startDate;
-  const fingerprint = JSON.stringify({ values, effectiveFrom });
+  const exampleDate =
+    firstOccurrence(
+      schedule,
+      initialRule ? effectiveFrom || schedule.startDate : schedule.startDate,
+    ) ?? "";
+  const fingerprint = JSON.stringify({ draftScope, values, effectiveFrom });
   const previewCurrent = preview !== null && previewKey === fingerprint;
   const selectedCount =
     split.mode === "Equal" ? split.horseIds.length : split.shares.length;
@@ -121,6 +146,12 @@ export function IncomeRuleForm({
   }
 
   function validate(): boolean {
+    if (!exampleDate) {
+      setError(
+        "This schedule has no occurrence on or after the selected date.",
+      );
+      return false;
+    }
     if (amountMinor === null || amountMinor <= 0) {
       setError("Enter a positive amount with no more than two decimal places.");
       return false;
@@ -153,6 +184,8 @@ export function IncomeRuleForm({
       const result = await onPreview({
         kind: "Income",
         exampleOccurrence: true,
+        exampleSchedule: schedule,
+        ...(initialRule ? { effectiveFrom } : {}),
         values: {
           receivedDate: exampleDate,
           amountMinor: amountMinor!,
@@ -191,10 +224,15 @@ export function IncomeRuleForm({
         if (!onRevise)
           throw new Error("Income rule revisions are unavailable.");
         await onRevise({ ...values, effectiveFrom });
+        clearDraftScope(draftScope, draftKey);
         setStatus("Income rule revision saved.");
       } else {
         await onCreate(values);
+        clearDraftScope(draftScope, draftKey);
         setStatus("Income rule created.");
+        setAmount("");
+        setSource("");
+        setSplit({ mode: "Equal", horseIds: [] });
       }
     } catch (reason) {
       setError(
@@ -239,9 +277,7 @@ export function IncomeRuleForm({
             required
           />
           <p>
-            {t(
-              "The revision keeps the original start date as its cadence anchor.",
-            )}
+            {t("The original start date keeps the repeating dates aligned.")}
           </p>
         </>
       )}
@@ -330,10 +366,7 @@ function incomeSplit(defaults: IncomeRuleInitialValue["defaults"]): SplitValue {
   return defaults.splitMode === "Custom"
     ? {
         mode: "Custom",
-        shares: defaults.allocations.map(({ horseId, weight }) => ({
-          horseId,
-          weight,
-        })),
+        shares: editorShares(defaults.allocations),
       }
     : {
         mode: "Equal",

@@ -287,6 +287,98 @@ public sealed class OneTimeLedgerTests
         Assert.Equal(2, accountJson.RootElement.GetProperty("streamVersion").GetInt64());
     }
 
+    [Fact]
+    public async Task Corrections_replace_current_values_preserve_history_and_are_owner_scoped()
+    {
+        using var app = new TestApplication();
+        using var client = Client(app, TestIdentityIssuer.Alice);
+        var horseId = await CreateHorse(client, 0, "Luna");
+        var split = new { mode = "Equal", horseIds = new[] { horseId } };
+        using var created = await Send(client, HttpMethod.Post, "/api/v1/expenses", 1,
+            JsonSerializer.Serialize(new { expenseDate = "2026-09-21", amountMinor = 100, category = "Feed", description = "Hay", split }));
+        using var original = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var id = original.RootElement.GetProperty("expenseId").GetGuid();
+        var replacement = new { expenseDate = "2026-08-21", amountMinor = 250, category = "Feed", description = "Corrected hay", split };
+        var body = JsonSerializer.Serialize(new { values = replacement, reason = "Receipt typo" });
+        using var preview = await client.PostAsync("/api/v1/previews/financial", new StringContent(
+            JsonSerializer.Serialize(new { kind = "ExpenseCorrection", recordId = id, values = replacement }), Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
+        using var effects = JsonDocument.Parse(await preview.Content.ReadAsStringAsync());
+        Assert.Equal(150, effects.RootElement.GetProperty("monthlyEffect").EnumerateArray().Sum(x => x.GetProperty("expenseDeltaMinor").GetInt64()));
+        using var corrected = await Send(client, HttpMethod.Post, $"/api/v1/expenses/{id}/corrections", 2, body);
+        Assert.Equal(HttpStatusCode.OK, corrected.StatusCode);
+        using var ledger = await client.GetAsync("/api/v1/expenses?from=2026-08-01&to=2026-09-21");
+        using var rows = JsonDocument.Parse(await ledger.Content.ReadAsStringAsync());
+        Assert.Single(rows.RootElement.GetProperty("items").EnumerateArray());
+        Assert.Equal(250, rows.RootElement.GetProperty("items")[0].GetProperty("amountMinor").GetInt64());
+        using var lifetime = await client.GetAsync("/api/v1/reports/lifetime");
+        using var lifetimeJson=JsonDocument.Parse(await lifetime.Content.ReadAsStringAsync());
+        Assert.Equal(250,lifetimeJson.RootElement.GetProperty("items")[0].GetProperty("expenseMinor").GetInt64());
+        using var history = await client.GetAsync("/api/v1/history");
+        Assert.Contains("Receipt typo", await history.Content.ReadAsStringAsync());
+        using var bob = Client(app, TestIdentityIssuer.Bob);
+        using var foreign = await Send(bob, HttpMethod.Post, $"/api/v1/expenses/{id}/corrections", 0, body);
+        Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
+    }
+
+    [Fact]
+    public async Task Retired_horses_accept_care_but_sold_horses_remain_restricted()
+    {
+        using var app = new TestApplication();
+        using var client = Client(app, TestIdentityIssuer.Alice);
+        var horseId = await CreateHorse(client, 0, "Maja");
+        using var retired = await Send(client, HttpMethod.Put, $"/api/v1/horses/{horseId}/status", 1, "{\"status\":\"Retired\"}");
+        Assert.Equal(HttpStatusCode.OK, retired.StatusCode);
+        var expense = JsonSerializer.Serialize(new { expenseDate = "2026-09-21", amountMinor = 100, category = "Feed", description = "Care", split = new { mode = "Equal", horseIds = new[] { horseId } } });
+        using var care = await Send(client, HttpMethod.Post, "/api/v1/expenses", 2, expense);
+        Assert.Equal(HttpStatusCode.Created, care.StatusCode);
+        using var sold = await Send(client, HttpMethod.Put, $"/api/v1/horses/{horseId}/status", 3, "{\"status\":\"Sold\"}");
+        Assert.Equal(HttpStatusCode.OK, sold.StatusCode);
+        using var rejected = await Send(client, HttpMethod.Post, "/api/v1/expenses", 4, expense);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, rejected.StatusCode);
+        using var careJson=JsonDocument.Parse(await care.Content.ReadAsStringAsync());var recordId=careJson.RootElement.GetProperty("expenseId").GetGuid();
+        using var correction=await Send(client,HttpMethod.Post,$"/api/v1/expenses/{recordId}/corrections",4,JsonSerializer.Serialize(new {values=new {expenseDate="2026-09-21",amountMinor=150,category="Feed",description="Correct historic care",split=new {mode="Equal",horseIds=new[]{horseId}}},reason="Historic receipt"}));
+        Assert.Equal(HttpStatusCode.OK,correction.StatusCode);
+    }
+
+    [Fact]
+    public async Task Income_and_task_corrections_keep_one_current_record_and_require_a_reason()
+    {
+        using var app = new TestApplication(); using var client = Client(app, TestIdentityIssuer.Alice);
+        var horse = await CreateHorse(client, 0, "Luna"); var split = new { mode = "Equal", horseIds = new[] {horse} };
+        var incomeValues = new { receivedDate = "2026-09-21", amountMinor = 15000, source = "Share", split };
+        using var income = await Send(client,HttpMethod.Post,"/api/v1/income",1,JsonSerializer.Serialize(incomeValues));
+        using var incomeJson = JsonDocument.Parse(await income.Content.ReadAsStringAsync()); var incomeId = incomeJson.RootElement.GetProperty("incomeId").GetGuid();
+        using var corrected = await Send(client,HttpMethod.Post,$"/api/v1/income/{incomeId}/corrections",2,JsonSerializer.Serialize(new { values = new { receivedDate="2026-09-20",amountMinor=14000,source="Correct share",split },reason="Receipt" }));
+        Assert.Equal(HttpStatusCode.OK,corrected.StatusCode);
+        using var tasks = await Send(client,HttpMethod.Post,"/api/v1/tasks",3,JsonSerializer.Serialize(new {horseId=horse,taskDate="2026-09-21",taskType="Riding",minutes=45,notes="Original"}));
+        using var taskJson = JsonDocument.Parse(await tasks.Content.ReadAsStringAsync()); var taskId=taskJson.RootElement.GetProperty("taskId").GetGuid();
+        var values = new {horseId=horse,taskDate="2026-09-20",taskType="Grooming",minutes=15,notes="Corrected"};
+        using var noReason = await Send(client,HttpMethod.Post,$"/api/v1/tasks/{taskId}/corrections",4,JsonSerializer.Serialize(new {values,reason=" "}));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity,noReason.StatusCode);
+        using var correction = await Send(client,HttpMethod.Post,$"/api/v1/tasks/{taskId}/corrections",4,JsonSerializer.Serialize(new {values,reason="Wrong duration"}));
+        Assert.Equal(HttpStatusCode.OK,correction.StatusCode);
+        using var list = await client.GetAsync("/api/v1/tasks?from=2026-09-01&to=2026-09-21"); using var listJson=JsonDocument.Parse(await list.Content.ReadAsStringAsync());
+        Assert.Equal(15,Assert.Single(listJson.RootElement.GetProperty("items").EnumerateArray()).GetProperty("minutes").GetInt64());
+        using var ledger=await client.GetAsync("/api/v1/income?from=2026-09-01&to=2026-09-21");using var ledgerJson=JsonDocument.Parse(await ledger.Content.ReadAsStringAsync());
+        Assert.Equal(14000,Assert.Single(ledgerJson.RootElement.GetProperty("items").EnumerateArray()).GetProperty("amountMinor").GetInt64());
+    }
+
+    [Fact]
+    public async Task Schedule_examples_use_the_server_schedule_and_reject_empty_bounded_schedules()
+    {
+        using var app=new TestApplication();using var client=Client(app,TestIdentityIssuer.Alice);
+        var horse=await CreateHorse(client,0,"Luna");
+        var values=new {receivedDate="2026-09-02",amountMinor=15000,source="Share",split=new {mode="Equal",horseIds=new[]{horse}}};
+        foreach(var end in new string?[]{null,"2026-09-09"})
+        {
+            var request=new {kind="Income",exampleOccurrence=true,exampleSchedule=new {cadence="Monthly",interval=1,weekdays=Array.Empty<int>(),dayOfMonth=10,startDate="2026-09-02",endDate=end},values};
+            using var response=await client.PostAsync("/api/v1/previews/financial",new StringContent(JsonSerializer.Serialize(request),Encoding.UTF8,"application/json"));
+            Assert.Equal(end is null?HttpStatusCode.OK:HttpStatusCode.UnprocessableEntity,response.StatusCode);
+            if(end is null){using var json=JsonDocument.Parse(await response.Content.ReadAsStringAsync());Assert.Equal("2026-09-10",json.RootElement.GetProperty("date").GetString());}
+        }
+    }
+
     private static HttpClient Client(TestApplication app, string subject)
     {
         var client = app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });

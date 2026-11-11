@@ -88,7 +88,7 @@ public static class IncomeRuleEndpoints
             var defaults = BuildDefaults(owner, events, request.AmountMinor, request.Source, request.Split, previousDefaults);
             var revision = new IncomeRuleRevision(request.EffectiveFrom, schedule, defaults);
             var today = FinancialEndpointSupport.OwnerToday(clock, account.TimeZone);
-            var protectedDates = replay.Decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).ToArray();
+            var protectedDates = replay.Decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).Concat(ReceiptDates(events, id)).ToArray();
             if (request.EffectiveFrom <= rule.Revisions[^1].EffectiveFrom || request.EffectiveFrom <= today)
                 throw FinancialEndpointSupport.Error(422, "invalid_schedule", "A revision must start after today and after queued revisions.", "effectiveFrom");
             if (protectedDates.Any(date => request.EffectiveFrom <= date))
@@ -116,7 +116,7 @@ public static class IncomeRuleEndpoints
             var rule = replay.Rules.GetValueOrDefault(id) ?? throw FinancialEndpointSupport.NotFound();
             if (rule.LastDate.HasValue) throw FinancialEndpointSupport.Error(409, "rule_stopped", "A stopped income rule is terminal.");
             var today = FinancialEndpointSupport.OwnerToday(clock, account.TimeZone);
-            var protectedDates = replay.Decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).ToArray();
+            var protectedDates = replay.Decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).Concat(ReceiptDates(events, id)).ToArray();
             if (protectedDates.Any(date => request.LastDate < date))
                 throw FinancialEndpointSupport.Error(409, "protected_occurrence", "The stop date cannot precede a decided income occurrence.", "lastDate");
             if (request.LastDate < today || request.LastDate < rule.StartDate || rule.Revisions.Any(item => request.LastDate < item.EffectiveFrom))
@@ -162,9 +162,9 @@ public static class IncomeRuleEndpoints
         var horses = HorseProjection.Replay(events).ToDictionary(horse => horse.HorseId);
         if (allocations.Any(item => !horses.ContainsKey(item.HorseId))) throw FinancialEndpointSupport.NotFound();
         var sameTargets = previous is not null && previous.SplitMode == mode && SplitTargets(previous.Allocations).SequenceEqual(SplitTargets(allocations));
-        var eligible = horses.Values.Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased).Select(horse => horse.HorseId).ToHashSet();
+        var eligible = horses.Values.Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased or HorseStatus.Retired).Select(horse => horse.HorseId).ToHashSet();
         if (!sameTargets && allocations.Any(item => !eligible.Contains(item.HorseId)))
-            throw FinancialEndpointSupport.Error(422, "inactive_horse", "Changed income splits require active or leased horses.", "split");
+            throw FinancialEndpointSupport.Error(422, "inactive_horse", "Changed income splits require active, leased or retired horses.", "split");
         string normalizedSource;
         try { normalizedSource = FinancialEndpointSupport.ValidateSource(source); }
         catch (ApiException) { throw; }
@@ -177,16 +177,18 @@ public static class IncomeRuleEndpoints
         ruleId, effectiveFrom = revision.EffectiveFrom, schedule = revision.Schedule, defaults = revision.Defaults
     };
 
+    internal static IEnumerable<DateOnly> ReceiptDates(IReadOnlyList<EventEnvelope> events, Guid id) => events.Where(e => e.Type == "RecurringIncomeReceiptRecorded" && e.Payload.GetProperty("ruleId").GetGuid() == id).Select(e => ExpenseProjection.ReadDate(e.Payload, "scheduledDate"));
+
     internal static Guid ParseRuleId(string value) => Guid.TryParseExact(value, "D", out var id) && id != Guid.Empty
         ? id : throw FinancialEndpointSupport.Error(400, "malformed_request", "Rule ID must be a nonempty UUID.", "ruleId");
 
     private static IncomeRuleResponse ToResponse(RecurringIncomeRule rule, DateOnly asOfDate)
     {
-        var selected = rule.RevisionFor(asOfDate) ?? rule.Revisions.First(revision => revision.EffectiveFrom >= asOfDate || revision == rule.Revisions[0]);
+        var selected = rule.Revisions.LastOrDefault(revision => revision.EffectiveFrom <= asOfDate) ?? rule.Revisions[0];
         var revisions = rule.Revisions.Select(revision => new IncomeRuleRevisionResponse(revision.EffectiveFrom,
             revision.Schedule, revision.Defaults)).ToArray();
         return new IncomeRuleResponse(rule.RuleId, rule.StartDate, selected.EffectiveFrom, selected.Schedule,
-            selected.Defaults, revisions, rule.LastDate);
+            selected.Defaults, revisions, rule.LastDate, ScheduleExpansion.NextScheduled(rule.Revisions.Select(r=>(r.EffectiveFrom,r.Schedule)),rule.LastDate,asOfDate));
     }
 
     private static string RulePosition(Guid id) => id.ToString("D").ToLowerInvariant();
@@ -202,7 +204,7 @@ public static class IncomeRuleEndpoints
     public sealed record StopIncomeRuleRequest(DateOnly LastDate);
     public sealed record IncomeRuleRevisionResponse(DateOnly EffectiveFrom, Schedule Schedule, IncomeRuleDefaults Defaults);
     public sealed record IncomeRuleResponse(Guid RuleId, DateOnly StartDate, DateOnly EffectiveFrom, Schedule Schedule,
-        IncomeRuleDefaults Defaults, IReadOnlyList<IncomeRuleRevisionResponse> Revisions, DateOnly? LastDate);
+        IncomeRuleDefaults Defaults, IReadOnlyList<IncomeRuleRevisionResponse> Revisions, DateOnly? LastDate, DateOnly? NextScheduledDate);
     public sealed record IncomeRuleCommandResponse(Guid RuleId, long StreamVersion);
     public sealed record IncomeRuleStopResponse(Guid RuleId, DateOnly LastDate, long StreamVersion);
     public sealed record IncomeRuleListResponse(IReadOnlyList<IncomeRuleResponse> Items, string? NextCursor, long StreamVersion);
@@ -216,6 +218,8 @@ internal static class IncomeRuleEventReplay
     {
         var rules = new Dictionary<Guid, RecurringIncomeRule>();
         var decisions = new List<IncomeDecision>();
+        var receiptIds = new HashSet<Guid>();
+        var received = new Dictionary<(Guid,DateOnly),long>();
         foreach (var envelope in events)
         {
             var payload = envelope.Payload;
@@ -233,7 +237,7 @@ internal static class IncomeRuleEventReplay
                     var id = payload.GetProperty("ruleId").GetGuid();
                     if (!rules.TryGetValue(id, out var rule)) throw new InvalidDataException("Income rule update references a missing rule.");
                     var revision = ReadRevision(payload);
-                    var protectedDates = decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).ToArray();
+                    var protectedDates = decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).Concat(IncomeRuleEndpoints.ReceiptDates(events.Where(e => e.StreamVersion < envelope.StreamVersion).ToArray(), id)).ToArray();
                     var today = revision.EffectiveFrom == DateOnly.MinValue ? DateOnly.MinValue : revision.EffectiveFrom.AddDays(-1);
                     rules[id] = rule.Revise(revision, today, protectedDates);
                     break;
@@ -243,8 +247,17 @@ internal static class IncomeRuleEventReplay
                     var id = payload.GetProperty("ruleId").GetGuid();
                     if (!rules.TryGetValue(id, out var rule)) throw new InvalidDataException("Income rule stop references a missing rule.");
                     var lastDate = ReadDate(payload.GetProperty("lastDate"));
-                    var protectedDates = decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).ToArray();
+                    var protectedDates = decisions.Where(item => item.RuleId == id).Select(item => item.ScheduledDate).Concat(IncomeRuleEndpoints.ReceiptDates(events.Where(e => e.StreamVersion < envelope.StreamVersion).ToArray(), id)).ToArray();
                     rules[id] = rule.Stop(lastDate, lastDate, protectedDates);
+                    break;
+                }
+                case "RecurringIncomeReceiptRecorded":
+                {
+                    var id = payload.GetProperty("ruleId").GetGuid(); var date = ReadDate(payload.GetProperty("scheduledDate"));
+                    if (!rules.TryGetValue(id,out var rule) || rule.RevisionFor(date) is not { } revision || ScheduleExpansion.Expand(revision.Schedule,date,date).Count == 0 || decisions.Any(d=>d.RuleId==id&&d.ScheduledDate==date) || !receiptIds.Add(payload.GetProperty("receiptId").GetGuid())) throw new InvalidDataException("Receipt references an unavailable occurrence.");
+                    var total=checked(received.GetValueOrDefault((id,date))+payload.GetProperty("amountMinor").GetInt64());
+                    if(total>revision.Defaults.AmountMinor)throw new InvalidDataException("Receipts exceed the expected payment.");
+                    received[(id,date)]=total;
                     break;
                 }
                 case "RecurringIncomeApproved":

@@ -122,7 +122,7 @@ test("an owner saves a driving rate and horse with silent session renewal", asyn
   expired = true;
   await configureLink.focus();
   await page.keyboard.press("Enter");
-  await page.getByLabel("Driving rate (minor units per km)").fill("30");
+  await page.getByLabel("Driving rate (€/km)").fill("0.30");
   expired = true;
   await page.getByRole("button", { name: "Save driving rate" }).focus();
   await page.keyboard.press("Enter");

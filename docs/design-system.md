@@ -41,7 +41,7 @@ Use a spacing scale of 4, 8, 12, 16, 20, 24, 32, 40, 48, and 64px. Desktop cards
 
 Use semantic navigation anchors with `aria-current="page"`, including horse detail routes. Use the shared `Icon` component for consistent 20px outline icons. Icons supplement text and are hidden from assistive technology. Avoid raw account identifiers in the main workspace.
 
-Below 700px, navigation becomes a horizontally scrollable row above content; keep every destination accessible. Main content and forms stack into a single column. Settings use a supporting note alongside the primary cards when space permits, and stack below 1180px. Tables scroll inside their named, focusable regions rather than causing page overflow.
+Below 700px, navigation wraps into labelled rows above content so all seven destinations remain discoverable without horizontal scrolling. Main content and forms stack into a single column. Settings use a supporting note alongside the primary cards when space permits, and stack below 1180px. Tables scroll inside their named, focusable regions rather than causing page overflow.
 
 ## Components and patterns
 
@@ -106,3 +106,15 @@ Use the selected locale for currency and date presentation through `frontend/src
 ## Automatic ledger defaults
 
 Fresh accounts use EUR and UTC automatically. Keep these automatic defaults out of the Settings UI, with no ledger preferences card, editable currency/timezone selectors, or save action. Keep driving-rate editing and history accessible, and offer Add horse without a setup gate. Display history instants using the browser timezone and selected interface locale; preserve date-only ledger days. Explicit historic financial settings retain their original meaning.
+
+## Usability remediation patterns
+
+Entry workflows use `EntryPanel` with one selected workflow per page, an explicit Cancel entry control and initial focus on the first field once loaded. Closing restores trigger focus. Repeated split and task fields use React-generated IDs. Corrections use the shared `Modal`, a required reason and server-calculated financial replacement preview; original events remain visible in history.
+
+Editable drafts use `useDraftState` in session storage keyed by subject, workflow and rule identity. Only editable values are retained; previews and credentials are never stored. A restored or changed draft needs a fresh server preview. Malformed draft structures fall back to an empty editor. Field guidance explains required values, optional descriptions and time/quantity alternatives before submission.
+
+Custom splits accept positive ratios (for example 2 and 1) or decimal percentage shares, normalize only at the API boundary and display exact server amounts before saving. Saved custom editors show readable percentages, not internal millionth weights. Driving inputs/display use currency major units per km; transport remains exact minor units per km, preserving the account currency precision plus four minor-rate decimal places (six major-unit places for EUR). Recurring examples are resolved by the server from the saved schedule and effective date.
+
+Reports show a wrapping income/expenses/net overview above the monthly semantic table and a neutral Total row. `ReportTableRegion` provides a visible scroll instruction and remains keyboard focusable. Quantity summaries retain exact matching units separately and identify unrecorded duration. Visible dates use month names; native date/month input values and stored calendar dates stay canonical.
+
+Payment review distinguishes explicit partial receipts from final settlement. The remaining balance stays pending only for partial receipts; historical final approvals keep their meaning. A named success receipt links to read-only decision history. History keeps stored summaries and adds names, amounts, categories, before/after values, quantities and related-record links.

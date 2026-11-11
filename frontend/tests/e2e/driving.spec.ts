@@ -181,10 +181,10 @@ test("euro driving retries the exact preview and receipt provenance remains fixe
   );
 
   await page.goto("/settings");
-  await page.getByLabel("Driving rate (minor units per km)").fill("31");
+  await page.getByLabel("Driving rate (€/km)").fill("0.31");
   await page.getByRole("button", { name: "Save driving rate" }).click();
   await expect(
-    page.getByText("Current saved rate: 31.0000 minor units/km"),
+    page.getByText("Current saved rate: €0.31 per km"),
   ).toBeVisible();
 
   await page.goto("/expenses");
@@ -195,7 +195,7 @@ test("euro driving retries the exact preview and receipt provenance remains fixe
   await page.getByLabel("Comet").check();
   await page.getByRole("button", { name: "Preview driving expense" }).click();
   const preview = page.getByRole("region", { name: "Driving expense preview" });
-  await expect(preview).toContainText("31.0000 minor units/km");
+  await expect(preview).toContainText("€0.31 per km");
   await expect(preview).toContainText("€3.14");
   await expect(preview).toContainText("Misty: €1.57");
   await expect(preview).toContainText("Comet: €1.57");
@@ -219,17 +219,17 @@ test("euro driving retries the exact preview and receipt provenance remains fixe
 
   await page.goto("/settings");
   await expect(
-    page.getByText("Current saved rate: 31.0000 minor units/km"),
+    page.getByText("Current saved rate: €0.31 per km"),
   ).toBeVisible();
-  await page.getByLabel("Driving rate (minor units per km)").fill("40");
+  await page.getByLabel("Driving rate (€/km)").fill("0.40");
   await page.getByRole("button", { name: "Save driving rate" }).click();
   await expect(
-    page.getByText("Current saved rate: 40.0000 minor units/km"),
+    page.getByText("Current saved rate: €0.40 per km"),
   ).toBeVisible();
   await page.goto("/expenses");
   await expect(
     page.getByRole("list", { name: "Expense ledger" }),
-  ).toContainText("10.125 km at 31.0000 minor units/km");
+  ).toContainText("10.125 km at €0.31 per km");
 });
 
 test("a real backend saved driving rate produces a persisted attributed trip", async ({
@@ -240,7 +240,7 @@ test("a real backend saved driving rate produces a persisted attributed trip", a
   const horseName = "Backend Driving Horse";
   const owner = await ensureLocalAccountAndHorse(request, session, horseName);
   await page.goto(new URL("/settings", session.webUrl).toString());
-  await page.getByLabel("Driving rate (minor units per km)").fill("31");
+  await page.getByLabel("Driving rate (€/km)").fill("0.31");
   await page.getByRole("button", { name: "Save driving rate" }).click();
   await expect(page.getByText("Driving rate saved.")).toBeVisible();
 
@@ -251,7 +251,7 @@ test("a real backend saved driving rate produces a persisted attributed trip", a
   await page.getByLabel(horseName).check();
   await page.getByRole("button", { name: "Preview driving expense" }).click();
   const preview = page.getByRole("region", { name: "Driving expense preview" });
-  await expect(preview).toContainText("31.0000 minor units/km");
+  await expect(preview).toContainText("€0.31 per km");
   await expect(preview).toContainText("€3.10");
   await page.getByRole("button", { name: "Save driving expense" }).click();
   await expect(page.getByText("Driving expense saved.")).toBeVisible();
@@ -286,13 +286,13 @@ test("a real backend saved driving rate produces a persisted attributed trip", a
   );
 
   await page.goto(new URL("/settings", session.webUrl).toString());
-  await page.getByLabel("Driving rate (minor units per km)").fill("40");
+  await page.getByLabel("Driving rate (€/km)").fill("0.40");
   await page.getByRole("button", { name: "Save driving rate" }).click();
   await expect(page.getByText("Driving rate saved.")).toBeVisible();
   await page.goto(new URL("/expenses", session.webUrl).toString());
   await expect(
     page.getByRole("list", { name: "Expense ledger" }),
-  ).toContainText("10 km at 31.0000 minor units/km");
+  ).toContainText("10 km at €0.31 per km");
 
   const history = await request.get(
     new URL(

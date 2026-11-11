@@ -1,3 +1,9 @@
+import { clearDraftScope } from "../features/finance/useDraftState";
+import { editorShares } from "../features/finance/normalizeSplit";
+import { formatRate } from "../features/driving/rate";
+import { EntryPanel } from "../components/EntryPanel";
+import { RecordCorrection } from "../features/finance/RecordCorrection";
+import { ScheduleSummary } from "../features/recurrence/ScheduleSummary";
 import { formatDate, formatMoney as money } from "../i18n/format";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
@@ -81,7 +87,7 @@ function splitFromAllocations(
   return mode === "Custom"
     ? {
         mode: "Custom",
-        shares: allocations.map(({ horseId, weight }) => ({ horseId, weight })),
+        shares: editorShares(allocations),
       }
     : { mode: "Equal", horseIds: allocations.map(({ horseId }) => horseId) };
 }
@@ -185,10 +191,27 @@ export function ExpensesRoute() {
         ? { cursor: page.nextCursor, streamVersion: page.streamVersion }
         : undefined,
   });
-  const through =
+  const [selectedMonth, setSelectedMonth] = useState(
+    () => new URLSearchParams(window.location.search).get("month") ?? "",
+  );
+  const [selectedHorse, setSelectedHorse] = useState(
+    () => new URLSearchParams(window.location.search).get("horseId") ?? "",
+  );
+  const ownerToday =
     account.data?.ownerToday ?? new Date().toISOString().slice(0, 10);
-  const today = through;
-  const from = `${through.slice(0, 7)}-01`;
+  const month =
+    /^[1-9][0-9]{3}-(0[1-9]|1[0-2])$/.test(selectedMonth) &&
+    selectedMonth <= ownerToday.slice(0, 7)
+      ? selectedMonth
+      : ownerToday.slice(0, 7);
+  const endOfMonth = new Date(
+    Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const through = month === ownerToday.slice(0, 7) ? ownerToday : endOfMonth;
+  const today = ownerToday;
+  const from = `${month}-01`;
   const queryRange = { from, to: through };
   const ledger = useInfiniteQuery<
     LedgerPage,
@@ -197,7 +220,10 @@ export function ExpensesRoute() {
     QueryKey,
     PageParam
   >({
-    queryKey: keys?.expenses(queryRange) ?? ["expenses", "unavailable"],
+    queryKey: keys?.expenses(queryRange, { horseId: selectedHorse }) ?? [
+      "expenses",
+      "unavailable",
+    ],
     enabled:
       canLoadProtectedData && subject !== null && account.data !== undefined,
     initialPageParam: { cursor: null, streamVersion: null } as PageParam,
@@ -210,6 +236,7 @@ export function ExpensesRoute() {
           );
       }
       const params = new URLSearchParams({ from, to: through, limit: "50" });
+      if (selectedHorse) params.set("horseId", selectedHorse);
       if (pageParam.cursor) params.set("cursor", pageParam.cursor);
       const path = `/api/v1/expenses?${params}` as `/api/v1/expenses?${string}`;
       const result = await apiClient.get({
@@ -297,6 +324,7 @@ export function ExpensesRoute() {
           queryClient.invalidateQueries({ queryKey: ["report", subject] }),
         ]);
       }
+      clearDraftScope(subject, "driving-");
       setRecordingDriving(false);
       setDrivingSaved(true);
     },
@@ -484,7 +512,14 @@ export function ExpensesRoute() {
         )}
       />
       {canLoadProtectedData && (
-        <button type="button" onClick={() => setRecording(true)}>
+        <button
+          type="button"
+          onClick={() => {
+            setRecording((v) => !v);
+            setShowRuleForm(false);
+            setRecordingDriving(false);
+          }}
+        >
           {t("Record expense")}
         </button>
       )}
@@ -493,34 +528,43 @@ export function ExpensesRoute() {
           type="button"
           onClick={() => {
             setDrivingSaved(false);
-            setRecordingDriving(true);
+            setRecordingDriving((v) => !v);
+            setRecording(false);
+            setShowRuleForm(false);
           }}
         >
           {t("Record driving expense")}
         </button>
       )}
       {drivingSaved && <p role="status">{t("Driving expense saved.")}</p>}
-      {/* Retain editor state while AppShell hides this subject during auth recovery. */}
-      {subject !== null && recording && <ExpenseForm />}
+      {/* Keep editors mounted during same-subject session recovery. */}
+      {subject !== null && recording && (
+        <EntryPanel onClose={() => setRecording(false)}>
+          <ExpenseForm />
+        </EntryPanel>
+      )}
       {subject !== null && recordingDriving && account.data && horses.data && (
         <section aria-labelledby="driving-expense-heading">
           <h2 id="driving-expense-heading">{t("Record driving expense")}</h2>
-          <DrivingForm
-            horses={horses.data.items}
-            today={account.data.ownerToday}
-            currency={currency}
-            savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
-            onPreview={async (request) =>
-              (await apiClient.preview({
-                subject: subject!,
-                path: "/api/v1/previews/financial",
-                body: request,
-              })) as DrivingPreview
-            }
-            onCommit={async (body, streamVersion) => {
-              await drivingMutation.mutateAsync({ body, streamVersion });
-            }}
-          />
+          <EntryPanel onClose={() => setRecordingDriving(false)}>
+            <DrivingForm
+              draftScope={subject}
+              horses={horses.data.items}
+              today={account.data.ownerToday}
+              currency={currency}
+              savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
+              onPreview={async (request) =>
+                (await apiClient.preview({
+                  subject: subject!,
+                  path: "/api/v1/previews/financial",
+                  body: request,
+                })) as DrivingPreview
+              }
+              onCommit={async (body, streamVersion) => {
+                await drivingMutation.mutateAsync({ body, streamVersion });
+              }}
+            />
+          </EntryPanel>
         </section>
       )}
       {subject !== null && (
@@ -532,6 +576,8 @@ export function ExpensesRoute() {
               setRuleNotice("");
               setEditingRuleId(null);
               setShowRuleForm((shown) => !shown);
+              setRecording(false);
+              setRecordingDriving(false);
             }}
           >
             {showRuleForm && !editingRuleId
@@ -557,11 +603,13 @@ export function ExpensesRoute() {
                 <li key={rule.ruleId}>
                   <h3>{rule.defaults.description || rule.defaults.category}</h3>
                   <p>
-                    {t(rule.schedule.cadence)} ·{" "}
-                    {money(rule.defaults.amountMinor, currency, locale)}{" "}
-                    {t("· starts")} {formatDate(rule.startDate, locale)}{" "}
-                    {t("· inclusive through")}{" "}
-                    {rule.lastDate ?? rule.schedule.endDate ?? t("no end date")}
+                    {money(rule.defaults.amountMinor, currency, locale)} ·{" "}
+                    <ScheduleSummary
+                      schedule={rule.schedule}
+                      nextScheduledDate={rule.nextScheduledDate}
+                      lastDate={rule.lastDate}
+                      today={account.data?.ownerToday}
+                    />
                   </p>
                   <ol
                     aria-label={t("Revisions for {value0}", {
@@ -598,6 +646,8 @@ export function ExpensesRoute() {
                           setRuleNotice("");
                           setEditingRuleId(rule.ruleId);
                           setShowRuleForm(true);
+                          setRecording(false);
+                          setRecordingDriving(false);
                         }}
                       >
                         {t("Revise recurring rule")}
@@ -688,39 +738,53 @@ export function ExpensesRoute() {
                 <p role="status">{t("Loading selected recurring rule…")}</p>
               )}
               {(!editingRuleId || editingRule) && (
-                <ExpenseRuleForm
-                  today={account.data.ownerToday}
-                  currency={currency}
-                  horses={horses.data.items}
-                  initialRule={editingRule}
-                  onPreview={async (values) => {
-                    const result = (await apiClient.preview({
-                      subject: subject!,
-                      path: "/api/v1/previews/financial",
-                      body: {
-                        kind: "Expense",
-                        exampleOccurrence: true,
-                        values,
-                      },
-                    })) as FinancialPreview;
-                    apiClient.rememberVersion(subject!, result.streamVersion);
-                    return result;
+                <EntryPanel
+                  onClose={() => {
+                    setShowRuleForm(false);
+                    setEditingRuleId(null);
                   }}
-                  onCreate={(body) =>
-                    createRuleMutation.mutateAsync(body).then(() => undefined)
-                  }
-                  onRevise={(body) =>
-                    editingRule
-                      ? reviseRuleMutation
-                          .mutateAsync({ ruleId: editingRule.ruleId, body })
-                          .then(() => undefined)
-                      : Promise.reject(
-                          new Error(
-                            "The selected recurring rule is no longer available.",
-                          ),
-                        )
-                  }
-                />
+                >
+                  <ExpenseRuleForm
+                    draftScope={subject}
+                    today={account.data.ownerToday}
+                    currency={currency}
+                    horses={horses.data.items}
+                    initialRule={editingRule}
+                    onPreview={async (
+                      values,
+                      exampleSchedule,
+                      effectiveFrom,
+                    ) => {
+                      const result = (await apiClient.preview({
+                        subject: subject!,
+                        path: "/api/v1/previews/financial",
+                        body: {
+                          kind: "Expense",
+                          exampleOccurrence: true,
+                          exampleSchedule,
+                          effectiveFrom,
+                          values,
+                        },
+                      })) as FinancialPreview;
+                      apiClient.rememberVersion(subject!, result.streamVersion);
+                      return result;
+                    }}
+                    onCreate={(body) =>
+                      createRuleMutation.mutateAsync(body).then(() => undefined)
+                    }
+                    onRevise={(body) =>
+                      editingRule
+                        ? reviseRuleMutation
+                            .mutateAsync({ ruleId: editingRule.ruleId, body })
+                            .then(() => undefined)
+                        : Promise.reject(
+                            new Error(
+                              "The selected recurring rule is no longer available.",
+                            ),
+                          )
+                    }
+                  />
+                </EntryPanel>
               )}
             </section>
           )}
@@ -760,7 +824,29 @@ export function ExpensesRoute() {
         </div>
       )}
       <section aria-labelledby="expenses-ledger-heading">
-        <h2 id="expenses-ledger-heading">{t("This month’s expenses")}</h2>
+        <h2 id="expenses-ledger-heading">{t("Expenses in selected month")}</h2>
+        <label>
+          {t("Ledger month")}
+          <input
+            type="month"
+            value={month}
+            max={ownerToday.slice(0, 7)}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          />
+        </label>
+        <label htmlFor="ledger-horse-filter">{t("Horse filter")}</label>
+        <select
+          id="ledger-horse-filter"
+          value={selectedHorse}
+          onChange={(e) => setSelectedHorse(e.target.value)}
+        >
+          <option value="">{t("All horses")}</option>
+          {horses.data?.items.map((h) => (
+            <option key={h.horseId} value={h.horseId}>
+              {h.name}
+            </option>
+          ))}
+        </select>
         {!account.isError && ledger.isPending && (
           <p role="status">{t("Loading expenses…")}</p>
         )}
@@ -773,7 +859,9 @@ export function ExpensesRoute() {
               type="button"
               onClick={() =>
                 void queryClient.resetQueries({
-                  queryKey: keys?.expenses(queryRange),
+                  queryKey: keys?.expenses(queryRange, {
+                    horseId: selectedHorse,
+                  }),
                 })
               }
             >
@@ -789,10 +877,16 @@ export function ExpensesRoute() {
             {entries.map((item) => (
               <li key={item.id}>
                 <h3>{item.description || item.category}</h3>
+                {item.origin === "OneTime" && (
+                  <RecordCorrection
+                    kind="Expense"
+                    item={item}
+                    horses={horses.data?.items ?? []}
+                    currency={currency}
+                  />
+                )}
                 <time dateTime={item.expenseDate}>
-                  {new Date(`${item.expenseDate}T00:00:00`).toLocaleDateString(
-                    locale,
-                  )}
+                  {formatDate(item.expenseDate, locale)}
                 </time>
                 <p>
                   {item.category} ·{" "}
@@ -803,13 +897,13 @@ export function ExpensesRoute() {
                     <p>
                       {t("Scheduled amount: ")}
                       {money(item.amountMinor, currency, locale)}
-                      {t(". Contribution: ")}
+                      {t(". Amount counted: ")}
                       {money(item.contributionMinor, currency, locale)}.
                     </p>
                     <p>
-                      {t("Occurrence state:")}{" "}
+                      {t("Payment state:")}{" "}
                       {item.occurrenceState === "Virtual"
-                        ? t("Computed")
+                        ? t("Scheduled")
                         : t(item.occurrenceState)}
                     </p>
                     {item.ruleId && (
@@ -845,8 +939,8 @@ export function ExpensesRoute() {
                 {item.driving && (
                   <p>
                     {item.driving.kilometers} {t("km at")}{" "}
-                    {item.driving.rateMinorPerKm.toFixed(4)}{" "}
-                    {t("minor units/km")}
+                    {formatRate(item.driving.rateMinorPerKm, currency, locale)}{" "}
+                    {t("per km")}
                   </p>
                 )}
                 <ul

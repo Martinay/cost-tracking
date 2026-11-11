@@ -100,6 +100,18 @@
     },
     {
       "$ref": "#/$defs/taskLogged"
+    },
+    {
+      "$ref": "#/$defs/expenseCorrected"
+    },
+    {
+      "$ref": "#/$defs/incomeCorrected"
+    },
+    {
+      "$ref": "#/$defs/taskCorrected"
+    },
+    {
+      "$ref": "#/$defs/incomeReceipt"
     }
   ],
   "$defs": {
@@ -854,6 +866,282 @@
             "notes": {
               "type": "string",
               "maxLength": 1000
+            }
+          }
+        }
+      }
+    },
+    "expenseCorrected": {
+      "properties": {
+        "type": {
+          "const": "ExpenseCorrected"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "expenseId",
+            "expenseDate",
+            "amountMinor",
+            "category",
+            "description",
+            "allocations",
+            "driving",
+            "splitMode",
+            "reason"
+          ],
+          "properties": {
+            "expenseId": {
+              "$ref": "#/$defs/id"
+            },
+            "expenseDate": {
+              "$ref": "#/$defs/date"
+            },
+            "amountMinor": {
+              "$ref": "#/$defs/money"
+            },
+            "category": {
+              "enum": [
+                "Stabling",
+                "Veterinary",
+                "Farrier",
+                "Feed",
+                "Equipment",
+                "Training",
+                "Driving",
+                "Other"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "allocations": {
+              "$ref": "#/$defs/allocations"
+            },
+            "driving": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kilometers",
+                    "rateMinorPerKm"
+                  ],
+                  "properties": {
+                    "kilometers": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "multipleOf": 0.001
+                    },
+                    "rateMinorPerKm": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "multipleOf": 0.0001
+                    }
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "splitMode": {
+              "enum": [
+                "Equal",
+                "Custom"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        }
+      }
+    },
+    "incomeCorrected": {
+      "properties": {
+        "type": {
+          "const": "IncomeCorrected"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "incomeId",
+            "receivedDate",
+            "amountMinor",
+            "source",
+            "allocations",
+            "splitMode",
+            "reason"
+          ],
+          "properties": {
+            "incomeId": {
+              "$ref": "#/$defs/id"
+            },
+            "receivedDate": {
+              "$ref": "#/$defs/date"
+            },
+            "amountMinor": {
+              "$ref": "#/$defs/money"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "allocations": {
+              "$ref": "#/$defs/allocations"
+            },
+            "splitMode": {
+              "enum": [
+                "Equal",
+                "Custom"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        }
+      }
+    },
+    "taskCorrected": {
+      "properties": {
+        "type": {
+          "const": "TaskCorrected"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "taskId",
+            "horseId",
+            "taskDate",
+            "taskType",
+            "minutes",
+            "quantity",
+            "quantityUnit",
+            "notes",
+            "reason"
+          ],
+          "properties": {
+            "taskId": {
+              "$ref": "#/$defs/id"
+            },
+            "horseId": {
+              "$ref": "#/$defs/id"
+            },
+            "taskDate": {
+              "$ref": "#/$defs/date"
+            },
+            "taskType": {
+              "enum": [
+                "Riding",
+                "Groundwork",
+                "Lunging",
+                "Grooming",
+                "MedicalCare",
+                "PaddockDuty",
+                "Transportation",
+                "Other"
+              ]
+            },
+            "minutes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "quantity": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "quantityUnit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 30
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        }
+      }
+    },
+    "incomeReceipt": {
+      "properties": {
+        "type": {
+          "const": "RecurringIncomeReceiptRecorded"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ruleId",
+            "scheduledDate",
+            "receivedDate",
+            "amountMinor",
+            "allocations",
+            "nextDueDate",
+            "splitMode",
+            "receiptId",
+            "source"
+          ],
+          "properties": {
+            "ruleId": {
+              "$ref": "#/$defs/id"
+            },
+            "scheduledDate": {
+              "$ref": "#/$defs/date"
+            },
+            "receivedDate": {
+              "$ref": "#/$defs/date"
+            },
+            "amountMinor": {
+              "$ref": "#/$defs/money"
+            },
+            "allocations": {
+              "$ref": "#/$defs/allocations"
+            },
+            "nextDueDate": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "splitMode": {
+              "enum": [
+                "Equal",
+                "Custom"
+              ]
+            },
+            "receiptId": {
+              "$ref": "#/$defs/id"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             }
           }
         }

@@ -63,13 +63,28 @@ public static class IncomeApprovalEndpoints
         catch (ArgumentException exception)
         { throw FinancialEndpointSupport.Error(422, "interval_limit", exception.Message); }
 
+        pending = pending.Select(item => Balance(item, Received(events, item.RuleId, item.ScheduledDate))).Where(item => item.AmountMinor > 0).ToArray();
         var page = pending.Skip(skip).Take(limit + 1).ToArray();
         var hasMore = page.Length > limit;
         var items = page.Take(limit).Select(item => new IncomeApprovalItem(item.RuleId, item.ScheduledDate,
             item.AmountMinor, item.Source, item.SplitMode.ToString(), item.Allocations)).ToArray();
         var nextCursor = hasMore ? cursorCodec.Encode(owner, filter, account.StreamVersion, today,
             checked(skip + limit).ToString(CultureInfo.InvariantCulture)) : null;
-        var response = new IncomeApprovalListResponse(items, nextCursor, from, through, today, account.StreamVersion);
+        var history = events.Where(e => e.Type is "RecurringIncomeApproved" or "RecurringIncomeRejected" or "RecurringIncomeReceiptRecorded")
+            .Where(e => ExpenseProjection.ReadDate(e.Payload, "scheduledDate") >= from && ExpenseProjection.ReadDate(e.Payload, "scheduledDate") <= through)
+            .Select(e => {
+                var id = e.Payload.GetProperty("ruleId").GetGuid(); var date = ExpenseProjection.ReadDate(e.Payload, "scheduledDate");
+                var defaults = replay.Rules[id].RevisionFor(date)!.Defaults;
+                var received = Received(events.Where(x => x.StreamVersion <= e.StreamVersion).ToArray(), id, date);
+                var actual = e.Type == "RecurringIncomeApproved" ? e.Payload.GetProperty("amountMinor").GetInt64() : 0;
+                var allocations = e.Type == "RecurringIncomeRejected"
+                    ? defaults.Allocations
+                    : ExpenseProjection.ReadAllocations(e.Payload.GetProperty("allocations"));
+                return new DecisionHistoryItem(id, date, defaults.Source, defaults.AmountMinor, checked(received + actual),
+                    e.Type == "RecurringIncomeReceiptRecorded" ? (received >= defaults.AmountMinor ? "Paid" : "Partial") : e.Type == "RecurringIncomeApproved" ? "Approved (final settlement)" : "Rejected (final)",
+                    e.Payload.TryGetProperty("receivedDate", out var rd) ? rd.GetString() : null, allocations, e.StreamVersion);
+            }).Reverse().ToArray();
+        var response = new IncomeApprovalListResponse(items, nextCursor, from, through, today, account.StreamVersion, history);
         return await AccountEndpoints.WriteAsync(context, StatusCodes.Status200OK, response, account.StreamVersion);
     }
 
@@ -95,6 +110,9 @@ public static class IncomeApprovalEndpoints
             if (request.ReceivedDate > today)
                 throw FinancialEndpointSupport.Error(422, "future_financial_date", "Received date cannot be after today.", "receivedDate");
 
+            var receivedBefore = Received(events, id, date);
+            if (receivedBefore >= revision.Defaults.AmountMinor || replay.Decisions.Any(d => d.RuleId == id && d.ScheduledDate == date)) throw FinancialEndpointSupport.Error(409, "already_decided", "This payment is already settled.");
+            if (request.Partial && request.AmountMinor > revision.Defaults.AmountMinor - receivedBefore) throw FinancialEndpointSupport.Error(422, "excess_receipt", "The partial receipt exceeds the outstanding balance.", "amountMinor");
             var actualDefaults = IncomeRuleEndpoints.BuildDefaults(owner, events, request.AmountMinor,
                 revision.Defaults.Source, request.Split, revision.Defaults);
             IncomeDecision decision;
@@ -103,7 +121,7 @@ public static class IncomeApprovalEndpoints
                 decision = IncomeDecision.Approve(rule, date, request.ReceivedDate, today,
                     new IncomeActuals(actualDefaults.AmountMinor, actualDefaults.SplitMode, actualDefaults.Allocations),
                     replay.Decisions.Where(item => item.RuleId == id).ToArray(),
-                    HorseProjection.Replay(events).Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased)
+                    HorseProjection.Replay(events).Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased or HorseStatus.Retired)
                         .Select(horse => horse.HorseId).ToHashSet());
             }
             catch (InvalidOperationException)
@@ -111,6 +129,7 @@ public static class IncomeApprovalEndpoints
             catch (ArgumentException exception)
             { throw FinancialEndpointSupport.Error(422, "invalid_occurrence", exception.Message, "scheduledDate"); }
 
+            if (request.Partial) return AccountEndpoints.Event("RecurringIncomeReceiptRecorded", new { receiptId = newId(), ruleId = id, scheduledDate = date, receivedDate = request.ReceivedDate, amountMinor = actualDefaults.AmountMinor, allocations = actualDefaults.Allocations, source = actualDefaults.Source, nextDueDate = decision.NextDueDate, splitMode = actualDefaults.SplitMode.ToString() });
             return AccountEndpoints.Event("RecurringIncomeApproved", new
             {
                 ruleId = id, scheduledDate = date, receivedDate = request.ReceivedDate,
@@ -118,7 +137,7 @@ public static class IncomeApprovalEndpoints
                 nextDueDate = decision.NextDueDate, splitMode = actualDefaults.SplitMode.ToString()
             });
         }, (accepted, _) => AccountEndpoints.Response(accepted.StreamVersion,
-            new IncomeApprovalResponse(id, date, "Approved", $"income-rule/{id:D}/{date:yyyy-MM-dd}",
+            new IncomeApprovalResponse(id, date, accepted.Type == "RecurringIncomeReceiptRecorded" ? "Receipt recorded" : "Approved", $"income-rule/{id:D}/{date:yyyy-MM-dd}",
                 IncomeRuleEventReplay.ReadNullableDate(accepted.Payload.GetProperty("nextDueDate")), accepted.StreamVersion)), cancellationToken);
         return await AccountEndpoints.WriteAsync(context, result.StatusCode, result.Body, result.StreamVersion);
     }
@@ -143,6 +162,7 @@ public static class IncomeApprovalEndpoints
             if (date > today) throw FinancialEndpointSupport.Error(422, "future_occurrence", "A future income occurrence cannot be decided.", "scheduledDate");
             if (revision is null || ScheduleExpansion.Expand(revision.Schedule, date, date).Count == 0)
                 throw FinancialEndpointSupport.Error(422, "invalid_occurrence", "The date is not a scheduled occurrence for this rule.", "scheduledDate");
+            if (Received(events,id,date) >= revision.Defaults.AmountMinor) throw FinancialEndpointSupport.Error(409,"already_decided","This payment is already settled.");
             IncomeDecision decision;
             try { decision = IncomeDecision.Reject(rule, date, today, replay.Decisions.Where(item => item.RuleId == id).ToArray()); }
             catch (InvalidOperationException)
@@ -164,12 +184,23 @@ public static class IncomeApprovalEndpoints
         return date;
     }
 
-    public sealed record ApproveIncomeRequest(DateOnly ReceivedDate, long AmountMinor, SplitRequest Split);
+    private static PendingIncomeItem Balance(PendingIncomeItem item, long received)
+    {
+        var remaining = checked(item.AmountMinor - received);
+        var allocations = remaining <= 0 ? item.Allocations : item.SplitMode == SplitMode.Equal
+            ? AllocationCalculator.Equal(remaining, item.Allocations.Select(a=>a.HorseId).ToArray())
+            : AllocationCalculator.Custom(remaining, item.Allocations.Select(a=>new CustomShare(a.HorseId,a.Weight)).ToArray());
+        return item with { AmountMinor = remaining, Allocations = allocations };
+    }
+
+    internal static long Received(IReadOnlyList<EventEnvelope> events, Guid ruleId, DateOnly date) => events.Where(e => e.Type == "RecurringIncomeReceiptRecorded" && e.Payload.GetProperty("ruleId").GetGuid() == ruleId && ExpenseProjection.ReadDate(e.Payload, "scheduledDate") == date).Aggregate(0L, (sum,e) => checked(sum + e.Payload.GetProperty("amountMinor").GetInt64()));
+    public sealed record ApproveIncomeRequest(DateOnly ReceivedDate, long AmountMinor, SplitRequest Split, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] bool Partial = false);
     public sealed record RejectIncomeRequest;
     public sealed record IncomeApprovalItem(Guid RuleId, DateOnly ScheduledDate, long AmountMinor, string Source,
         string SplitMode, IReadOnlyList<Allocation> Allocations);
     public sealed record IncomeApprovalListResponse(IReadOnlyList<IncomeApprovalItem> Items, string? NextCursor,
-        DateOnly From, DateOnly Through, DateOnly AsOfDate, long StreamVersion);
+        DateOnly From, DateOnly Through, DateOnly AsOfDate, long StreamVersion, IReadOnlyList<DecisionHistoryItem> History);
+    public sealed record DecisionHistoryItem(Guid RuleId, DateOnly ScheduledDate, string Source, long ExpectedMinor, long ReceivedMinor, string Outcome, string? ReceivedDate, IReadOnlyList<Allocation> Allocations, long StreamVersion);
     public sealed record IncomeApprovalResponse(Guid RuleId, DateOnly ScheduledDate, string Decision,
         string? RealizedIncomeId, DateOnly? NextDueDate, long StreamVersion);
 }

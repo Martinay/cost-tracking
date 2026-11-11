@@ -154,9 +154,10 @@ public static class SessionEndpoints
         if (handle is not null) await store.UpdateAsync(handle, _ => null, cancellationToken);
         context.Response.Cookies.Delete(SessionCookie, CookieOptions(TimeSpan.Zero));
         var frontend = RequiredHttps(configuration["Auth:FrontendOrigin"], "Auth:FrontendOrigin");
-        var logoutUrl = session is null ? frontend : QueryHelpers.AddQueryString(
+        var returnTo = new Uri(new Uri(frontend), "/?signedOut=1").ToString();
+        var logoutUrl = session is null ? returnTo : QueryHelpers.AddQueryString(
             "https://api.workos.com/user_management/sessions/logout",
-            new Dictionary<string, string?> { ["session_id"] = session.SessionId, ["return_to"] = frontend });
+            new Dictionary<string, string?> { ["session_id"] = session.SessionId, ["return_to"] = returnTo });
         return Results.Json(new { logoutUrl });
     }
 

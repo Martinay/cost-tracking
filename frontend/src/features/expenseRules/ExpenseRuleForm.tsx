@@ -1,3 +1,6 @@
+import { editorShares } from "../finance/normalizeSplit";
+import { useDraftState, clearDraftScope } from "../finance/useDraftState";
+import { firstOccurrence } from "../recurrence/schedule";
 import { ExpenseCategorySelect } from "../expenses/ExpenseCategorySelect";
 import { formatDate, formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -56,11 +59,16 @@ export interface ExpenseRuleRevisionBody extends ExpenseRuleCreateBody {
 }
 
 export interface ExpenseRuleFormProps {
+  draftScope?: string | null;
   today: string;
   currency: string;
   horses: FinancialHorse[];
   initialRule?: ExpenseRuleInitialValue;
-  onPreview(values: ExpenseExampleValues): Promise<FinancialPreview>;
+  onPreview(
+    values: ExpenseExampleValues,
+    exampleSchedule?: ScheduleValue,
+    effectiveFrom?: string,
+  ): Promise<FinancialPreview>;
   onCreate(body: ExpenseRuleCreateBody): Promise<void>;
   onRevise?(body: ExpenseRuleRevisionBody): Promise<void>;
 }
@@ -78,10 +86,7 @@ function toSplit(defaults: ExpenseRuleDefaults): SplitValue {
   if (defaults.splitMode === "Custom") {
     return {
       mode: "Custom",
-      shares: defaults.allocations.map(({ horseId, weight }) => ({
-        horseId,
-        weight,
-      })),
+      shares: editorShares(defaults.allocations),
     };
   }
   return {
@@ -98,6 +103,7 @@ function parseMinor(value: string): number | null {
 
 export function ExpenseRuleForm({
   today,
+  draftScope,
   currency,
   horses,
   initialRule,
@@ -106,20 +112,35 @@ export function ExpenseRuleForm({
   onRevise,
 }: ExpenseRuleFormProps) {
   const { t, locale } = useI18n();
-  const [schedule, setSchedule] = useState<ScheduleValue>(
+  const draftKey = "expense-rule-" + (initialRule?.ruleId ?? "new");
+  const [schedule, setSchedule] = useDraftState<ScheduleValue>(
+    draftScope,
+    draftKey + "-schedule",
     initialRule?.schedule ?? emptySchedule(),
   );
-  const [effectiveFrom, setEffectiveFrom] = useState("");
-  const [amount, setAmount] = useState(() =>
+  const [effectiveFrom, setEffectiveFrom] = useDraftState(
+    draftScope,
+    draftKey + "-effectiveFrom",
+    "",
+  );
+  const [amount, setAmount] = useDraftState(
+    draftScope,
+    draftKey + "-amount",
     initialRule ? (initialRule.defaults.amountMinor / 100).toFixed(2) : "",
   );
-  const [category, setCategory] = useState(
+  const [category, setCategory] = useDraftState(
+    draftScope,
+    draftKey + "-category",
     initialRule?.defaults.category ?? "",
   );
-  const [description, setDescription] = useState(
+  const [description, setDescription] = useDraftState(
+    draftScope,
+    draftKey + "-description",
     initialRule?.defaults.description ?? "",
   );
-  const [split, setSplit] = useState<SplitValue>(() =>
+  const [split, setSplit] = useDraftState<SplitValue>(
+    draftScope,
+    draftKey + "-split",
     initialRule
       ? toSplit(initialRule.defaults)
       : { mode: "Equal", horseIds: [] },
@@ -130,9 +151,11 @@ export function ExpenseRuleForm({
   const [status, setStatus] = useState("");
   const pendingPreview = useRef(0);
   const amountMinor = parseMinor(amount);
-  const exampleDate = initialRule
-    ? effectiveFrom || schedule.startDate
-    : schedule.startDate;
+  const exampleDate =
+    firstOccurrence(
+      schedule,
+      initialRule ? effectiveFrom || schedule.startDate : schedule.startDate,
+    ) ?? "";
   const values: ExpenseExampleValues = {
     expenseDate: exampleDate,
     amountMinor: amountMinor ?? 0,
@@ -140,7 +163,12 @@ export function ExpenseRuleForm({
     description: description.trim(),
     split,
   };
-  const fingerprint = JSON.stringify({ schedule, effectiveFrom, values });
+  const fingerprint = JSON.stringify({
+    draftScope,
+    schedule,
+    effectiveFrom,
+    values,
+  });
   const previewCurrent = preview !== null && previewKey === fingerprint;
   const selectedCount =
     split.mode === "Equal" ? split.horseIds.length : split.shares.length;
@@ -154,6 +182,12 @@ export function ExpenseRuleForm({
   }
 
   function validFields(): boolean {
+    if (!exampleDate) {
+      setError(
+        "This schedule has no occurrence on or after the selected date.",
+      );
+      return false;
+    }
     if (amountMinor === null || amountMinor <= 0) {
       setError("Enter a positive amount with no more than two decimal places.");
       return false;
@@ -183,7 +217,11 @@ export function ExpenseRuleForm({
     if (!validFields()) return;
     const generation = ++pendingPreview.current;
     try {
-      const result = await onPreview(values);
+      const result = await onPreview(
+        values,
+        schedule,
+        initialRule ? effectiveFrom : undefined,
+      );
       if (generation !== pendingPreview.current) return;
       setPreview(result);
       setPreviewKey(fingerprint);
@@ -216,6 +254,7 @@ export function ExpenseRuleForm({
           schedule,
           effectiveFrom,
         });
+        clearDraftScope(draftScope, draftKey);
         setStatus("Expense rule revision saved.");
       } else {
         if (!previewCurrent) {
@@ -223,7 +262,12 @@ export function ExpenseRuleForm({
           return;
         }
         await onCreate({ schedule, ...valuesWithoutDate(values) });
+        clearDraftScope(draftScope, draftKey);
         setStatus("Expense rule created.");
+        setAmount("");
+        setCategory("");
+        setDescription("");
+        setSplit({ mode: "Equal", horseIds: [] });
       }
     } catch (reason) {
       setError(
@@ -267,9 +311,7 @@ export function ExpenseRuleForm({
             required
           />
           <p>
-            {t(
-              "The revision keeps the original start date as its cadence anchor.",
-            )}
+            {t("The original start date keeps the repeating dates aligned.")}
           </p>
         </>
       )}

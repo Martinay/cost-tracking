@@ -1,3 +1,4 @@
+import { editorShares } from "../finance/normalizeSplit";
 import { formatDate, formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +19,7 @@ export interface IncomeDecisionValues {
   receivedDate: string;
   amountMinor: number;
   split: SplitValue;
+  partial?: boolean;
 }
 
 export interface IncomeDecisionPreviewRequest {
@@ -48,6 +50,7 @@ export function IncomeDecisionDialogs({
   onReject(): Promise<void>;
 }) {
   const { t, locale } = useI18n();
+  const [partial, setPartial] = useState(false);
   const [editing, setEditing] = useState(false);
   const [receivedDate, setReceivedDate] = useState(today);
   const [amount, setAmount] = useState((item.amountMinor / 100).toFixed(2));
@@ -55,10 +58,7 @@ export function IncomeDecisionDialogs({
     item.splitMode === "Custom"
       ? {
           mode: "Custom",
-          shares: item.allocations.map(({ horseId, weight }) => ({
-            horseId,
-            weight,
-          })),
+          shares: editorShares(item.allocations),
         }
       : {
           mode: "Equal",
@@ -75,7 +75,12 @@ export function IncomeDecisionDialogs({
   const amountMinor = Number.isFinite(Number(amount))
     ? Math.round(Number(amount) * 100)
     : 0;
-  const fingerprint = JSON.stringify({ receivedDate, amountMinor, split });
+  const fingerprint = JSON.stringify({
+    receivedDate,
+    amountMinor,
+    split,
+    partial,
+  });
   const previewCurrent = preview !== null && previewFingerprint === fingerprint;
 
   useEffect(() => {
@@ -104,12 +109,12 @@ export function IncomeDecisionDialogs({
       setError("Enter an amount and a received date on or before today.");
       return;
     }
-    const values = { receivedDate, amountMinor, split };
+    const values = { receivedDate, amountMinor, split, partial };
     try {
       setPending(true);
       const next = await onPreview({
         kind: "Income",
-        values: { ...values, source: item.source },
+        values: { receivedDate, amountMinor, split, source: item.source },
       });
       setPreview(next);
       setPreviewFingerprint(JSON.stringify(values));
@@ -132,7 +137,12 @@ export function IncomeDecisionDialogs({
     setError("");
     setPending(true);
     try {
-      await onApprove({ receivedDate, amountMinor, split });
+      await onApprove({
+        receivedDate,
+        amountMinor,
+        split,
+        ...(partial ? { partial: true } : {}),
+      });
     } catch (reason) {
       setError(
         reason instanceof Error ? reason : "The payment could not be approved.",
@@ -172,12 +182,29 @@ export function IncomeDecisionDialogs({
         {money(item.amountMinor, currency, locale)}
       </p>
       <p>{t("Pending")}</p>
+      <label>
+        <input
+          type="checkbox"
+          checked={partial}
+          onChange={(e) => {
+            setPartial(e.target.checked);
+            invalidatePreview();
+          }}
+        />
+        {t("Partial receipt — keep the unpaid balance pending")}
+      </label>
+      <p>
+        {partial
+          ? t("Only this receipt is recorded. The remainder stays outstanding.")
+          : t(
+              "Final settlement: confirming closes this payment, including any difference.",
+            )}
+      </p>
       {item.allocations.some(
         (allocation) =>
           !horses.some(
             (horse) =>
-              horse.horseId === allocation.horseId &&
-              (horse.status === "Active" || horse.status === "Leased"),
+              horse.horseId === allocation.horseId && horse.status !== "Sold",
           ),
       ) && (
         <p>
@@ -228,7 +255,7 @@ export function IncomeDecisionDialogs({
       {error && <p role="alert">{t(error)}</p>}
       {previewCurrent && preview && (
         <section aria-label={t("Approval preview")}>
-          <h4>{t("Authoritative approval preview")}</h4>
+          <h4>{t("Confirm received payment")}</h4>
           <p>
             {t("Actual received date:")}{" "}
             <time dateTime={receivedDate}>
@@ -238,6 +265,10 @@ export function IncomeDecisionDialogs({
           <p>
             {t("Amount: ")}
             {money(preview.amountMinor, preview.currency ?? currency, locale)}
+          </p>
+          <p>
+            {t("Difference from outstanding amount")}:{" "}
+            {money(item.amountMinor - amountMinor, currency, locale)}
           </p>
           <ul aria-label={t("Approval preview allocations")}>
             {preview.allocations.map((allocation) => (

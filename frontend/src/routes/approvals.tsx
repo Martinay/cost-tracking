@@ -1,4 +1,4 @@
-import { formatDate } from "../i18n/format";
+import { formatDate, formatMoney as money } from "../i18n/format";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
@@ -187,8 +187,12 @@ export function ApprovalsRoute() {
         command,
       )) as IncomeDecisionResponse;
       pendingCommand.current = null;
-      removeDecidedApprovalFromCache(queryClient, approvalKey, item);
+      if (!values?.partial)
+        removeDecidedApprovalFromCache(queryClient, approvalKey, item);
       await invalidateDecision(result.streamVersion);
+      setDecisionNotice(
+        t("{source}: decision saved.", { source: item.source }),
+      );
     } catch (error) {
       if ((error as { status?: number }).status === 409) {
         await queryClient.invalidateQueries({ queryKey: approvalKey });
@@ -234,7 +238,52 @@ export function ApprovalsRoute() {
         {formatDate(today, locale)} {t("· as of")}{" "}
         {formatDate(approvals.data?.pages[0]?.asOfDate ?? today, locale)}
       </p>
-      {decisionNotice && <p role="status">{t(decisionNotice)}</p>}
+      <section aria-labelledby="decision-history-heading">
+        <h2 id="decision-history-heading">{t("Payment decision history")}</h2>
+        <p>
+          {t(
+            "Final decisions stay in history. Correct one-off entries from the income ledger; rejected payments cannot be undone.",
+          )}
+        </p>
+        <ol>
+          {(approvals.data?.pages[0]?.history ?? []).map((item) => (
+            <li key={item.streamVersion}>
+              <strong>{item.source}</strong> ·{" "}
+              {formatDate(item.scheduledDate, locale)} · {t(item.outcome)}
+              <p>
+                {t("Expected")}: {money(item.expectedMinor, currency, locale)} ·{" "}
+                {t("Received")}: {money(item.receivedMinor, currency, locale)} ·{" "}
+                {t("Difference")}:{" "}
+                {money(
+                  item.expectedMinor - item.receivedMinor,
+                  currency,
+                  locale,
+                )}
+              </p>
+              {item.receivedDate && (
+                <p>
+                  {t("Received")}: {formatDate(item.receivedDate, locale)}
+                </p>
+              )}
+              <p>
+                {item.allocations
+                  .map(
+                    (a) =>
+                      horses.data?.items.find((h) => h.horseId === a.horseId)
+                        ?.name ?? t("Horse"),
+                  )
+                  .join(", ")}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+      {decisionNotice && (
+        <p role="status">
+          {t(decisionNotice)}{" "}
+          <a href="#decision-history-heading">{t("View payment decision")}</a>
+        </p>
+      )}
       {from > startOfMonth && (
         <button
           type="button"
@@ -281,7 +330,7 @@ export function ApprovalsRoute() {
         <section aria-label={t("Pending payments")}>
           {items.map((item) => (
             <IncomeDecisionDialogs
-              key={`${item.ruleId}-${item.scheduledDate}`}
+              key={`${item.ruleId}-${item.scheduledDate}-${item.amountMinor}`}
               item={item}
               horses={horses.data?.items ?? []}
               currency={currency}

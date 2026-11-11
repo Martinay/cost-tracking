@@ -1,4 +1,119 @@
 export const german: Record<string, string> = {
+  "Share for ": "Anteil für ",
+  "Share for {value0}": "Anteil für {value0}",
+  "Use ratios such as 2 and 1, or percentage shares such as 60 and 40. Saved shares are shown as percentages. Preview shows exact amounts.":
+    "Nutze Verhältnisse wie 2 und 1 oder Prozentanteile wie 60 und 40. Gespeicherte Anteile werden in Prozent angezeigt. Die Vorschau zeigt genaue Beträge.",
+  "Enter positive split shares with up to six decimal places, for example 2 and 1.":
+    "Gib positive Anteile mit höchstens sechs Nachkommastellen ein, zum Beispiel 2 und 1.",
+  "Rate per km ({currency}/km, optional)":
+    "Satz pro km ({currency}/km, optional)",
+  "Rate per km ({currency}/km)": "Satz pro km ({currency}/km)",
+  "Driving rate ({currency}/km)": "Fahrtkostensatz ({currency}/km)",
+  "Enter a rate in {currency} per km, for example {example}/km.":
+    "Gib einen Satz in {currency} pro km ein, zum Beispiel {example}/km.",
+  "Enter a positive rate within supported precision.":
+    "Gib einen positiven Satz mit unterstützter Genauigkeit ein.",
+  "Every day": "Jeden Tag",
+  "Every week": "Jede Woche",
+  "Every month": "Jeden Monat",
+  "Every {count} days": "Alle {count} Tage",
+  "Every {count} weeks": "Alle {count} Wochen",
+  "Every {count} months": "Alle {count} Monate",
+  "Stops after": "Endet nach",
+  "Next scheduled date": "Nächster geplanter Termin",
+  "{source}: decision saved.": "{source}: Entscheidung gespeichert.",
+  "View payment decision": "Zahlungsentscheidung ansehen",
+  "The original start date keeps the repeating dates aligned.":
+    "Das ursprüngliche Startdatum hält die wiederkehrenden Termine im gleichen Rhythmus.",
+  ". Amount counted: ": ". Angerechneter Betrag: ",
+  ". Amount counted:": ". Angerechneter Betrag:",
+  "Monthly overall result": "Monatliches Gesamtergebnis",
+  "Scroll horizontally to see all columns. Use arrow keys when this table is focused.":
+    "Scrolle seitlich, um alle Spalten zu sehen. Mit fokussierter Tabelle kannst du die Pfeiltasten verwenden.",
+  "Expenses in selected month": "Ausgaben im ausgewählten Monat",
+  "Income in selected month": "Einnahmen im ausgewählten Monat",
+  "Add the horses in your care, then record your first bill and split it across them. Horses also keep your income and care tasks organised.":
+    "Füge die Pferde in deiner Obhut hinzu. Erfasse dann deine erste Rechnung und teile sie auf. Pferde ordnen auch deine Einnahmen und Pflegeaufgaben.",
+  "Cancel entry": "Eingabe schließen",
+  "Choose a date, positive amount and at least one horse. Category or source is required; description is optional.":
+    "Wähle ein Datum, einen positiven Betrag und mindestens ein Pferd. Kategorie oder Einnahmequelle sind erforderlich; die Beschreibung ist optional.",
+  "Confirm received payment": "Zahlungseingang bestätigen",
+  "Correct entry": "Buchung korrigieren",
+  "Correct task": "Aufgabe korrigieren",
+  "Correction preview": "Korrekturvorschau",
+  "Correction saved. Original retained in history.":
+    "Korrektur gespeichert. Das Original bleibt im Verlauf.",
+  Date: "Datum",
+  Difference: "Differenz",
+  "Difference from outstanding amount": "Differenz zum offenen Betrag",
+  "Driving rate (€/km)": "Fahrtkostensatz (€/km)",
+  "Duration not recorded": "Dauer nicht erfasst",
+  "Enter a correction reason.": "Gib einen Grund für die Korrektur an.",
+  "Enter euros per km. For example, 0.30 means €0.30/km.":
+    "Gib Euro pro km ein. Zum Beispiel bedeutet 0,30 einen Satz von 0,30 €/km.",
+  "Enter positive whole-number ratios, for example 2 and 1 for a two-to-one split. Preview shows the exact amounts.":
+    "Gib positive ganze Verhältniszahlen ein, zum Beispiel 2 und 1 für eine Aufteilung im Verhältnis zwei zu eins. Die Vorschau zeigt die genauen Beträge.",
+  Every: "Alle",
+  Expected: "Erwartet",
+  "Final decisions stay in history. Correct one-off entries from the income ledger; rejected payments cannot be undone.":
+    "Endgültige Entscheidungen bleiben im Verlauf. Einmalige Buchungen kannst du in der Einnahmenliste korrigieren; Ablehnungen lassen sich nicht rückgängig machen.",
+  "Final settlement: confirming closes this payment, including any difference.":
+    "Endgültige Abrechnung: Die Bestätigung schließt diese Zahlung einschließlich einer möglichen Differenz ab.",
+  "Ledger month": "Buchungsmonat",
+  "Next due": "Nächste Fälligkeit",
+  "Only this receipt is recorded. The remainder stays outstanding.":
+    "Nur dieser Zahlungseingang wird erfasst. Der Rest bleibt offen.",
+  "Partial receipt — keep the unpaid balance pending":
+    "Teilzahlung – unbezahlten Rest offen lassen",
+  "Payment decision history": "Zahlungsentscheidungen",
+  "Payment state:": "Zahlungsstatus:",
+  "Preview correction": "Korrektur prüfen",
+  "Previous amount": "Vorheriger Betrag",
+  "Rate per km (€/km)": "Satz pro km (€/km)",
+  "Rate per km (€/km, optional)": "Satz pro km (€/km, optional)",
+  "Reason for correction": "Grund für die Korrektur",
+  Received: "Erhalten",
+  "Record time, quantity, or both. Add a unit when recording a quantity. Notes are optional.":
+    "Erfasse Zeit, Menge oder beides. Ergänze bei Mengen eine Einheit. Notizen sind optional.",
+  "Refresh account and review draft": "Konto aktualisieren und Entwurf prüfen",
+  Repeats: "Wiederholung",
+  "Retired horses can still receive care, expenses and tasks. Sold horses are unavailable for new entries. Existing recurring rules continue until you stop them.":
+    "Für Pferde im Ruhestand können weiterhin Pflege, Ausgaben und Aufgaben erfasst werden. Verkaufte Pferde sind für neue Einträge gesperrt. Bestehende wiederkehrende Regeln laufen weiter, bis du sie beendest.",
+  "Save correction": "Korrektur speichern",
+  Scheduled: "Geplant",
+  "Scroll horizontally to see all columns, including Net. Use arrow keys when this table is focused.":
+    "Scrolle seitlich, um alle Spalten einschließlich Saldo zu sehen. Mit fokussierter Tabelle kannst du die Pfeiltasten verwenden.",
+  "Split differently": "Anders aufteilen",
+  Stopped: "Beendet",
+  "The original entry stays in history. Explain the correction before saving.":
+    "Das Original bleibt im Verlauf. Begründe die Korrektur vor dem Speichern.",
+  "The original entry stays in history. Preview the replacement and explain the correction.":
+    "Das Original bleibt im Verlauf. Prüfe die Ersatzbuchung und begründe die Korrektur.",
+  "View expenses for this month": "Ausgaben dieses Monats ansehen",
+  "View income for this month": "Einnahmen dieses Monats ansehen",
+  "View related records": "Zugehörige Einträge ansehen",
+  "You are signed out.": "Du bist abgemeldet.",
+  "inclusive through": "einschließlich bis",
+  "on day": "am Tag",
+  optional: "optional",
+  "per km": "pro km",
+  starts: "ab",
+  "tasks without duration": "Aufgaben ohne Dauer",
+  "month(s)": "Monat(e)",
+  "week(s)": "Woche(n)",
+  "day(s)": "Tag(e)",
+  "Approved (final settlement)": "Bestätigt (endgültig abgerechnet)",
+  "Rejected (final)": "Abgelehnt (endgültig)",
+  Partial: "Teilzahlung",
+  Paid: "Bezahlt",
+  "This schedule has no occurrence on or after the selected date.":
+    "Dieser Zeitplan enthält ab dem gewählten Datum keinen Termin.",
+  "Enter a positive rate with no more than six decimal places.":
+    "Gib einen positiven Satz mit höchstens sechs Nachkommastellen ein.",
+  "Saved rate: {value0}/km. Leave the rate blank to use it.":
+    "Gespeicherter Satz: {value0}/km. Lass das Feld leer, um ihn zu verwenden.",
+
+  "Your ledger is ready to use.": "Dein Pferdebuch ist einsatzbereit.",
   "Calendar dates on financial records stay unchanged.":
     "Kalenderdaten deiner Finanzbuchungen bleiben unverändert.",
   "Record driving costs separately using mileage.":

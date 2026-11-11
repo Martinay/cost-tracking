@@ -232,6 +232,19 @@ export function ReportsRoute() {
           "See the bigger picture, one horse and one month at a time.",
         )}
       />
+      <p>
+        <a
+          href={`/expenses?month=${month}&horseId=${encodeURIComponent(selectedHorseId)}`}
+        >
+          {t("View expenses for this month")}
+        </a>{" "}
+        ·{" "}
+        <a
+          href={`/income?month=${month}&horseId=${encodeURIComponent(selectedHorseId)}`}
+        >
+          {t("View income for this month")}
+        </a>
+      </p>
       <section
         aria-labelledby="monthly-heading"
         data-testid={monthly.isSuccess ? "report-ready" : undefined}

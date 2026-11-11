@@ -85,8 +85,8 @@ public static class FinancialReportEndpoints
             var payload = value.Payload;
             var dateProperty = value.Type switch
             {
-                "ExpenseRecorded" => "expenseDate",
-                "IncomeRecorded" => "receivedDate",
+                "ExpenseRecorded" or "ExpenseCorrected" => "expenseDate",
+                "IncomeRecorded" or "IncomeCorrected" or "RecurringIncomeReceiptRecorded" => "receivedDate",
                 "RecurringExpenseRuleCreated" or "RecurringIncomeRuleCreated" => null,
                 "RecurringIncomeApproved" => "receivedDate",
                 _ => null

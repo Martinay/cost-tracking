@@ -1,5 +1,9 @@
 import { ExpenseCategorySelect } from "../expenses/ExpenseCategorySelect";
-import { formatDate, formatMoney as money } from "../../i18n/format";
+import {
+  formatDate,
+  formatMonth,
+  formatMoney as money,
+} from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import { useState } from "react";
 import type {
@@ -199,7 +203,7 @@ export function ExpenseOccurrenceEditor({
         <p>
           {t("Scheduled amount remains")}{" "}
           {money(defaults.amountMinor, displayedCurrency, locale)}
-          {t(". Contribution:")} {money(0, displayedCurrency, locale)}.
+          {t(". Amount counted:")} {money(0, displayedCurrency, locale)}.
         </p>
       )}
       {action === "Changed" && (
@@ -260,8 +264,10 @@ export function ExpenseOccurrenceEditor({
           </p>
           <ul aria-label={t("Occurrence preview monthly deltas")}>
             {preview.monthlyEffect.map((effect, index) => (
-              <li key={`${effect.month}-${effect.horseId}-${index}`}>
-                {effect.month} ·{" "}
+              <li
+                key={`${formatMonth(effect.month, locale)}-${effect.horseId}-${index}`}
+              >
+                {formatMonth(effect.month, locale)} ·{" "}
                 {horses.find((horse) => horse.horseId === effect.horseId)
                   ?.name ?? effect.horseId}{" "}
                 {t("· expense change ")}

@@ -142,7 +142,7 @@ test("German report localizes currency while retaining amount and currency", () 
       name: "Monatliche Gewinn- und Verlustrechnung",
     }),
   ).toBeInTheDocument();
-  expect(screen.getByText("1.234,56 €")).toBeInTheDocument();
+  expect(screen.getAllByText("1.234,56 €")[0]).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Income" })).toBeInTheDocument();
 });
 
@@ -216,8 +216,8 @@ test("known German API errors give recovery guidance and unknown diagnostics sur
 });
 
 test("date-only presentation follows language without changing the calendar day", () => {
-  expect(formatDate("2026-11-01", "de-DE")).toBe("1.11.2026");
-  expect(formatDate("2026-11-01", "en-US")).toBe("11/1/2026");
+  expect(formatDate("2026-11-01", "de-DE")).toBe("1. Nov. 2026");
+  expect(formatDate("2026-11-01", "en-US")).toBe("Nov 1, 2026");
 });
 
 test("unknown prototype-like messages remain readable and route-specific recovery is preserved", () => {

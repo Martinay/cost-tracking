@@ -1,3 +1,4 @@
+import { splitJsonReplacer } from "../features/finance/normalizeSplit";
 import type { components, paths } from "./schema";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -562,7 +563,7 @@ export function createApiClient({
         input.subject,
         input.path,
         "POST",
-        JSON.stringify(input.body),
+        JSON.stringify(input.body, splitJsonReplacer),
       ),
     createCommand,
     sendCommand: (command) =>
@@ -572,7 +573,7 @@ export function createApiClient({
         command.subject,
         command.path,
         command.method,
-        command.body,
+        JSON.stringify(JSON.parse(command.body), splitJsonReplacer),
         command.headers,
       ),
     rememberVersion(subject, streamVersion) {

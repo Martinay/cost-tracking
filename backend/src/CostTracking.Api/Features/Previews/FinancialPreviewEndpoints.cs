@@ -34,6 +34,38 @@ public static class FinancialPreviewEndpoints
             var occurrencePreview = PreviewOccurrenceChange(owner, events, account.Currency, streamVersion, request);
             return await AccountEndpoints.WriteAsync(context, StatusCodes.Status200OK, occurrencePreview, streamVersion);
         }
+        if (request.Kind is "ExpenseCorrection" or "IncomeCorrection")
+        {
+            var correctionKind = request.Kind == "ExpenseCorrection" ? "Expense" : "Income";
+            if (request.RecordId is not { } id) throw FinancialEndpointSupport.Error(400, "malformed_request", "Correction record ID is required.");
+            var replacement = JsonSerializer.SerializeToElement(CorrectionEndpoints.Prepare(owner, events, id, correctionKind, request.Values, "Preview", clock), ApiProtocol.JsonOptions);
+            var oldExpense = correctionKind == "Expense" ? ExpenseProjection.Replay(events).Single(item => item.ExpenseId == id) : null;
+            var oldIncome = correctionKind == "Income" ? IncomeProjection.Replay(events).Single(item => item.Id == id.ToString("D")) : null;
+            var newDate = ExpenseProjection.ReadDate(replacement, correctionKind == "Expense" ? "expenseDate" : "receivedDate");
+            var oldDate = oldExpense?.ExpenseDate ?? oldIncome!.ReceivedDate;
+            var allocationsNew = ExpenseProjection.ReadAllocations(replacement.GetProperty("allocations"));
+            var effects = (oldExpense?.Allocations ?? oldIncome!.Allocations).Select(a => new MonthlyEffect(oldDate.ToString("yyyy-MM"), a.HorseId, correctionKind == "Income" ? -a.AmountMinor : 0, correctionKind == "Expense" ? -a.AmountMinor : 0, correctionKind == "Income" ? -a.AmountMinor : a.AmountMinor))
+                .Concat(allocationsNew.Select(a => new MonthlyEffect(newDate.ToString("yyyy-MM"), a.HorseId, correctionKind == "Income" ? a.AmountMinor : 0, correctionKind == "Expense" ? a.AmountMinor : 0, correctionKind == "Income" ? a.AmountMinor : -a.AmountMinor)))
+                .GroupBy(e => (e.Month, e.HorseId)).Select(g => new MonthlyEffect(g.Key.Month, g.Key.HorseId, g.Sum(e=>e.IncomeDeltaMinor), g.Sum(e=>e.ExpenseDeltaMinor), g.Sum(e=>e.NetDeltaMinor))).ToArray();
+            var responseCorrection = new FinancialPreviewResponse(account.Currency, newDate, replacement.GetProperty("amountMinor").GetInt64(), replacement.GetProperty("splitMode").GetString()!, allocationsNew, effects, streamVersion,
+                oldExpense is not null && replacement.GetProperty("driving").ValueKind == JsonValueKind.Object ? replacement.GetProperty("driving").Deserialize<DrivingDetails>(ApiProtocol.JsonOptions) : null);
+            return await AccountEndpoints.WriteAsync(context, 200, responseCorrection, streamVersion);
+        }
+        DateOnly? exampleDate = null;
+        if (request.ExampleOccurrence && request.ExampleSchedule is { } schedule)
+        {
+            var from = request.EffectiveFrom is { } effective && effective > schedule.StartDate ? effective : schedule.StartDate;
+            var end = schedule.EndDate ?? DateOnly.MaxValue;
+            while (from <= end)
+            {
+                var through = from.Year > 9994 ? DateOnly.MaxValue : from.AddYears(5).AddDays(-1);
+                if (through > end) through = end;
+                exampleDate = ScheduleExpansion.Expand(schedule, from, through).Cast<DateOnly?>().FirstOrDefault();
+                if (exampleDate.HasValue || through == DateOnly.MaxValue) break;
+                from = through.AddDays(1);
+            }
+            if (exampleDate is null) throw FinancialEndpointSupport.Error(422,"invalid_schedule","This schedule has no occurrence on or after the selected date.");
+        }
         DateOnly date;
         long amount;
         SplitMode mode;
@@ -44,11 +76,13 @@ public static class FinancialPreviewEndpoints
         {
             case "Expense":
                 var expenseRequest = Deserialize<ExpenseEndpoints.CreateExpenseRequest>(request.Values);
+                if (exampleDate.HasValue) expenseRequest = expenseRequest with { ExpenseDate = exampleDate.Value };
                 var expense = FinancialEndpointSupport.PrepareExpense(owner, events, expenseRequest, clock, request.ExampleOccurrence);
                 date = expense.Date; amount = expense.Amount; mode = expense.SplitMode; allocations = expense.Allocations; kind = "Expense";
                 break;
             case "Income":
                 var incomeRequest = Deserialize<IncomeEndpoints.CreateIncomeRequest>(request.Values);
+                if (exampleDate.HasValue) incomeRequest = incomeRequest with { ReceivedDate = exampleDate.Value };
                 var income = FinancialEndpointSupport.PrepareIncome(owner, events, incomeRequest, clock, request.ExampleOccurrence);
                 date = income.Date; amount = income.Amount; mode = income.SplitMode; allocations = income.Allocations; kind = "Income";
                 break;
@@ -165,9 +199,11 @@ public static class FinancialPreviewEndpoints
     }
 
     public sealed record FinancialPreviewRequest(string Kind, JsonElement Values, Guid? RuleId = null,
-        DateOnly? ScheduledDate = null)
+        DateOnly? ScheduledDate = null, Guid? RecordId = null)
     {
         public bool ExampleOccurrence { get; init; }
+        public Schedule? ExampleSchedule { get; init; }
+        public DateOnly? EffectiveFrom { get; init; }
     }
     public sealed record ExpenseOccurrenceChangeRequest(string Action, ExpenseOccurrenceEndpoints.ChangedOccurrenceRequest? Changed);
     public sealed record FinancialPreviewResponse(string? Currency, DateOnly Date, long AmountMinor, string SplitMode,

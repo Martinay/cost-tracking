@@ -32,7 +32,7 @@ test("previews an example income occurrence before saving a recurring rule", asy
     />,
   );
 
-  await userEvent.selectOptions(screen.getByLabelText("Cadence"), "Weekly");
+  await userEvent.selectOptions(screen.getByLabelText("Repeats"), "Weekly");
   await userEvent.type(screen.getByLabelText("Start date"), "2026-10-12");
   await userEvent.type(screen.getByLabelText("Amount"), "120.00");
   await userEvent.type(screen.getByLabelText("Source"), "Boarding");
@@ -47,6 +47,10 @@ test("previews an example income occurrence before saving a recurring rule", asy
   expect(onPreview).toHaveBeenCalledWith({
     kind: "Income",
     exampleOccurrence: true,
+    exampleSchedule: expect.objectContaining({
+      cadence: "Weekly",
+      startDate: "2026-10-12",
+    }),
     values: {
       receivedDate: "2026-10-12",
       amountMinor: 12000,
@@ -142,4 +146,26 @@ test("queues a future revision while keeping the rule's original cadence anchor"
     source: "Boarding",
     split: { mode: "Equal", horseIds: ["horse-a", "horse-b"] },
   });
+});
+
+test("recurring drafts restore without restoring a preview and stay owner scoped", async () => {
+  const props = {
+    currency: "EUR",
+    today: "2026-11-10",
+    horses,
+    onPreview: vi.fn(),
+    onCreate: vi.fn(),
+  };
+  const first = render(<IncomeRuleForm {...props} draftScope="owner-one" />);
+  await userEvent.type(screen.getByLabelText("Amount"), "150");
+  await userEvent.type(screen.getByLabelText("Source"), "Luna share");
+  first.unmount();
+  const second = render(<IncomeRuleForm {...props} draftScope="owner-one" />);
+  expect(screen.getByLabelText("Amount")).toHaveValue(150);
+  expect(screen.getByLabelText("Source")).toHaveValue("Luna share");
+  expect(
+    screen.queryByRole("region", { name: "Example occurrence" }),
+  ).not.toBeInTheDocument();
+  second.rerender(<IncomeRuleForm {...props} draftScope="owner-two" />);
+  expect(screen.getByLabelText("Source")).toHaveValue("");
 });

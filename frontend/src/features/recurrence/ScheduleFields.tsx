@@ -38,7 +38,7 @@ export function ScheduleFields({
   return (
     <fieldset>
       <legend>{t("Schedule")}</legend>
-      <label htmlFor="schedule-cadence">{t("Cadence")}</label>
+      <label htmlFor="schedule-cadence">{t("Repeats")}</label>
       <select
         id="schedule-cadence"
         value={value.cadence}
@@ -60,7 +60,7 @@ export function ScheduleFields({
       </select>
       {value.cadence !== "Weekdays" && (
         <>
-          <label htmlFor="schedule-interval">{t("Interval")}</label>
+          <label htmlFor="schedule-interval">{t("Every")}</label>
           <input
             id="schedule-interval"
             type="number"

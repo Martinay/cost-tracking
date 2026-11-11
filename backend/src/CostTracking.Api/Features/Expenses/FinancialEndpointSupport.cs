@@ -17,7 +17,7 @@ internal sealed record PreparedIncome(DateOnly Date, long Amount, string Source,
 internal static class FinancialEndpointSupport
 {
     public static PreparedExpense PrepareExpense(string owner, IReadOnlyList<EventEnvelope> events,
-        ExpenseEndpoints.CreateExpenseRequest request, TimeProvider clock, bool allowFutureDate = false)
+        ExpenseEndpoints.CreateExpenseRequest request, TimeProvider clock, bool allowFutureDate = false, IReadOnlyList<Allocation>? previousAllocations = null, SplitMode? previousMode = null)
     {
         var account = RequireAccount(owner, events);
         if (!allowFutureDate && request.ExpenseDate > OwnerToday(clock, account.TimeZone))
@@ -28,13 +28,13 @@ internal static class FinancialEndpointSupport
             category == ExpenseCategory.Driving || category.ToString() != request.Category)
             throw Error(422, "invalid_expense_category", "Choose a supported non-driving expense category.", "category");
         var description = ValidateDescription(request.Description);
-        var allocations = Allocate(events, request.AmountMinor, request.Split);
+        var allocations = Allocate(events, request.AmountMinor, request.Split, previousAllocations, previousMode);
         return new PreparedExpense(request.ExpenseDate, request.AmountMinor, category, description,
             Enum.Parse<SplitMode>(request.Split.Mode, false), allocations);
     }
 
     public static PreparedIncome PrepareIncome(string owner, IReadOnlyList<EventEnvelope> events,
-        IncomeEndpoints.CreateIncomeRequest request, TimeProvider clock, bool allowFutureDate = false)
+        IncomeEndpoints.CreateIncomeRequest request, TimeProvider clock, bool allowFutureDate = false, IReadOnlyList<Allocation>? previousAllocations = null, SplitMode? previousMode = null)
     {
         var account = RequireAccount(owner, events);
         if (!allowFutureDate && request.ReceivedDate > OwnerToday(clock, account.TimeZone))
@@ -42,7 +42,7 @@ internal static class FinancialEndpointSupport
         try { FinancialValues.RequirePositiveMinor(request.AmountMinor); }
         catch (ArgumentException) { throw Error(422, "invalid_amount", "Amount must be a positive safe integer in minor units.", "amountMinor"); }
         var source = ValidateSource(request.Source);
-        var allocations = Allocate(events, request.AmountMinor, request.Split);
+        var allocations = Allocate(events, request.AmountMinor, request.Split, previousAllocations, previousMode);
         return new PreparedIncome(request.ReceivedDate, request.AmountMinor, source,
             Enum.Parse<SplitMode>(request.Split.Mode, false), allocations);
     }
@@ -58,8 +58,9 @@ internal static class FinancialEndpointSupport
     public static DateOnly OwnerToday(TimeProvider clock, string? zone)
         => OwnerCalendar.Today(clock, zone);
 
-    public static IReadOnlyList<Allocation> Allocate(IReadOnlyList<EventEnvelope> events, long amount, SplitRequest split)
+    public static IReadOnlyList<Allocation> Allocate(IReadOnlyList<EventEnvelope> events, long amount, SplitRequest split, IReadOnlyList<Allocation>? previousAllocations = null, SplitMode? previousMode = null)
     {
+        if (split is null) throw Error(422,"invalid_split","Choose at least one horse and a valid split.","split");
         if (!Enum.TryParse<SplitMode>(split.Mode, false, out var mode) || !Enum.IsDefined(mode) || mode.ToString() != split.Mode)
             throw Error(422, "invalid_split", "Split mode is invalid.", "split.mode");
         IReadOnlyList<Allocation> allocations;
@@ -79,10 +80,12 @@ internal static class FinancialEndpointSupport
         }
         var horses = HorseProjection.Replay(events).ToDictionary(horse => horse.HorseId);
         if (allocations.Any(item => !horses.ContainsKey(item.HorseId))) throw NotFound();
-        var eligible = horses.Values.Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased)
+        var eligible = horses.Values.Where(horse => horse.Status is HorseStatus.Active or HorseStatus.Leased or HorseStatus.Retired)
             .Select(horse => horse.HorseId).ToHashSet();
-        if (allocations.Any(item => !eligible.Contains(item.HorseId)))
-            throw Error(422, "inactive_horse", "New financial allocations require active or leased horses.", "split");
+        var unchangedTargets = previousMode == mode && previousAllocations is not null &&
+            previousAllocations.OrderBy(a => a.HorseId).Select(a => (a.HorseId,a.Weight)).SequenceEqual(allocations.OrderBy(a => a.HorseId).Select(a => (a.HorseId,a.Weight)));
+        if (!unchangedTargets && allocations.Any(item => !eligible.Contains(item.HorseId)))
+            throw Error(422, "inactive_horse", "New financial allocations require active, leased or retired horses.", "split");
         return allocations;
     }
 

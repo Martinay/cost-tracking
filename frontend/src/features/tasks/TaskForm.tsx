@@ -1,5 +1,6 @@
+import { useDraftState } from "../finance/useDraftState";
 import { useI18n } from "../../i18n/I18nProvider";
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 
 export type TaskType =
   | "Riding"
@@ -24,6 +25,8 @@ export interface TaskCommandBody {
   notes: string;
 }
 export interface TaskFormProps {
+  draftScope?: string | null;
+  initial?: TaskCommandBody;
   horses: TaskHorseOption[];
   today: string;
   onSubmit: (value: TaskCommandBody) => Promise<void>;
@@ -44,19 +47,50 @@ const TASK_TYPES: TaskType[] = [
 
 export function TaskForm({
   horses,
+  draftScope,
+  initial,
   today,
   onSubmit,
   pending = false,
   errorMessage,
 }: TaskFormProps) {
   const { t } = useI18n();
-  const [horseId, setHorseId] = useState("");
-  const [taskDate, setTaskDate] = useState(today);
-  const [taskType, setTaskType] = useState<TaskType>("Riding");
-  const [minutes, setMinutes] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [quantityUnit, setQuantityUnit] = useState("");
-  const [notes, setNotes] = useState("");
+  const fieldId = useId();
+  const [horseId, setHorseId] = useDraftState(
+    draftScope,
+    "task-horseId",
+    initial?.horseId ?? "",
+  );
+  const [taskDate, setTaskDate] = useDraftState(
+    draftScope,
+    "task-taskDate",
+    initial?.taskDate ?? today,
+  );
+  const [taskType, setTaskType] = useDraftState<TaskType>(
+    draftScope,
+    "task-taskType",
+    initial?.taskType ?? "Riding",
+  );
+  const [minutes, setMinutes] = useDraftState(
+    draftScope,
+    "task-minutes",
+    initial?.minutes?.toString() ?? "",
+  );
+  const [quantity, setQuantity] = useDraftState(
+    draftScope,
+    "task-quantity",
+    initial?.quantity?.toString() ?? "",
+  );
+  const [quantityUnit, setQuantityUnit] = useDraftState(
+    draftScope,
+    "task-quantityUnit",
+    initial?.quantityUnit?.toString() ?? "",
+  );
+  const [notes, setNotes] = useDraftState(
+    draftScope,
+    "task-notes",
+    initial?.notes ?? "",
+  );
   const [validationError, setValidationError] = useState("");
   const [submissionError, setSubmissionError] = useState<string | Error>("");
   const [saved, setSaved] = useState(false);
@@ -96,6 +130,11 @@ export function TaskForm({
     };
     try {
       await onSubmit(body);
+      setHorseId("");
+      setMinutes("");
+      setQuantity("");
+      setQuantityUnit("");
+      setNotes("");
       setSaved(true);
     } catch (error) {
       setSubmissionError(
@@ -106,9 +145,14 @@ export function TaskForm({
 
   return (
     <form onSubmit={(event) => void submit(event)}>
-      <label htmlFor="task-horse">{t("Horse")}</label>
+      <p>
+        {t(
+          "Record time, quantity, or both. Add a unit when recording a quantity. Notes are optional.",
+        )}
+      </p>
+      <label htmlFor={`${fieldId}-horse`}>{t("Horse")}</label>
       <select
-        id="task-horse"
+        id={`${fieldId}-horse`}
         value={horseId}
         onChange={(event) => setHorseId(event.currentTarget.value)}
         required
@@ -120,18 +164,18 @@ export function TaskForm({
           </option>
         ))}
       </select>
-      <label htmlFor="task-date">{t("Task date")}</label>
+      <label htmlFor={`${fieldId}-date`}>{t("Task date")}</label>
       <input
-        id="task-date"
+        id={`${fieldId}-date`}
         type="date"
         value={taskDate}
         max={today}
         onChange={(event) => setTaskDate(event.currentTarget.value)}
         required
       />
-      <label htmlFor="task-type">{t("Task type")}</label>
+      <label htmlFor={`${fieldId}-type`}>{t("Task type")}</label>
       <select
-        id="task-type"
+        id={`${fieldId}-type`}
         value={taskType}
         onChange={(event) => setTaskType(event.currentTarget.value as TaskType)}
       >
@@ -141,9 +185,9 @@ export function TaskForm({
           </option>
         ))}
       </select>
-      <label htmlFor="task-minutes">{t("Minutes")}</label>
+      <label htmlFor={`${fieldId}-minutes`}>{t("Minutes")}</label>
       <input
-        id="task-minutes"
+        id={`${fieldId}-minutes`}
         type="number"
         inputMode="numeric"
         min="0"
@@ -151,9 +195,9 @@ export function TaskForm({
         value={minutes}
         onChange={(event) => setMinutes(event.currentTarget.value)}
       />
-      <label htmlFor="task-quantity">{t("Quantity")}</label>
+      <label htmlFor={`${fieldId}-quantity`}>{t("Quantity")}</label>
       <input
-        id="task-quantity"
+        id={`${fieldId}-quantity`}
         type="number"
         inputMode="decimal"
         min="0"
@@ -161,16 +205,16 @@ export function TaskForm({
         value={quantity}
         onChange={(event) => setQuantity(event.currentTarget.value)}
       />
-      <label htmlFor="task-quantity-unit">{t("Quantity unit")}</label>
+      <label htmlFor={`${fieldId}-quantity-unit`}>{t("Quantity unit")}</label>
       <input
-        id="task-quantity-unit"
+        id={`${fieldId}-quantity-unit`}
         maxLength={30}
         value={quantityUnit}
         onChange={(event) => setQuantityUnit(event.currentTarget.value)}
       />
-      <label htmlFor="task-notes">{t("Notes")}</label>
+      <label htmlFor={`${fieldId}-notes`}>{t("Notes")}</label>
       <textarea
-        id="task-notes"
+        id={`${fieldId}-notes`}
         maxLength={1000}
         value={notes}
         onChange={(event) => setNotes(event.currentTarget.value)}

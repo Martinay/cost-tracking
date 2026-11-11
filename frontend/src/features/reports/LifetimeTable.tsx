@@ -26,11 +26,11 @@ export function LifetimeTable({
   const items = [...unique.values()];
   const totals = items.reduce(
     (sum, item) => ({
-      incomeMinor: sum.incomeMinor + item.incomeMinor,
-      expenseMinor: sum.expenseMinor + item.expenseMinor,
-      netMinor: sum.netMinor + item.netMinor,
+      incomeMinor: sum.incomeMinor + BigInt(item.incomeMinor),
+      expenseMinor: sum.expenseMinor + BigInt(item.expenseMinor),
+      netMinor: sum.netMinor + BigInt(item.netMinor),
     }),
-    { incomeMinor: 0, expenseMinor: 0, netMinor: 0 },
+    { incomeMinor: 0n, expenseMinor: 0n, netMinor: 0n },
   );
 
   return (
@@ -60,7 +60,7 @@ export function LifetimeTable({
             </tr>
           ))}
           <tr>
-            <th scope="row">{t("Total income")}</th>
+            <th scope="row">{t("Total")}</th>
             <td>{money(totals.incomeMinor, lastPage.currency, locale)}</td>
             <td>{money(totals.expenseMinor, lastPage.currency, locale)}</td>
             <td>{money(totals.netMinor, lastPage.currency, locale)}</td>

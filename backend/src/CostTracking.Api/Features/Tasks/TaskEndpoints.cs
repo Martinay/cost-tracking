@@ -43,7 +43,7 @@ public static class TaskEndpoints
             }
             catch (ArgumentException exception) when (exception.ParamName == "horse")
             {
-                throw FinancialEndpointSupport.Error(422, "inactive_horse", "Tasks can only be logged for an Active or Leased horse.", "horseId");
+                throw FinancialEndpointSupport.Error(422, "inactive_horse", "Tasks can only be logged for an Active, Leased or Retired horse.", "horseId");
             }
             catch (ArgumentException)
             {

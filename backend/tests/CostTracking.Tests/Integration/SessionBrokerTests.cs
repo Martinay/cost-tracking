@@ -429,6 +429,7 @@ public sealed class SessionBrokerTests
         using var body = JsonDocument.Parse(await success.Content.ReadAsStringAsync());
         Assert.StartsWith("https://api.workos.com/user_management/sessions/logout?", body.RootElement.GetProperty("logoutUrl").GetString());
         Assert.Contains("session_id=sid_test", body.RootElement.GetProperty("logoutUrl").GetString(), StringComparison.Ordinal);
+        Assert.Contains("signedOut%3D1", body.RootElement.GetProperty("logoutUrl").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task<string> CreateExpiringSessionAsync(TestApplication app)

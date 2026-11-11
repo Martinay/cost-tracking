@@ -1,3 +1,4 @@
+import { ScheduleSummary } from "../recurrence/ScheduleSummary";
 import { formatDate, formatMoney as money } from "../../i18n/format";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { IncomeRuleInitialValue } from "./IncomeRuleForm";
@@ -5,11 +6,15 @@ import type { IncomeRuleInitialValue } from "./IncomeRuleForm";
 export function IncomeRuleList({
   rules,
   currency,
+  horses = [],
+  today,
   onRevise,
   onStop,
 }: {
   rules: IncomeRuleInitialValue[];
   currency: string;
+  horses?: { horseId: string; name: string }[];
+  today?: string;
   onRevise(ruleId: string): void;
   onStop(ruleId: string): void;
 }) {
@@ -21,14 +26,22 @@ export function IncomeRuleList({
         <li key={rule.ruleId}>
           <h3>{rule.defaults.source}</h3>
           <p>
-            {t(rule.schedule.cadence)} ·{" "}
-            {money(rule.defaults.amountMinor, currency, locale)} {t("· starts")}{" "}
-            {formatDate(rule.startDate, locale)}
-            {rule.lastDate
-              ? t(" · inclusive through {value0}", {
-                  value0: formatDate(rule.lastDate, locale),
-                })
-              : t(" · no end date")}
+            {money(rule.defaults.amountMinor, currency, locale)} ·{" "}
+            <ScheduleSummary
+              schedule={rule.schedule}
+              nextScheduledDate={rule.nextScheduledDate}
+              lastDate={rule.lastDate}
+              today={today}
+            />
+            {rule.defaults.allocations.map((a) => (
+              <span key={a.horseId}>
+                {" "}
+                ·{" "}
+                {horses.find((h) => h.horseId === a.horseId)?.name ??
+                  t("Horse")}
+                : {money(a.amountMinor, currency, locale)}
+              </span>
+            ))}
           </p>
           <ul
             aria-label={t("Revisions for {value0}", {

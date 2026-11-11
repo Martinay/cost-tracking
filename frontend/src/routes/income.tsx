@@ -1,4 +1,6 @@
-import { formatMoney as money } from "../i18n/format";
+import { EntryPanel } from "../components/EntryPanel";
+import { RecordCorrection } from "../features/finance/RecordCorrection";
+import { formatDate, formatMoney as money } from "../i18n/format";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHeading } from "../components/PageHeading";
 import { useRef, useState } from "react";
@@ -74,9 +76,26 @@ export function IncomeRoute() {
         path: "/api/v1/horses",
       }),
   });
-  const through =
+  const [selectedMonth, setSelectedMonth] = useState(
+    () => new URLSearchParams(window.location.search).get("month") ?? "",
+  );
+  const [selectedHorse, setSelectedHorse] = useState(
+    () => new URLSearchParams(window.location.search).get("horseId") ?? "",
+  );
+  const ownerToday =
     account.data?.ownerToday ?? new Date().toISOString().slice(0, 10);
-  const from = `${through.slice(0, 7)}-01`;
+  const month =
+    /^[1-9][0-9]{3}-(0[1-9]|1[0-2])$/.test(selectedMonth) &&
+    selectedMonth <= ownerToday.slice(0, 7)
+      ? selectedMonth
+      : ownerToday.slice(0, 7);
+  const endOfMonth = new Date(
+    Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const through = month === ownerToday.slice(0, 7) ? ownerToday : endOfMonth;
+  const from = `${month}-01`;
   const queryRange = { from, to: through };
   const incomeRules = useInfiniteQuery<
     IncomeRulePage,
@@ -127,7 +146,10 @@ export function IncomeRoute() {
     QueryKey,
     PageParam
   >({
-    queryKey: keys?.income(queryRange) ?? ["income", "unavailable"],
+    queryKey: keys?.income(queryRange, { horseId: selectedHorse }) ?? [
+      "income",
+      "unavailable",
+    ],
     enabled:
       canLoadProtectedData && subject !== null && account.data !== undefined,
     initialPageParam: { cursor: null, streamVersion: null } as PageParam,
@@ -140,6 +162,7 @@ export function IncomeRoute() {
           );
       }
       const params = new URLSearchParams({ from, to: through, limit: "50" });
+      if (selectedHorse) params.set("horseId", selectedHorse);
       if (pageParam.cursor) params.set("cursor", pageParam.cursor);
       const path = `/api/v1/income?${params}` as `/api/v1/income?${string}`;
       const result = await apiClient.get({
@@ -227,12 +250,22 @@ export function IncomeRoute() {
         )}
       />
       {canLoadProtectedData && (
-        <button type="button" onClick={() => setRecording(true)}>
+        <button
+          type="button"
+          onClick={() => {
+            setRecording((v) => !v);
+            setShowRuleForm(false);
+          }}
+        >
           {t("Record income")}
         </button>
       )}
-      {/* Retain editor state while AppShell hides this subject during auth recovery. */}
-      {subject !== null && recording && <IncomeForm />}
+      {/* Keep editors mounted during same-subject session recovery. */}
+      {subject !== null && recording && (
+        <EntryPanel onClose={() => setRecording(false)}>
+          <IncomeForm />
+        </EntryPanel>
+      )}
       {subject !== null && (
         <section aria-labelledby="income-rules-heading">
           <h2 id="income-rules-heading">{t("Recurring income")}</h2>
@@ -241,6 +274,7 @@ export function IncomeRoute() {
             onClick={() => {
               setEditingRuleId(null);
               setShowRuleForm((value) => !value);
+              setRecording(false);
             }}
           >
             {t("Create recurring income rule")}
@@ -259,6 +293,8 @@ export function IncomeRoute() {
           )}
           {ruleEntries.length > 0 && (
             <IncomeRuleList
+              horses={horses.data?.items}
+              today={account.data?.ownerToday}
               rules={ruleEntries}
               currency={currency}
               onRevise={(id) => {
@@ -285,28 +321,36 @@ export function IncomeRoute() {
                   ? t("Revise recurring income rule")
                   : t("Create recurring income rule")}
               </h3>
-              <IncomeRuleForm
-                currency={currency}
-                today={account.data.ownerToday}
-                horses={
-                  horses.data
-                    .items as import("../features/finance/useFinancialForm").FinancialHorse[]
-                }
-                initialRule={editingRule}
-                onPreview={previewRule}
-                onCreate={async (body: IncomeRuleValues) => {
-                  await runRuleCommand("POST", "/api/v1/income-rules", body);
+              <EntryPanel
+                onClose={() => {
                   setShowRuleForm(false);
-                  setRuleNotice("Income rule created.");
-                }}
-                onRevise={async (body: IncomeRuleRevisionValues) => {
-                  const path =
-                    `/api/v1/income-rules/${encodeURIComponent(editingRule!.ruleId)}` as `/api/v1/income-rules/${string}`;
-                  await runRuleCommand("PATCH", path, body);
                   setEditingRuleId(null);
-                  setRuleNotice("Income rule revision saved.");
                 }}
-              />
+              >
+                <IncomeRuleForm
+                  draftScope={subject}
+                  currency={currency}
+                  today={account.data.ownerToday}
+                  horses={
+                    horses.data
+                      .items as import("../features/finance/useFinancialForm").FinancialHorse[]
+                  }
+                  initialRule={editingRule}
+                  onPreview={previewRule}
+                  onCreate={async (body: IncomeRuleValues) => {
+                    await runRuleCommand("POST", "/api/v1/income-rules", body);
+                    setShowRuleForm(false);
+                    setRuleNotice("Income rule created.");
+                  }}
+                  onRevise={async (body: IncomeRuleRevisionValues) => {
+                    const path =
+                      `/api/v1/income-rules/${encodeURIComponent(editingRule!.ruleId)}` as `/api/v1/income-rules/${string}`;
+                    await runRuleCommand("PATCH", path, body);
+                    setEditingRuleId(null);
+                    setRuleNotice("Income rule revision saved.");
+                  }}
+                />
+              </EntryPanel>
               <button
                 type="button"
                 onClick={() => {
@@ -382,7 +426,29 @@ export function IncomeRoute() {
         aria-labelledby="income-ledger-heading"
         data-testid={ledger.isSuccess ? "ledger-ready" : undefined}
       >
-        <h2 id="income-ledger-heading">{t("This month’s income")}</h2>
+        <h2 id="income-ledger-heading">{t("Income in selected month")}</h2>
+        <label>
+          {t("Ledger month")}
+          <input
+            type="month"
+            value={month}
+            max={ownerToday.slice(0, 7)}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          />
+        </label>
+        <label htmlFor="ledger-horse-filter">{t("Horse filter")}</label>
+        <select
+          id="ledger-horse-filter"
+          value={selectedHorse}
+          onChange={(e) => setSelectedHorse(e.target.value)}
+        >
+          <option value="">{t("All horses")}</option>
+          {horses.data?.items.map((h) => (
+            <option key={h.horseId} value={h.horseId}>
+              {h.name}
+            </option>
+          ))}
+        </select>
         {!account.isError && ledger.isPending && (
           <p role="status">{t("Loading income…")}</p>
         )}
@@ -393,7 +459,9 @@ export function IncomeRoute() {
               type="button"
               onClick={() =>
                 void queryClient.resetQueries({
-                  queryKey: keys?.income(queryRange),
+                  queryKey: keys?.income(queryRange, {
+                    horseId: selectedHorse,
+                  }),
                 })
               }
             >
@@ -409,10 +477,16 @@ export function IncomeRoute() {
             {entries.map((item) => (
               <li key={item.id}>
                 <h3>{item.source}</h3>
+                {item.origin === "OneTime" && (
+                  <RecordCorrection
+                    kind="Income"
+                    item={item}
+                    horses={horses.data?.items ?? []}
+                    currency={currency}
+                  />
+                )}
                 <time dateTime={item.receivedDate}>
-                  {new Date(`${item.receivedDate}T00:00:00`).toLocaleDateString(
-                    locale,
-                  )}
+                  {formatDate(item.receivedDate, locale)}
                 </time>
                 <p>{money(item.contributionMinor, currency, locale)}</p>
                 <ul
