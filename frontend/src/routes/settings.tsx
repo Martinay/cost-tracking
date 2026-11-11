@@ -164,24 +164,6 @@ export function SettingsRoute() {
       />
       <div className="settings-layout">
         <div className="settings-main">
-          <section
-            className="settings-card"
-            aria-labelledby="preferences-heading"
-          >
-            <div className="card-heading">
-              <span className="section-number">01</span>
-              <div>
-                <h2 id="preferences-heading">{t("Ledger preferences")}</h2>
-                <p>{t("Your ledger is ready to use.")}</p>
-              </div>
-            </div>
-            <p>{t("All income and expenses use euros (EUR).")}</p>
-            <p>
-              {t(
-                "Timestamps are stored in UTC and shown in your browser’s local time.",
-              )}
-            </p>
-          </section>
           <DrivingRateForm
             savedRateMinorPerKm={account.data.drivingRateMinorPerKm ?? null}
             pending={saveDrivingRate.isPending}
@@ -217,7 +199,7 @@ export function SettingsRoute() {
         aria-labelledby="account-history-heading"
       >
         <div className="card-heading">
-          <span className="section-number">03</span>
+          <span className="section-number">02</span>
           <div>
             <h2 id="account-history-heading">{t("Account history")}</h2>
             <p>{t("A record of changes to your workspace.")}</p>

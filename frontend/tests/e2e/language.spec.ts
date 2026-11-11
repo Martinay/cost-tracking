@@ -144,10 +144,17 @@ for (const width of [1440, 375]) {
       if (path === "/settings") {
         await expect(page.getByLabel("Währung")).toHaveCount(0);
         await expect(
-          page.getByText(
-            "Alle Einnahmen und Ausgaben werden in Euro (EUR) erfasst.",
-          ),
+          page.getByRole("heading", { name: "Kilometersatz", exact: true }),
         ).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Kilometersatz speichern" }),
+        ).toBeEnabled();
+        await expect(
+          page.getByRole("heading", { name: "Kontoverlauf", exact: true }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("heading", { name: "Buchführungseinstellungen" }),
+        ).toHaveCount(0);
         await expect(page.getByLabel("Sprache")).toBeEnabled();
       }
       if (path === "/reports")

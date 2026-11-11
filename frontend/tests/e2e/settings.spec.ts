@@ -53,8 +53,11 @@ for (const width of [1280, 375]) {
         );
         await page.goto("/settings");
         await expect(
-          page.getByText("All income and expenses use euros (EUR)."),
+          page.getByRole("heading", { name: "Driving rate" }),
         ).toBeVisible();
+        await expect(
+          page.getByRole("heading", { name: "Ledger preferences" }),
+        ).toHaveCount(0);
         await expect(page.getByLabel("Currency", { exact: true })).toHaveCount(
           0,
         );

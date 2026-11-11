@@ -72,17 +72,15 @@ function setup(timeZone: string | null = "Europe/Berlin", locked = false) {
 }
 
 test.each([false, true])(
-  "uses automatic ledger defaults without preference controls (locked=%s)",
+  "shows actionable settings without the ledger preferences panel (locked=%s)",
   async (locked) => {
     const { save } = setup("UTC", locked);
     expect(
-      await screen.findByText("All income and expenses use euros (EUR)."),
+      await screen.findByRole("heading", { name: "Driving rate" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Timestamps are stored in UTC and shown in your browser’s local time.",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByRole("heading", { name: "Ledger preferences" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("combobox", { name: "Time zone" }),
     ).not.toBeInTheDocument();

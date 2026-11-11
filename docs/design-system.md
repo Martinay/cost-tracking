@@ -105,4 +105,4 @@ Use the selected locale for currency and date presentation through `frontend/src
 
 ## Automatic ledger defaults
 
-Fresh accounts use EUR and UTC automatically. Show explanatory text in the existing ledger preferences card, with no editable currency/timezone selectors or save action. Keep driving-rate editing and history accessible, and offer Add horse without a setup gate. Display history instants using the browser timezone and selected interface locale; preserve date-only ledger days. Explicit historic financial settings retain their original meaning.
+Fresh accounts use EUR and UTC automatically. Keep these automatic defaults out of the Settings UI, with no ledger preferences card, editable currency/timezone selectors, or save action. Keep driving-rate editing and history accessible, and offer Add horse without a setup gate. Display history instants using the browser timezone and selected interface locale; preserve date-only ledger days. Explicit historic financial settings retain their original meaning.
