@@ -76,3 +76,6 @@ Final convergence: all initial 34 tasks completed for repository scope. U05/U07 
 - [x] T037 Replay actual event allocations for approved payments and partial receipts in backend/src/CostTracking.Api/Features/IncomeRules/IncomeApprovalEndpoints.cs; retain rule defaults for rejections and cover both payment kinds in backend/tests/CostTracking.Tests/Integration/RecurringIncomeTests.cs (U11/U12/U20; PR review finding 4542464189).
 
 - [x] T038 Search successive bounded windows for recurring preview examples in backend/src/CostTracking.Api/Features/Previews/FinancialPreviewEndpoints.cs and remove the frontend five-year cutoff in frontend/src/features/recurrence/schedule.ts; cover long intervals, inclusive ends and calendar exhaustion (U09/U10; PR review finding on FinancialPreviewEndpoints.cs).
+
+- [x] T039 Clear the subject-scoped driving draft explicitly in frontend/src/routes/expenses.tsx before closing the saved editor; verify reopen starts empty without clearing another owner’s draft in frontend/tests/components/SessionRenewal.test.tsx (U02/U15; PR review finding 4542609944).
+- [x] T040 Reject invalid monthly days and weekday selections before occurrence search in frontend/src/features/recurrence/schedule.ts and verify no iteration for invalid monthly inputs in frontend/tests/components/Usability.test.tsx (U09/U10; PR review finding 4542609956).

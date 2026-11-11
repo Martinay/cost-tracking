@@ -1,3 +1,4 @@
+import { clearDraftScope } from "../features/finance/useDraftState";
 import { editorShares } from "../features/finance/normalizeSplit";
 import { formatRate } from "../features/driving/rate";
 import { EntryPanel } from "../components/EntryPanel";
@@ -323,6 +324,7 @@ export function ExpensesRoute() {
           queryClient.invalidateQueries({ queryKey: ["report", subject] }),
         ]);
       }
+      clearDraftScope(subject, "driving-");
       setRecordingDriving(false);
       setDrivingSaved(true);
     },

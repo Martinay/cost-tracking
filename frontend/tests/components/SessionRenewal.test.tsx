@@ -396,3 +396,77 @@ for (const kind of ["Expense", "Income", "Driving"] as const) {
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
   });
 }
+
+test("successful driving save clears only its subject draft before closing", async () => {
+  const user = userEvent.setup();
+  const { transport } = await mountBoundary(<ExpensesRoute />, (transport) =>
+    transport.mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url === "/api/v1/account")
+        return json({
+          currency: "EUR",
+          timeZone: "UTC",
+          ownerToday: "2026-09-21",
+          streamVersion: 7,
+          drivingRateMinorPerKm: 30,
+        });
+      if (url === "/api/v1/horses")
+        return json({
+          items: [{ horseId: "horse-a", name: "Misty", status: "Active" }],
+          nextCursor: null,
+          streamVersion: 7,
+        });
+      if (url === "/api/v1/previews/financial")
+        return json({
+          currency: "EUR",
+          amountMinor: 300,
+          splitMode: "Equal",
+          allocations: [{ horseId: "horse-a", amountMinor: 300 }],
+          streamVersion: 7,
+          driving: { kilometers: 10, rateMinorPerKm: 30 },
+        });
+      if (url === "/api/v1/driving" && init?.method === "POST")
+        return json({ streamVersion: 8 });
+      return json({
+        items: [],
+        nextCursor: null,
+        streamVersion: 7,
+        currency: "EUR",
+      });
+    }),
+  );
+  sessionStorage.setItem(
+    "horse-ledger:draft:v1:other-owner:driving-description",
+    JSON.stringify("Other trip"),
+  );
+  await user.click(
+    screen.getByRole("button", { name: "Record driving expense" }),
+  );
+  await user.type(await screen.findByLabelText("Distance (km)"), "10");
+  await user.type(screen.getByLabelText("Description"), "Saved trip");
+  await user.click(screen.getByLabelText("Misty"));
+  await user.click(
+    screen.getByRole("button", { name: "Preview driving expense" }),
+  );
+  await user.click(
+    await screen.findByRole("button", { name: "Save driving expense" }),
+  );
+  await screen.findByText("Driving expense saved.");
+  expect(
+    transport.mock.calls.some(
+      ([url, init]) =>
+        String(url) === "/api/v1/driving" && init?.method === "POST",
+    ),
+  ).toBe(true);
+  await user.click(
+    screen.getByRole("button", { name: "Record driving expense" }),
+  );
+  expect(await screen.findByLabelText("Distance (km)")).toHaveValue(null);
+  expect(screen.getByLabelText("Description")).toHaveValue("");
+  expect(screen.getByLabelText("Misty")).not.toBeChecked();
+  expect(
+    sessionStorage.getItem(
+      "horse-ledger:draft:v1:other-owner:driving-description",
+    ),
+  ).toBe(JSON.stringify("Other trip"));
+});

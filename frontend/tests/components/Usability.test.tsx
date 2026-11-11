@@ -230,3 +230,29 @@ test("saved percentage shares round-trip to the original exact allocation", () =
     ],
   });
 });
+
+test.each([0, 1.5, 32, null])(
+  "invalid monthly day %s is rejected before searching",
+  async (dayOfMonth) => {
+    const { firstOccurrence } =
+      await import("../../src/features/recurrence/schedule");
+    const iso = vi.spyOn(Date.prototype, "toISOString");
+    try {
+      const result = firstOccurrence(
+        {
+          cadence: "Monthly",
+          interval: 1,
+          weekdays: [],
+          dayOfMonth,
+          startDate: "2026-11-11",
+          endDate: "2026-12-11",
+        },
+        "2026-11-11",
+      );
+      expect(iso).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    } finally {
+      iso.mockRestore();
+    }
+  },
+);

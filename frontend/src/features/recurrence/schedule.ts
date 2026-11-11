@@ -10,7 +10,15 @@ export function firstOccurrence(
     !Number.isInteger(schedule.interval) ||
     schedule.interval < 1 ||
     schedule.interval > 366 ||
-    (schedule.cadence === "Weekdays" && schedule.weekdays.length === 0)
+    (schedule.cadence === "Monthly" &&
+      (!Number.isInteger(schedule.dayOfMonth) ||
+        Number(schedule.dayOfMonth) < 1 ||
+        Number(schedule.dayOfMonth) > 31)) ||
+    (schedule.cadence === "Weekdays" &&
+      (schedule.weekdays.length === 0 ||
+        schedule.weekdays.some(
+          (day) => !Number.isInteger(day) || day < 1 || day > 7,
+        )))
   )
     return null;
   const anchor = new Date(schedule.startDate + "T00:00:00Z");
