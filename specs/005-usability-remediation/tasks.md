@@ -66,4 +66,9 @@ Independent checks may run in parallel: frontend ratio/mileage tests and backend
 
 - [x] T034 Present saved custom allocations as readable percentage shares, accepting exact decimal ratios at the transport boundary in frontend/src/features/finance/normalizeSplit.ts and frontend/src/features/finance/SplitFields.tsx, and verify saved-split editor round trips per U01/U25 (partial).
 
-Final convergence: all 34 tasks completed for repository scope. U05/U07 remain excluded. U06 hosted configuration/verification is the explicit external dependency documented in validation.md; no additional repository task remains.
+Final convergence: all initial 34 tasks completed for repository scope. U05/U07 remain excluded. U06 hosted configuration/verification is the explicit external dependency documented in validation.md; no additional repository task remains.
+
+## Phase 10: PR review hardening
+
+- [x] T035 Keep the task's original sold horse alongside eligible replacements in frontend/src/routes/tasks.tsx and cover correction without reassignment in frontend/tests/components/TaskCorrection.test.tsx (U13/U16; PR review finding 4535134857).
+- [x] T036 Clear cached correction commands after definitive version conflicts in frontend/src/features/tasks/TaskCorrection.tsx; verify fresh unchanged-draft retries and original-key ambiguous-save retries in frontend/tests/components/TaskCorrection.test.tsx (U03/U16; PR review finding 4535134864).

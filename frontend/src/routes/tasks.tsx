@@ -256,8 +256,10 @@ export function TasksRoute() {
                         quantityUnit: item.quantityUnit ?? undefined,
                       }}
                       horses={
-                        horses.data?.items.filter((h) => h.status !== "Sold") ??
-                        []
+                        horses.data?.items.filter(
+                          (h) =>
+                            h.status !== "Sold" || h.horseId === item.horseId,
+                        ) ?? []
                       }
                       today={today}
                     />

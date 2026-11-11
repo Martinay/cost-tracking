@@ -8,7 +8,7 @@ import {
   type TaskCommandBody,
   type TaskHorseOption,
 } from "./TaskForm";
-import type { ApiCommand } from "../../api/client";
+import { ApiError, type ApiCommand } from "../../api/client";
 export function TaskCorrection({
   item,
   horses,
@@ -76,7 +76,16 @@ export function TaskCorrection({
                   body,
                   streamVersion: account.streamVersion,
                 });
-              await apiClient.sendCommand(command.current);
+              try {
+                await apiClient.sendCommand(command.current);
+              } catch (error) {
+                if (
+                  error instanceof ApiError &&
+                  (error.status === 409 || error.status === 412)
+                )
+                  command.current = null;
+                throw error;
+              }
               await queries.invalidateQueries({
                 predicate: (q) => q.queryKey[1] === subject,
               });

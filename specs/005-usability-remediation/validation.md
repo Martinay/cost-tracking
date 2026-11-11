@@ -6,7 +6,7 @@ Date: 11 November 2026. Source: the original live report at local path `docs/usa
 
 Spec Kit specify → plan/research → tasks → read-only artifact analysis → implement → converge → implement remaining tasks. Requirements checklist: 10/10 checked. All 26 finding IDs are traced in spec.md; 24 are authorized requirements, U05/U07 are excluded by the user's explicit follow-up. No blocking clarification was necessary; assumptions are documented in the spec. No extension hooks are configured.
 
-Initial analysis: 24/24 in-scope requirements mapped to tasks, no unmapped implementation task, no blocking ambiguity or constitution conflict. Convergence identified payment-editor reset, explicit decision receipts, recurring draft recovery, remaining date/history details, correction-aware lifetime bounds, canonical upcoming schedule dates and readable saved split shares; these were appended as T027–T034 and implemented. Final convergence checked all 24 required findings, five success criteria, the plan decisions and all eight constitution principles. No buildable gap remains; all 34 tasks are checked.
+Initial analysis: 24/24 in-scope requirements mapped to tasks, no unmapped implementation task, no blocking ambiguity or constitution conflict. Convergence identified payment-editor reset, explicit decision receipts, recurring draft recovery, remaining date/history details, correction-aware lifetime bounds, canonical upcoming schedule dates and readable saved split shares; these were appended as T027–T034 and implemented. Final convergence checked all 24 required findings, five success criteria, the plan decisions and all eight constitution principles. All initial 34 tasks were checked; the PR-review follow-up below adds two completed hardening tasks.
 
 ## Resolution crosswalk
 
@@ -74,3 +74,11 @@ WorkOS now documents default Sign-out URIs; its App homepage URL is deprecated. 
 ## Limits and publication
 
 No direct deployment, production-data mutation, real participant study, physical-phone test, screen-reader certification, target Azure SMB test or release-readiness claim is made. Existing external release gates under feature 001 remain. The user subsequently authorized a PR and auto-merge; the normal main workflow may deploy after GitHub's required gates permit that merge. U06 hosted verification remains explicitly external rather than being presented as fixed in production.
+
+## PR #10 review-gate follow-up
+
+The original GitHub CI workflow completed successfully ([run 42979481971](https://github.com/Martinay/cost-tracking/actions/runs/42979481971)). Its separate Codex review gate reported two genuine task-correction findings: the original sold horse was omitted from its editor, and definitive version conflicts retained a stale cached command.
+
+Three new component regressions observed both failures before the fixes. Correction options now retain only that task's original sold horse alongside eligible replacements. A definitive 409/412 clears the cached command so the unchanged draft can retry with a fresh version/key; an ambiguous 503 retains the original body/version/key, even when the account version advances, to avoid duplicate accepted corrections.
+
+Follow-up validation: **110 component tests in 22 files, 34 browser journeys, typecheck, lint, formatting, and production build passed** with pinned Node 24.19.0/npm 11.17.0. No backend/domain/schema changes were made in this follow-up; the existing 298 backend and 42 contract test results remain unchanged. T035/T036 record these completed fixes. Live reports and captured images remain excluded from publication.
